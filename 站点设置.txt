@@ -1,0 +1,11 @@
+# 型号查询站 · 站点设置
+#
+# 改完保存，然后双击“更新数据.cmd”重新生成（几秒钟）。
+# 域名不用带最后的斜杠。
+#
+# 按《推广物料\部署说明.md》上传到 Cloudflare Pages、项目名填 ymy-parts 的话，
+# 下面这一行就是对的，不用改。
+# 换成自己的域名（比如 https://parts.yumengyang.com）就改这里，再跑一次。
+
+域名=https://ymy-parts.pages.dev
+WhatsApp=8615915859048
