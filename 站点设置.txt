@@ -7,5 +7,5 @@
 # 下面这一行就是对的，不用改。
 # 换成自己的域名（比如 https://parts.yumengyang.com）就改这里，再跑一次。
 
-域名=https://ymy-parts.pages.dev
+域名=https://yiran8392-crypto.github.io/yumengyang-parts
 WhatsApp=8615915859048

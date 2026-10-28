@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ymy-parts.pages.dev/sitemap.xml
+Sitemap: https://yiran8392-crypto.github.io/yumengyang-parts/sitemap.xml
