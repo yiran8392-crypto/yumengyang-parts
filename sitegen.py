@@ -212,9 +212,9 @@ def sitehead(cfg, active=""):
         nav.append('<a href="../category/%s.html"%s>%s</a>' % (slug, cls, esc(en)))
     return """<header class="sitehead"><div class="wrap">
 <a class="brand" href="../index.html">Yumengyang<em>Auto Parts</em></a>
-<nav>%s</nav>
+<nav>%s<a href="../category/index.html">All %d categories</a></nav>
 <a class="wapush" href="%s" target="_blank" rel="noopener">WhatsApp Us</a>
-</div></header>""" % ("".join(nav), esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
+</div></header>""" % ("".join(nav), len(CAT_META), esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
 
 
 def sitefoot(cfg):
@@ -336,7 +336,7 @@ def page_model(cfg, it, cat, related):
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
         WhatsApp for price &amp; MOQ
       </a>
-      <a class="btn-ghost" href="../index.html?q=%s">Search all 3,500+ parts</a>
+      <a class="btn-ghost" href="../index.html?q=%s">Search all %s parts</a>
     </div>
   </div>
 </div>
@@ -350,6 +350,7 @@ def page_model(cfg, it, cat, related):
        esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
        (" · brand " + esc(it["b"])) if it.get("b") else "",
        spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
+       "{:,}".format(cfg.get("_total", 0)),
        esc(apps or "Please contact us with your vehicle model and we will confirm the fitment."),
        rel_html, esc(cfg["company_en"]), esc(one), esc(it.get("b") or "WEILI"),
        sitefoot(cfg))
@@ -403,6 +404,35 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
        if total_pages > 1 else ("All models (%d)" % len(all_items)),
        lis, pager, sitefoot(cfg))
     return head_block(cfg, title, desc, canonical, "assets/og/%s.jpg" % slug, "website") + "\n" + body
+
+
+def page_cat_index(cfg, cats, by_cat):
+    total = sum(len(by_cat.get(c["key"], [])) for c in cats)
+    title = "All %d product categories — %d part numbers | Guangzhou Yumengyang Auto Parts" % (len(cats), total)
+    desc = ("Ignition coils, ABS sensors, oxygen sensors, fuel pumps, TPMS, throttle bodies and more — "
+            "%d part numbers with OE cross-reference." % total)
+    cards = []
+    for c in cats:
+        key = c["key"]
+        slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
+        n = len(by_cat.get(key, []))
+        cards.append('<a class="catcard" href="%s.html"><b>%s</b><span>%s</span><em>%d models →</em></a>'
+                     % (slug, esc(en), esc(cn), n))
+    body = """<body>
+%s
+<main class="cat-main">
+<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>All categories</span></nav>
+<div class="cat-head">
+  <h1>All product categories <span style="color:#8b9dab;font-weight:500;font-size:.66em">全部品类</span></h1>
+  <p>%d categories, %d part numbers. Pick a category to see every model with its OE number, cross-reference and fitment.</p>
+  <div class="stat"><a href="../index.html">Search by OE number</a></div>
+</div>
+<div class="catcards">%s</div>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg), len(cats), total, "".join(cards), sitefoot(cfg))
+    return head_block(cfg, title, desc, rel_url(cfg, "category/index.html"), "", "website") + "\n" + body
 
 
 def page_404(cfg):
@@ -491,22 +521,34 @@ def make_og_images(cfg, cats):
         img.save(os.path.join(ogdir, slug + ".jpg"), "JPEG", quality=84, optimize=True)
 
 
+def register_cats(cats):
+    """把新品类登记进 CAT_META（slug, 复数英文, 单数英文, 中文）。"""
+    for c in cats or []:
+        CAT_META[c["key"]] = (c.get("slug") or c["key"], c.get("en") or c["key"],
+                              c.get("one") or c.get("en") or c["key"], c.get("name") or c["key"])
+
+
 # ------------------------------------------------------------------ 首页注入
 def home_links(cfg, cats, by_cat, limit=100):
-    blocks = ['<h2>按品类浏览全部型号 <span style="font-weight:400;color:#8b9dab;font-size:12.5px">Browse all models</span></h2>',
-              '<p class="lead">每个型号都有独立页面（含 OE 号、交叉号、适配车型和 WhatsApp 询价按钮），也可以直接点品类看全部。</p>']
+    rows = []
+    total = 0
     for c in cats:
         key = c["key"]
         items = by_cat.get(key, [])
-        slug, en, one, cn = CAT_META[key]
-        links = "".join('<a href="c/%s.html">%s</a>' % (esc(it["s"]), esc(it.get("oe") or it["m"]))
-                        for it in items[:limit])
-        blocks.append(
-            '<details open><summary>%s <span>%s · %d models / 个型号</span></summary>'
-            '<div class="lst">%s</div>'
-            '<a class="all" href="category/%s.html">View all %d %s 查看全部 →</a></details>'
-            % (esc(en), esc(cn), len(items), links, slug, len(items), esc(en)))
-    return "\n".join(blocks)
+        total += len(items)
+        slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
+        links = "".join('<a href="c/%s.html" title="%s">%s</a>' % (
+            esc(it["s"]), esc(it.get("a", "")[:60]), esc(it.get("oe") or it["m"]))
+            for it in items[:limit])
+        rows.append(
+            '<div class="catrow"><div class="cath"><b>%s</b><span>%s · %d models</span>'
+            '<a class="all" href="category/%s.html">View all 查看全部 →</a></div>'
+            '<div class="lst">%s</div></div>'
+            % (esc(en), esc(cn), len(items), slug, links))
+    return ('<h2>按品类浏览全部型号 <span>Browse all models by category</span></h2>'
+            '<p class="lead">每个品类下面列出前 100 个型号（点「查看全部」看整类）。这一类展开后可以折叠、单独滚动，不会拉一屏数字墙。</p>'
+            '<details class="catbox"><summary>展开 / 收起：%d 个品类 · %d 个型号（Expand all categories）</summary>%s</details>'
+            % (len(cats), total, "".join(rows)))
 
 
 def inject_home(cfg, cats, by_cat):
@@ -534,6 +576,7 @@ def inject_home(cfg, cats, by_cat):
 # ------------------------------------------------------------------ 主入口
 def build_static(items, cats, log=print):
     cfg = load_cfg()
+    cfg["_total"] = len(items)
     t0 = time.time()
     clash = make_slugs(items)
 
@@ -545,6 +588,14 @@ def build_static(items, cats, log=print):
     catdir = os.path.join(HERE, "category")
     os.makedirs(cdir, exist_ok=True)
     os.makedirs(catdir, exist_ok=True)
+    # 先清掉上一轮生成的 html，避免品类改名/型号下架后留下孤儿页
+    for d in (cdir, catdir):
+        for fn in os.listdir(d):
+            if fn.endswith(".html"):
+                try:
+                    os.remove(os.path.join(d, fn))
+                except OSError:
+                    pass
 
     counts = {}
     for idx, it in enumerate(items):
@@ -581,10 +632,15 @@ def build_static(items, cats, log=print):
                 f.write(text)
             cat_files.append(fname)
 
+    with open(os.path.join(catdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(page_cat_index(cfg, cats, by_cat))
+
     # sitemap
     today = time.strftime("%Y-%m-%d")
     urls = ['<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>'
             % (esc(cfg["site_url"] + "/"), today)]
+    urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
+                % (esc(rel_url(cfg, "category/index.html")), today))
     for fname in cat_files:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>'
                     % (esc(rel_url(cfg, "category/" + fname)), today))

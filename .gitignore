@@ -1,0 +1,10 @@
+﻿# 内部价格，绝不发布
+内部价格-不发布/
+*.xls
+*.xlsx
+# 打包文件 / 缓存 / 构建中间产物
+型号查询站-客户版.zip
+data/_images_cache.json
+__pycache__/
+*.pyc
+.tmp/

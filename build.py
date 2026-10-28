@@ -668,7 +668,34 @@ def main():
     for idx, it in enumerate(items, 1):
         it["i"] = idx
 
-    log("\n[2/3] 抽图 + 压缩 …")
+    # ---- 合并 D:\111A剪辑 里的 10 个目录表（价格只写进 内部价格-不发布）----
+    extra_cats = []
+    try:
+        import import_catalogs as ic
+        if os.path.isdir(ic.SRC_DIR):
+            log("\n[1b/4] 合并 111A剪辑 目录表 …")
+            extra, price_rows, cfails, used = ic.load_all(log=log)
+            added, merged, used_cats = ic.merge(items, extra, log=log)
+            csv_path, nprice = ic.write_prices(price_rows)
+            log("  新增 %d 条，合并进已有 %d 条；价格 %d 行已单独存放（不进网页）" % (added, merged, nprice))
+            old_keys = {c["key"] for c in CATS}
+            for key in sorted(used_cats):
+                if key in old_keys:
+                    continue
+                slug, en, one, cn = ic.NEW_CATS.get(key, (key, key, key, key))
+                extra_cats.append({"key": key, "name": cn, "en": en, "one": one, "slug": slug})
+            if cfails:
+                warns.extend(cfails)
+        else:
+            warns.append("没找到 D:\\111A剪辑 目录表目录，本次只更新原有 5 类")
+    except Exception as e:
+        warns.append("合并 111A剪辑 目录表失败：%s" % e)
+        log("  !! 合并失败：%s" % e)
+
+    for idx, it in enumerate(items, 1):
+        it["i"] = idx
+
+    log("\n[2/4] 抽图 + 压缩 …")
     stats = build_images(items)
 
     log("\n[3/4] 生成 data.js 与清单 …")
@@ -677,9 +704,14 @@ def main():
         n = sum(1 for it in items if it["cat"] == c["key"])
         if n:
             cats.append({"key": c["key"], "name": c["name"], "en": c["en"], "n": n})
+    for c in extra_cats:
+        n = sum(1 for it in items if it["cat"] == c["key"])
+        if n:
+            cats.append({"key": c["key"], "name": c["name"], "en": c["en"], "n": n})
     try:
         import sitegen
         sitegen.make_slugs(items)
+        sitegen.register_cats(extra_cats)
     except Exception as e:
         warns.append("生成 slug 失败：%s" % e)
     size = write_data_js(items, cats)
