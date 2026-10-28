@@ -118,7 +118,8 @@ def fitment_hint(app, brand=""):
     """从适配车型里挑一个短的车系名，用在 title 里，比如 “Toyota Camry”。"""
     text = clean_text(app)
     if not text:
-        return clean_text(brand).split(",")[0].strip()[:32]
+        b = clean_text(brand).split(",")[0].strip()[:32]
+        return "" if re.search(r"[\u4e00-\u9fa5]", b) else b
     for seg in re.split(r"[;|,]", text):
         had_slash = "/" in seg
         seg = seg.replace("/", " ").replace("=", " ")
@@ -134,6 +135,12 @@ def fitment_hint(app, brand=""):
                 continue
             if re.fullmatch(r"\d+(\.\d+)?\s*(l|t|v|cc|kw|hp|at|mt)?", t, re.I):
                 continue          # 排量/功率这类参数别放进标题
+            if re.search(r"[\u4e00-\u9fa5]", t):
+                # 中文车型段：只挑里面的拉丁词，挑不到就跳过（标题保持英文）
+                latin = re.findall(r"[A-Za-z][A-Za-z0-9\.\-]*", tok)
+                if latin and not out:
+                    out.extend(latin[:2])
+                continue
             out.append(t)
             if len(out) >= 2:
                 break
