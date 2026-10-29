@@ -26,9 +26,14 @@
  "oxygen-sensors": {
   "cat": "o2",
   "en": "Oxygen Sensors",
-  "sku": null,
-  "src": null,
-  "placeholder": true
+  "sku": "10-BM061",
+  "src": "images/o2/10-BM061.webp",
+  "score": 0.888,
+  "srcSize": [
+   356,
+   356
+  ],
+  "placeholder": false
  },
  "spark-plugs": {
   "cat": "plug",
