@@ -32,6 +32,15 @@ DEFAULT_CFG = {
     "company_cn": "广州驭盟扬汽车零部件有限公司",
 }
 
+# 品牌显示（别在模板里散着写名字，改一处全站生效）
+# translate="no" + class="notranslate" 是给浏览器自动翻译看的：Edge / Chrome / iOS Safari
+# 翻页面时会跳过这些节点，避免把 Yumengyang 翻成「玉明阳」这种鬼东西。
+# 注意：不整页禁译（客户可能想翻译页面），只锁品牌名。
+BRAND_EN = "Yumengyang"
+BRAND_EN2 = "Auto Parts"
+BRAND_CN = "广州驭盟扬汽配"
+NOTRANSLATE = 'translate="no"'
+
 # 品类元信息：key -> (目录 slug, 英文复名, 英文单数, 中文)
 CAT_META = {
     "coil": ("ignition-coils", "Ignition Coils", "Ignition Coil", "点火线圈"),
@@ -218,17 +227,19 @@ def sitehead(cfg, active=""):
         cls = ' class="on"' if active == cat else ""
         nav.append('<a href="../category/%s.html"%s>%s</a>' % (slug, cls, esc(en)))
     return """<header class="sitehead"><div class="wrap">
-<a class="brand" href="../index.html">Yumengyang<em>Auto Parts</em></a>
+<a class="brand notranslate" %s href="../index.html">%s<em %s>%s</em></a>
 <nav>%s<a href="../category/index.html">All %d categories</a></nav>
 <a class="wapush" href="%s" target="_blank" rel="noopener">WhatsApp Us</a>
-</div></header>""" % ("".join(nav), len(CAT_META), esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
+</div></header>""" % (NOTRANSLATE, BRAND_EN, NOTRANSLATE, BRAND_EN2,
+                       "".join(nav), len(CAT_META),
+                       esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
 
 
 def sitefoot(cfg):
     return """<footer class="sitefoot"><div class="wrap">
-<div><b>%s</b> · %s</div>
+<div><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></div>
 <div><a href="../index.html">OE / cross-reference lookup</a> · <a href="../sitemap.xml">Sitemap</a></div>
-</div></footer>""" % (esc(cfg["company_cn"]), esc(cfg["company_en"]))
+</div></footer>""" % (NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]))
 
 
 def spec_rows(it):
@@ -244,7 +255,7 @@ def spec_rows(it):
         rows.append(("Vehicle fitment", esc(it["a"])))
     if it.get("r"):
         rows.append(("Notes", esc(it["r"])))
-    rows.append(("Our part no.", esc(it["m"])))
+    rows.append(("Our SKU", esc(it["m"])))
     return "".join("<tr><th>%s</th><td>%s</td></tr>" % r for r in rows)
 
 
@@ -266,7 +277,7 @@ def page_model(cfg, it, cat, related):
     tail = ". Factory-direct, ask price and MOQ on WhatsApp."
     desc = "%s %s" % (one, ("OE " + it["oe"]) if it.get("oe") else ("part " + it["m"]))
     if it.get("oe") and it.get("m"):
-        desc += " (our no. %s)" % it["m"]
+        desc += " (our SKU %s)" % it["m"]
     if it.get("x"):
         desc += ". Cross-reference: %s" % ", ".join(it["x"][:3])
     room = 158 - len(desc) - len(tail) - 8
@@ -336,7 +347,7 @@ def page_model(cfg, it, cat, related):
   <div class="pdp-info">
     <div class="kicker">%s</div>
     <h1>%s</h1>
-    <p class="sub2">Our part no. <b>%s</b>%s</p>
+    <p class="sub2">Our SKU <b>%s</b>%s</p>
     <table class="spec">%s</table>
     <div class="cta">
       <a class="btn-wa" href="%s" target="_blank" rel="noopener">
@@ -443,8 +454,9 @@ def page_cat_index(cfg, cats, by_cat):
 
 
 def page_404(cfg):
+    home = rel_url(cfg, "") if has_site(cfg) else "index.html"
     return """<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -466,17 +478,17 @@ small{display:block;margin-top:26px;color:#9aabb9;font-size:12px}
 <body>
 <div class="box">
   <div class="code">404</div>
-  <h1>这个页面走丢了 / Page not found</h1>
+  <h1>Page not found</h1>
   <p>The part may have moved. Search by OE number on the home page, or just message us on WhatsApp.<br>
-  型号页可能换过链接，回到首页按 OE 号或车型搜一下，或者直接发 WhatsApp 问我们。</p>
-  <a class="btn" href="/">回到查询首页</a>
+  <span lang="zh-CN">型号页可能换过链接，回到首页按 OE 号或车型搜一下，或者直接发 WhatsApp 问我们。</span></p>
+  <a class="btn" href="%s">Back to the lookup home</a>
   <a class="wa" href="%s" target="_blank" rel="noopener">WhatsApp</a>
-  <small>%s · %s</small>
+  <small><span class="notranslate" translate="no">%s</span> · <span class="notranslate" translate="no">%s</span></small>
 </div>
 </body>
 </html>
-""" % (esc(wa_link(cfg, "Hi, I could not find a part on your website.")),
-       esc(cfg["company_en"]), esc(cfg["company_cn"]))
+""" % (esc(home), esc(wa_link(cfg, "Hi, I could not find a part on your website.")),
+       esc(BRAND_CN), esc(cfg["company_en"]))
 
 
 def make_og_images(cfg, cats):
