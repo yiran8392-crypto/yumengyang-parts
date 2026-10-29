@@ -53,10 +53,25 @@ def cat_meta():
 def score(im):
     """白底多、横向比例、产品占比适中、分辨率够、边缘锐利 → 分高。"""
     from PIL import ImageChops, ImageFilter, ImageStat
+    # 先按内容裁掉大白边，再看「真正挨着产品」的那圈底色（有的图是白边+蓝底）
+    g0 = im.convert("L").point(lambda p: 255 if p < 246 else 0)
+    box0 = g0.getbbox()
+    if box0 and (box0[2] - box0[0]) > 40:
+        im = im.crop(box0)
     w, h = im.size
     g = im.convert("L")
-    hist = g.histogram()
-    white_ratio = sum(hist[242:]) / float(w * h)
+    # 只看最外一圈的底色（整图白度会被「白底+蓝底」这种图骗过）
+    bw = max(3, int(min(w, h) * 0.07))
+    ring = []
+    rgb = im.load()
+    for x in range(0, w, max(1, w // 60)):
+        for y in list(range(0, bw)) + list(range(h - bw, h)):
+            ring.append(rgb[x, y])
+    for y in range(0, h, max(1, h // 60)):
+        for x in list(range(0, bw)) + list(range(w - bw, w)):
+            ring.append(rgb[x, y])
+    white_ratio = (sum(1 for (r_, g_, b_) in ring if min(r_, g_, b_) > 235) /
+                   float(max(1, len(ring))))
     mask = g.point(lambda p: 0 if p > 244 else 255)
     bbox = mask.getbbox()
     fill = 0.0

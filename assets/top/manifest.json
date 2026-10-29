@@ -2,24 +2,24 @@
  "ignition-coils": {
   "cat": "coil",
   "en": "Ignition Coils",
-  "sku": "WL03-0241",
-  "src": "images/coil/WL03-0241.webp",
-  "score": 0.874,
+  "sku": "WL03-0230",
+  "src": "images/coil/WL03-0230.webp",
+  "score": 0.898,
   "srcSize": [
-   380,
-   261
+   800,
+   543
   ],
   "placeholder": false
  },
  "fuel-pumps": {
   "cat": "fuelpump",
   "en": "Fuel Pumps",
-  "sku": "WL02-0049",
-  "src": "images/fuelpump/31110-4v000.webp",
-  "score": 0.762,
+  "sku": "WL02-0009",
+  "src": "images/fuelpump/1106100-v01.webp",
+  "score": 0.863,
   "srcSize": [
-   587,
-   587
+   439,
+   439
   ],
   "placeholder": false
  },
@@ -33,12 +33,12 @@
  "spark-plugs": {
   "cat": "plug",
   "en": "Spark Plugs",
-  "sku": "WL29-95660",
-  "src": "images/plug/WL29-95660.webp",
-  "score": 0.786,
+  "sku": "WL29-96964",
+  "src": "images/plug/WL29-96964.webp",
+  "score": 0.703,
   "srcSize": [
-   521,
-   521
+   800,
+   800
   ],
   "placeholder": false
  },
@@ -57,12 +57,12 @@
  "throttle-bodies": {
   "cat": "throttle",
   "en": "Throttle Bodies",
-  "sku": "WL13-0295",
-  "src": "images/throttle/WL13-0295.webp",
-  "score": 0.653,
+  "sku": "WL13-0261",
+  "src": "images/throttle/WL13-0261.webp",
+  "score": 0.757,
   "srcSize": [
-   709,
-   709
+   629,
+   629
   ],
   "placeholder": false
  }

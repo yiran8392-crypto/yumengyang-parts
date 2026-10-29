@@ -20,7 +20,7 @@ if not exist "%SITE%data\data.js" goto nodir
 
 echo 正在启动本地服务（端口 %PORT%）……
 start "型号查询站 · 本地预览服务（关掉这个窗口就停止）" /D "%SITE%" "%PY%" -m http.server %PORT% --bind 127.0.0.1
-timeout /t 2 /nobreak >nul
+ping -n 3 127.0.0.1 >nul
 start "" "http://127.0.0.1:%PORT%/index.html"
 
 echo.
