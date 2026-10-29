@@ -7,7 +7,6 @@ color 0F
 set "HERE=%~dp0"
 set "SITE=%HERE%"
 if exist "%HERE%型号查询站\data\data.js" set "SITE=%HERE%型号查询站"
-set "PY=D:\欧鲸鲸\dsh-home\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
 set "TOKFILE=D:\欧鲸鲸\tools\gh_token.txt"
 set "LIVE=https://yiran8392-crypto.github.io/yumengyang-parts/"
 
@@ -27,17 +26,25 @@ if errorlevel 1 goto norepo
 echo [1/4] 正在检查改动……
 git add -A >nul 2>&1
 git diff --cached --quiet
-if not errorlevel 1 goto nochanges
+if errorlevel 1 goto do_commit
 
+rem 没有新改动：看看是不是上次推送失败了，还有提交压在本地
+set "AHEAD=0"
+for /f %%n in ('git rev-list --count origin/main..HEAD 2^>nul') do set "AHEAD=%%n"
+if "%AHEAD%"=="0" goto nochanges
+echo     没有新改动，但本地有 %AHEAD% 个提交还没推上去，继续发布……
+goto do_push
+
+:do_commit
 echo [2/4] 有改动，准备提交……
 set "STAMP="
-if exist "%PY%" for /f "usebackq delims=" %%i in (`"%PY%" -c "import time;print(time.strftime('%%Y-%%m-%%d %%H:%%M'))"`) do set "STAMP=%%i"
-if "%STAMP%"=="" for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd HH:mm'"`) do set "STAMP=%%i"
+for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd HH:mm'"`) do set "STAMP=%%i"
 if "%STAMP%"=="" set "STAMP=update"
 git -c user.name="yiran8392-crypto" -c user.email="yiran8392@users.noreply.github.com" commit -q -m "Update %STAMP%"
 if errorlevel 1 goto commitfail
 echo     已提交：Update %STAMP%
 
+:do_push
 echo [3/4] 正在推送……
 if not exist "%TOKFILE%" goto notoken
 set "TOKEN="
@@ -114,7 +121,7 @@ goto fail
 :commitfail
 echo.
 echo [错误] 提交失败，没往下走。
-echo        常见原因：别的程序正占用 .git 里的文件，或者磁盘满了。
+echo        常见原因：别的程序正占着 .git 里的文件，或者磁盘满了。
 goto fail
 
 :pushfail
