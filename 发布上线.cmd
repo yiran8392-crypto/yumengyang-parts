@@ -69,6 +69,16 @@ if not "!RC!"=="0" (
     set "RC=!errorlevel!"
   )
 )
+if not "!RC!"=="0" (
+  echo     连接不太稳，再试 2 次……
+  for /l %%k in (1,1,2) do (
+    if not "!RC!"=="0" (
+      timeout /t 5 /nobreak >nul
+      git -c http.sslBackend=openssl push origin HEAD >"%LOG%" 2>&1
+      set "RC=!errorlevel!"
+    )
+  )
+)
 git remote set-url origin "%CLEAN%"
 if not "!RC!"=="0" goto pushfail
 
