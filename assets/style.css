@@ -1,4 +1,4 @@
-﻿:root{
+:root{
   --navy:#0d2233;
   --navy2:#153a55;
   --navy3:#1d4a6b;
@@ -103,6 +103,37 @@ html[dir="rtl"] #q{padding:0 52px 0 128px}
 .chip.on:hover{background:#fff;color:var(--navy)}
 .herostat{margin-top:14px;font-size:13.5px;color:#9dbdd1}
 .herostat b{color:#fff;font-weight:700}
+
+/* ============ 首页：热销六宫格 ============ */
+.topsell{margin:26px 0 4px}
+.ts-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+.ts-head h2{margin:0;font-size:20px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.ts-head h2 .zh-extra{font-weight:500;font-size:14px;color:#9dbbd0;margin-inline-start:6px}
+.ts-sub{margin:0;font-size:13.5px;color:#a7c2d5;max-width:660px}
+.ts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.tscard{
+  display:flex;flex-direction:column;background:#fff;border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;overflow:hidden;text-decoration:none;color:var(--ink);min-width:0;
+  box-shadow:0 1px 2px rgba(4,18,30,.18);
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s;
+}
+.tscard:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(4,18,30,.30);border-color:#cfdae4}
+.tsimg{display:block;aspect-ratio:16/10;background:#f2f5f7;overflow:hidden}
+.tsimg img{width:100%;height:100%;object-fit:cover;display:block}
+.tsbd{display:block;padding:14px 16px 16px}
+.tsbd b{display:block;font-size:21px;line-height:1.25;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.tsbd em{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:3px}
+.tsbd .tsn{display:inline-block;margin-top:10px;font-size:13.5px;font-weight:600;color:#3d5a72;background:#f1f5f8;border:1px solid #e6edf2;border-radius:8px;padding:3px 10px}
+html[dir="rtl"] .tsbd{text-align:right}
+@media (max-width:900px){
+  .ts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+}
+@media (max-width:600px){
+  .topsell{margin-top:20px}
+  .ts-grid{grid-template-columns:1fr;gap:12px}
+  .ts-head h2{font-size:18px}
+  .tsbd b{font-size:19px}
+}
 
 /* ============ 结果区 ============ */
 main{max-width:1200px;margin:0 auto;padding:26px 20px 70px}

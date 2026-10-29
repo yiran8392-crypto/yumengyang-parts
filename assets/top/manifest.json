@@ -1,0 +1,69 @@
+{
+ "ignition-coils": {
+  "cat": "coil",
+  "en": "Ignition Coils",
+  "sku": "WL03-0241",
+  "src": "images/coil/WL03-0241.webp",
+  "score": 0.874,
+  "srcSize": [
+   380,
+   261
+  ],
+  "placeholder": false
+ },
+ "fuel-pumps": {
+  "cat": "fuelpump",
+  "en": "Fuel Pumps",
+  "sku": "WL02-0049",
+  "src": "images/fuelpump/31110-4v000.webp",
+  "score": 0.762,
+  "srcSize": [
+   587,
+   587
+  ],
+  "placeholder": false
+ },
+ "oxygen-sensors": {
+  "cat": "o2",
+  "en": "Oxygen Sensors",
+  "sku": null,
+  "src": null,
+  "placeholder": true
+ },
+ "spark-plugs": {
+  "cat": "plug",
+  "en": "Spark Plugs",
+  "sku": "WL29-95660",
+  "src": "images/plug/WL29-95660.webp",
+  "score": 0.786,
+  "srcSize": [
+   521,
+   521
+  ],
+  "placeholder": false
+ },
+ "abs-sensors": {
+  "cat": "abs",
+  "en": "ABS Sensors",
+  "sku": "WL18-BC024",
+  "src": "images/abs/WL18-BC024.webp",
+  "score": 0.411,
+  "srcSize": [
+   486,
+   333
+  ],
+  "placeholder": false
+ },
+ "throttle-bodies": {
+  "cat": "throttle",
+  "en": "Throttle Bodies",
+  "sku": "WL13-0295",
+  "src": "images/throttle/WL13-0295.webp",
+  "score": 0.653,
+  "srcSize": [
+   709,
+   709
+  ],
+  "placeholder": false
+ }
+}

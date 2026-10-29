@@ -614,6 +614,39 @@ def register_cats(cats):
 
 
 # ------------------------------------------------------------------ 首页注入
+# 首页「热销品类」六宫格：顺序写死，数量从数据实时算，图优先用 assets/top/<slug>.webp
+# （想换封面直接替换那个文件，sitegen 只读不写；没有就用该品类第一张实拍图）
+TOP_KEYS = ["coil", "fuelpump", "o2", "plug", "abs", "throttle"]
+
+
+def top_cards(cfg, cats, by_cat):
+    cards = []
+    for key in TOP_KEYS:
+        items = by_cat.get(key) or []
+        if not items:
+            continue
+        slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
+        n = len(items)
+        img = "assets/top/%s.webp" % slug
+        if not os.path.exists(os.path.join(HERE, img)):
+            img = ""
+            for it in items:
+                if it.get("t"):
+                    img = it["t"]
+                    break
+        if not img:
+            continue
+        cards.append(
+            '<a class="tscard" href="category/%s.html">'
+            '<span class="tsimg"><img src="%s" width="400" height="250" loading="lazy" '
+            'decoding="async" alt="%s"></span>'
+            '<span class="tsbd"><b data-cat="%s">%s</b>'
+            '<em class="zh-extra">%s</em>'
+            '<span class="tsn" data-i18n="models_n" data-v-n="%d">%d models</span></span></a>'
+            % (slug, esc(img), esc(en), key, esc(en), esc(cn), n, n))
+    return "".join(cards)
+
+
 def home_links(cfg, cats, by_cat, limit=100):
     rows = []
     total = 0
@@ -653,6 +686,10 @@ def inject_home(cfg, cats, by_cat):
                     h, count=1, flags=re.S)
     if not n:
         return
+    cards = top_cards(cfg, cats, by_cat)
+    h2 = re.sub(r"(<!-- TOP_CARDS_START -->)(.*?)(<!-- TOP_CARDS_END -->)",
+                lambda m: m.group(1) + "\n" + cards + "\n" + m.group(3),
+                h2, count=1, flags=re.S)
     h2 = h2.replace("https://your-domain.com", cfg["site_url"])
     h2 = h2.replace("8615915859048", cfg["whatsapp"])
     if not has_site(cfg):
