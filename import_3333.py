@@ -509,8 +509,9 @@ def main():
         used_media[v] = used_media.get(v, 0) + 1
     unused = sum(1 for name, tgt in sheet_list(z) for row, media in sheet_anchors(z, tgt)
                  if media not in used_media)
-    print("\n图片：锚点 %d → 对上型号 %d 个（其中同图多用 %d）" % (
-        sum(len(sheet_anchors(z, t)) for _, t in sheet_list(z)), len(img_for), img_dup))
+    total_anchors = sum(len(sheet_anchors(z, t)) for _, t in sheet_list(z))
+    print("\n图片：锚点 %d → 对上型号 %d 个（同一行多图/同图多用 %d）" % (
+        total_anchors, len(img_for), max(0, total_anchors - len(img_for))))
 
     fixed = [r for r in recs_all if r["key"] in by_key]
     new = [r for r in recs_all if r["key"] not in by_key]
@@ -725,8 +726,9 @@ def main():
         lines.append("   %-12s 解析 %-4d 行 · 图锚点 %-4d · 品类 %s" % (name, n, anc, cat))
     lines.append("")
     lines.append("三、图片")
-    lines.append("   锚点合计 1976，对上型号 %d 张；新写 %d，已存在跳过 %d，失败 %d"
-                 % (len(keys), stats["write"], stats["exists"] + stats["thumb"], stats["err"]))
+    lines.append("   锚点合计 %d，对上型号 %d 个；新写 %d，已存在跳过 %d，失败 %d"
+                 % (total_anchors, len(keys), stats["write"], stats["exists"] + stats["thumb"], stats["err"]))
+    lines.append("   另有 %d 个锚点落在「同一行已经有一张图」的行上，只取第一张，其余忽略" % max(0, total_anchors - len(keys)))
     lines.append("")
     lines.append("四、合并结果")
     lines.append("   老型号补字段：%s" % filled)
