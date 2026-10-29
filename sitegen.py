@@ -41,6 +41,36 @@ BRAND_EN2 = "Auto Parts"
 BRAND_CN = "广州驭盟扬汽配"
 NOTRANSLATE = 'translate="no"'
 
+# 界面多语言：文案字典在 assets/i18n.js（全站共用一个文件，页面里只放 data-i18n 标记）。
+# 这里只负责语言切换器的 HTML 和“首屏防闪”的小脚本。
+LANG_OPTIONS = [("en", "English"), ("zh", "简体中文"), ("ar", "العربية"), ("ru", "Русский")]
+
+
+def lang_sel_html():
+    opts = "".join('<option value="%s">%s</option>' % (k, esc(v)) for k, v in LANG_OPTIONS)
+    return ('<label class="sr-only" for="langsel">Language</label>'
+            '<select id="langsel" class="langsel" aria-label="Language" translate="no">%s</select>' % opts)
+
+
+LANG_BOOT = ('<script>try{var l=(new URLSearchParams(location.search).get("lang")||'
+             'localStorage.getItem("ymy_lang")||"en").toLowerCase();'
+             'l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":"en";'
+             'var d=document.documentElement;d.setAttribute("data-lang",l);'
+             'if(l==="ar")d.setAttribute("dir","rtl")}catch(e){}</script>')
+
+# 热销品类排最前，其余按型号数从多到少（首页按钮 / 导航 / 品类总览 / 首页目录块共用）
+HOT_ORDER = ["coil", "fuelpump", "o2", "plug"]
+NAV_KEYS = []          # build_static 里算好，给 sitehead 用
+
+
+def order_cats(cats):
+    """热销四类固定在前，后面按型号数倒序。"""
+    def k(c):
+        key = c.get("key")
+        i = HOT_ORDER.index(key) if key in HOT_ORDER else len(HOT_ORDER)
+        return (i, -(c.get("n") or 0), key or "")
+    return sorted(cats, key=k)
+
 # 品类元信息：key -> (目录 slug, 英文复名, 英文单数, 中文)
 CAT_META = {
     "coil": ("ignition-coils", "Ignition Coils", "Ignition Coil", "点火线圈"),
@@ -215,48 +245,57 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">{ogurl}{img}
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../assets/style.css">{ld}
+<link rel="stylesheet" href="../assets/style.css">
+{langboot}
+<script defer src="../assets/i18n.js"></script>{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl,
-                 ogtype=og_type, img=img, ld=ld)
+                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT)
 
 
 def sitehead(cfg, active=""):
+    keys = NAV_KEYS or ["coil", "abs", "wire", "thermo", "plug"]
     nav = []
-    for cat in ("coil", "abs", "wire", "thermo", "plug"):
-        slug, en, _one, _cn = CAT_META[cat]
-        cls = ' class="on"' if active == cat else ""
-        nav.append('<a href="../category/%s.html"%s>%s</a>' % (slug, cls, esc(en)))
+    for key in keys[:5]:
+        slug, en, _one, _cn = CAT_META.get(key, (key, key, key, key))
+        cls = ' class="on"' if active == key else ""
+        nav.append('<a href="../category/%s.html"%s data-cat="%s">%s</a>' % (slug, cls, key, esc(en)))
     return """<header class="sitehead"><div class="wrap">
 <a class="brand notranslate" %s href="../index.html">%s<em %s>%s</em></a>
-<nav>%s<a href="../category/index.html">All %d categories</a></nav>
-<a class="wapush" href="%s" target="_blank" rel="noopener">WhatsApp Us</a>
+<nav>%s<a href="../category/index.html" data-i18n="nav_all" data-v-n="%d">All %d categories</a></nav>
+<div class="tools">%s<a class="wapush" href="%s" target="_blank" rel="noopener" data-i18n="wa">WhatsApp Us</a></div>
 </div></header>""" % (NOTRANSLATE, BRAND_EN, NOTRANSLATE, BRAND_EN2,
-                       "".join(nav), len(CAT_META),
+                       "".join(nav), len(CAT_META), len(CAT_META), lang_sel_html(),
                        esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
 
 
 def sitefoot(cfg):
     return """<footer class="sitefoot"><div class="wrap">
 <div><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></div>
-<div><a href="../index.html">OE / cross-reference lookup</a> · <a href="../sitemap.xml">Sitemap</a></div>
+<div><a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> · <a href="../sitemap.xml" data-i18n="sitemap">Sitemap</a></div>
 </div></footer>""" % (NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]))
+
+
+SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
+               ("spec_fit", "Vehicle fitment"), ("spec_notes", "Notes"), ("our_sku", "Our SKU")]
 
 
 def spec_rows(it):
     rows = []
     if it.get("oe"):
-        rows.append(("OE number", '<span style="font-variant-numeric:tabular-nums">%s</span>' % esc(it["oe"])))
+        rows.append(("spec_oe", '<span style="font-variant-numeric:tabular-nums">%s</span>' % esc(it["oe"])))
     if it.get("x"):
         tags = "".join("<span>%s</span>" % esc(x) for x in it["x"][:24])
-        rows.append(("Cross-reference", '<div class="tags">%s</div>' % tags))
+        rows.append(("spec_xref", '<div class="tags">%s</div>' % tags))
     if it.get("b"):
-        rows.append(("Brand", esc(it["b"])))
+        rows.append(("spec_brand", esc(it["b"])))
     if it.get("a"):
-        rows.append(("Vehicle fitment", esc(it["a"])))
+        rows.append(("spec_fit", esc(it["a"])))
     if it.get("r"):
-        rows.append(("Notes", esc(it["r"])))
-    rows.append(("Our SKU", esc(it["m"])))
-    return "".join("<tr><th>%s</th><td>%s</td></tr>" % r for r in rows)
+        rows.append(("spec_notes", esc(it["r"])))
+    rows.append(("our_sku", esc(it["m"])))
+    label = dict(SPEC_LABELS)
+    return "".join('<tr><th data-i18n="%s">%s</th><td>%s</td></tr>' % (k, label.get(k, k), v)
+                   for k, v in rows)
 
 
 def page_model(cfg, it, cat, related):
@@ -326,7 +365,12 @@ def page_model(cfg, it, cat, related):
     crumbs = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": _items}
 
     pic = ('<img src="../%s" alt="%s" loading="eager" decoding="async">' % (esc(it["p"]), esc("%s %s" % (one, primary)))
-           if it.get("p") else '<div class="nopic">No photo available for this part<br><span style="font-size:12px">Ask us on WhatsApp for a real picture</span></div>')
+           if it.get("p") else
+           '<div class="nopic"><span data-i18n="nopic">No photo available for this part</span><br>'
+           '<span style="font-size:12px" data-i18n="nopic_sub">Ask us on WhatsApp for a real picture</span></div>')
+
+    app_html = ('<p>%s</p>' % esc(apps)) if apps else \
+        '<p data-i18n="app_fallback">Please contact us with your vehicle model and we will confirm the fitment.</p>'
 
     wa_text = "Hi, I am interested in %s%s. Please send me the price, MOQ and delivery time." % (
         it.get("m"), (" (OE %s)" % it["oe"]) if it.get("oe") else "")
@@ -334,43 +378,47 @@ def page_model(cfg, it, cat, related):
 
     rel_html = ""
     if related:
-        rel_html = ('<section class="pdp-block"><h2>More %s</h2><ul class="rel">%s</ul></section>' % (
-            esc(CAT_META[cat][1]),
-            "".join('<li><a href="../c/%s.html">%s</a></li>' % (esc(r["s"]), esc(r.get("oe") or r["m"])) for r in related)))
+        rel_html = ('<section class="pdp-block"><h2><span data-i18n="more">More</span> '
+                    '<span data-cat="%s">%s</span></h2><ul class="rel">%s</ul></section>' % (
+                        cat, esc(CAT_META[cat][1]),
+                        "".join('<li><a href="../c/%s.html">%s</a></li>'
+                                % (esc(r["s"]), esc(r.get("oe") or r["m"])) for r in related)))
 
+    total_txt = "{:,}".format(cfg.get("_total", 0))
     body = """<body class="pdp">
 %s
 <main class="pdp-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <a href="../category/%s.html">%s</a> &rsaquo; <span>%s</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <a href="../category/%s.html" data-cat="%s">%s</a> &rsaquo; <span>%s</span></nav>
 <div class="pdp-grid">
   <figure class="pdp-pic">%s</figure>
   <div class="pdp-info">
-    <div class="kicker">%s</div>
+    <div class="kicker" data-cat="%s">%s</div>
     <h1>%s</h1>
-    <p class="sub2">Our SKU <b>%s</b>%s</p>
+    <p class="sub2"><span data-i18n="our_sku">Our SKU</span> <b>%s</b>%s</p>
+    <p class="langnote" data-i18n="langnote">Product data is shown in English</p>
     <table class="spec">%s</table>
     <div class="cta">
       <a class="btn-wa" href="%s" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
-        WhatsApp for price &amp; MOQ
+        <span data-i18n="btn_wa">WhatsApp for price &amp; MOQ</span>
       </a>
-      <a class="btn-ghost" href="../index.html?q=%s">Search all %s parts</a>
+      <a class="btn-ghost" href="../index.html?q=%s" data-i18n="btn_search_all" data-v-n="%s">Search all %s parts</a>
     </div>
   </div>
 </div>
-<section class="pdp-block"><h2>Vehicle application</h2><p>%s</p></section>
+<section class="pdp-block"><h2 data-i18n="block_app">Vehicle application</h2>%s</section>
 %s
-<section class="pdp-block"><h2>Buying this part</h2><p>%s supplies %s under our own brand %s. Send us the OE number on WhatsApp and we will confirm availability, price, MOQ and packing. Samples for testing are available on request.</p></section>
+<section class="pdp-block"><h2 data-i18n="block_buy">Buying this part</h2><p data-i18n="buy_text" data-v-company="%s" data-v-brand="%s">%s supplies these parts under our own brand %s. Send us the OE number on WhatsApp and we will confirm availability, price, MOQ and packing. Samples for testing are available on request.</p></section>
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg, cat), cat_slug(cat), esc(CAT_META[cat][1]), esc(primary), pic,
-       esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
+""" % (sitehead(cfg, cat), cat_slug(cat), cat, esc(CAT_META[cat][1]), esc(primary), pic,
+       cat, esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
        (" · brand " + esc(it["b"])) if it.get("b") else "",
        spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
-       "{:,}".format(cfg.get("_total", 0)),
-       esc(apps or "Please contact us with your vehicle model and we will confirm the fitment."),
-       rel_html, esc(cfg["company_en"]), esc(one), esc(it.get("b") or "WEILI"),
+       total_txt, total_txt, app_html,
+       rel_html, esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
+       esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
        sitefoot(cfg))
 
     og_img = it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat))
@@ -402,25 +450,32 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
                 links.append('<b>%d</b>' % p)
             else:
                 links.append('<a href="%s">%d</a>' % (href, p))
-        pager = '<div class="pager"><span>Page %d / %d</span> %s</div>' % (page_no, total_pages, " ".join(links))
+        pager = ('<div class="pager"><span data-i18n="page_of" data-v-p="%d" data-v-t="%d">Page %d / %d</span> %s</div>'
+                 % (page_no, total_pages, page_no, total_pages, " ".join(links)))
+
+    if total_pages > 1:
+        a = (page_no - 1) * 700 + 1
+        b = (page_no - 1) * 700 + len(page_items)
+        modh = ('<span data-i18n="models_range" data-v-a="%d" data-v-b="%d" data-v-n="%d">Models %d–%d of %d</span>'
+                % (a, b, len(all_items), a, b, len(all_items)))
+    else:
+        modh = '<span data-i18n="all_models" data-v-n="%d">All models (%d)</span>' % (len(all_items), len(all_items))
 
     body = """<body>
 %s
 <main class="cat-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>%s</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-cat="%s">%s</span></nav>
 <div class="cat-head">
-  <h1>%s <span style="color:#8b9dab;font-weight:500;font-size:.66em">%s</span></h1>
-  <p>Every %s we stock, with OE number and cross-reference. Click a part number to see fitment, photos and a WhatsApp quote button.</p>
-  <div class="stat">%d models · <a href="../index.html">search by OE number</a> · <a href="../index.html?cat=%s">filter on the search page</a></div>
+  <h1><span data-cat="%s">%s</span> <span class="h1sub zh-extra">%s</span></h1>
+  <p data-i18n="cat_lead">Every %s we stock, with OE number and cross-reference. Click a part number to see fitment, photos and a WhatsApp quote button.</p>
+  <div class="stat"><span data-i18n="models_n" data-v-n="%d">%d models</span> · <a href="../index.html" data-i18n="search_oe">search by OE number</a> · <a href="../index.html?cat=%s" data-i18n="filter_search">filter on the search page</a></div>
 </div>
 <div class="modlist"><h2>%s</h2><ul class="modgrid">%s</ul>%s</div>
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg, cat), esc(en), esc(en), esc(cn), esc(one), len(all_items), cat,
-       ("Models %d–%d of %d" % ((page_no - 1) * 700 + 1, (page_no - 1) * 700 + len(page_items), len(all_items)))
-       if total_pages > 1 else ("All models (%d)" % len(all_items)),
-       lis, pager, sitefoot(cfg))
+""" % (sitehead(cfg, cat), cat, esc(en), cat, esc(en), esc(cn), esc(one),
+       len(all_items), len(all_items), cat, modh, lis, pager, sitefoot(cfg))
     return head_block(cfg, title, desc, canonical, "assets/og/%s.jpg" % slug, "website") + "\n" + body
 
 
@@ -430,31 +485,34 @@ def page_cat_index(cfg, cats, by_cat):
     desc = ("Ignition coils, ABS sensors, oxygen sensors, fuel pumps, TPMS, throttle bodies and more — "
             "%d part numbers with OE cross-reference." % total)
     cards = []
-    for c in cats:
+    for c in order_cats(cats):
         key = c["key"]
         slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
         n = len(by_cat.get(key, []))
-        cards.append('<a class="catcard" href="%s.html"><b>%s</b><span>%s</span><em>%d models →</em></a>'
-                     % (slug, esc(en), esc(cn), n))
+        cards.append('<a class="catcard" href="%s.html"><b data-cat="%s">%s</b><span class="zh-extra">%s</span>'
+                     '<em data-i18n="cat_arrow" data-v-n="%d">%d models →</em></a>'
+                     % (slug, key, esc(en), esc(cn), n, n))
     body = """<body>
 %s
 <main class="cat-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>All categories</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="all_cat_h1">All categories</span></nav>
 <div class="cat-head">
-  <h1>All product categories <span style="color:#8b9dab;font-weight:500;font-size:.66em">全部品类</span></h1>
-  <p>%d categories, %d part numbers. Pick a category to see every model with its OE number, cross-reference and fitment.</p>
-  <div class="stat"><a href="../index.html">Search by OE number</a></div>
+  <h1><span data-i18n="all_cat_h1">All product categories</span> <span class="h1sub zh-extra">全部品类</span></h1>
+  <p data-i18n="all_cat_lead" data-v-c="%d" data-v-n="%d">%d categories, %d part numbers. Pick a category to see every model with its OE number, cross-reference and fitment.</p>
+  <div class="stat"><a href="../index.html" data-i18n="search_oe">Search by OE number</a></div>
 </div>
 <div class="catcards">%s</div>
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg), len(cats), total, "".join(cards), sitefoot(cfg))
+""" % (sitehead(cfg), len(cats), total, len(cats), total, "".join(cards), sitefoot(cfg))
     return head_block(cfg, title, desc, rel_url(cfg, "category/index.html"), "", "website") + "\n" + body
 
 
 def page_404(cfg):
     home = rel_url(cfg, "") if has_site(cfg) else "index.html"
+    js = rel_url(cfg, "assets/i18n.js") if has_site(cfg) else "assets/i18n.js"
+    sel = lang_sel_html().replace('class="langsel"', 'class="langsel dark"')
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -462,33 +520,41 @@ def page_404(cfg):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Page not found | Guangzhou Yumengyang Auto Parts</title>
 <meta name="robots" content="noindex,follow">
+{LANG_BOOT}
+<script defer src="{js}"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",Arial,sans-serif;background:#f5f7f9;color:#16222c;
-display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
-.box{max-width:560px;text-align:center}
-.code{font-size:72px;font-weight:800;color:#dbe6ee;line-height:1}
-h1{font-size:22px;margin:12px 0 8px}
-p{color:#6b7c8c;font-size:14px;line-height:1.7;margin:0 0 22px}
-a.btn{display:inline-block;background:#0e2438;color:#fff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;font-size:14px}
-a.wa{display:inline-block;background:#25d366;color:#062b16;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:800;font-size:14px;margin-left:8px}
-small{display:block;margin-top:26px;color:#9aabb9;font-size:12px}
+*{{box-sizing:border-box}}
+body{{margin:0;font-family:Inter,"Segoe UI",system-ui,Arial,"Microsoft YaHei",sans-serif;background:#f6f8fa;color:#16232e;
+display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}}
+.box{{max-width:600px;text-align:center}}
+.top{{display:flex;justify-content:center;margin-bottom:18px}}
+.code{{font-size:72px;font-weight:700;color:#dbe6ee;line-height:1}}
+h1{{font-size:24px;margin:12px 0 10px;font-weight:700}}
+p{{color:#5d7186;font-size:15px;line-height:1.7;margin:0 0 24px}}
+a.btn{{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#0d2233;color:#fff;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:600;font-size:15px}}
+a.wa{{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#25d366;color:#062b16;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:700;font-size:15px;margin-inline-start:10px}}
+small{{display:block;margin-top:28px;color:#8698a9;font-size:12.5px}}
+.langsel{{-webkit-appearance:none;appearance:none;height:42px;min-width:130px;padding:0 34px 0 14px;border-radius:10px;
+font:inherit;font-size:14px;font-weight:600;color:#16232e;background:#fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%235d7186' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center/12px 8px;
+border:1px solid #cfdae4;cursor:pointer}}
+html[dir="rtl"] .langsel{{padding:0 14px 0 34px;background-position:left 12px center}}
 </style>
 </head>
 <body>
 <div class="box">
+  <div class="top">{sel}</div>
   <div class="code">404</div>
-  <h1>Page not found</h1>
-  <p>The part may have moved. Search by OE number on the home page, or just message us on WhatsApp.<br>
-  <span lang="zh-CN">型号页可能换过链接，回到首页按 OE 号或车型搜一下，或者直接发 WhatsApp 问我们。</span></p>
-  <a class="btn" href="%s">Back to the lookup home</a>
-  <a class="wa" href="%s" target="_blank" rel="noopener">WhatsApp</a>
-  <small><span class="notranslate" translate="no">%s</span> · <span class="notranslate" translate="no">%s</span></small>
+  <h1 data-i18n="nf_h1">Page not found</h1>
+  <p data-i18n="nf_p">The part may have moved. Search by OE number on the home page, or message us on WhatsApp.</p>
+  <a class="btn" href="{home}" data-i18n="nf_back">Back to the lookup home</a>
+  <a class="wa" href="{wa}" target="_blank" rel="noopener">WhatsApp</a>
+  <small><span class="notranslate" translate="no">{cn}</span> · <span class="notranslate" translate="no">{en}</span></small>
 </div>
 </body>
 </html>
-""" % (esc(home), esc(wa_link(cfg, "Hi, I could not find a part on your website.")),
-       esc(BRAND_CN), esc(cfg["company_en"]))
+""".format(LANG_BOOT=LANG_BOOT, js=esc(js), sel=sel, home=esc(home),
+           wa=esc(wa_link(cfg, "Hi, I could not find a part on your website.")),
+           cn=esc(BRAND_CN), en=esc(cfg["company_en"]))
 
 
 def make_og_images(cfg, cats):
@@ -551,7 +617,7 @@ def register_cats(cats):
 def home_links(cfg, cats, by_cat, limit=100):
     rows = []
     total = 0
-    for c in cats:
+    for c in order_cats(cats):
         key = c["key"]
         items = by_cat.get(key, [])
         total += len(items)
@@ -560,14 +626,20 @@ def home_links(cfg, cats, by_cat, limit=100):
             esc(it["s"]), esc(it.get("a", "")[:60]), esc(it.get("oe") or it["m"]))
             for it in items[:limit])
         rows.append(
-            '<div class="catrow"><div class="cath"><b>%s</b><span>%s · %d models</span>'
-            '<a class="all" href="category/%s.html">View all 查看全部 →</a></div>'
+            '<div class="catrow"><div class="cath"><b data-cat="%s">%s</b>'
+            '<span class="zh-extra">%s · </span>'
+            '<span data-i18n="models_n" data-v-n="%d">%d models</span>'
+            '<a class="all" href="category/%s.html"><span data-i18n="view_all">View all</span>'
+            '<span class="zh-extra"> 查看全部</span> →</a></div>'
             '<div class="lst">%s</div></div>'
-            % (esc(en), esc(cn), len(items), slug, links))
-    return ('<h2>按品类浏览全部型号 <span>Browse all models by category</span></h2>'
-            '<p class="lead">每个品类下面列出前 100 个型号（点「查看全部」看整类）。这一类展开后可以折叠、单独滚动，不会拉一屏数字墙。</p>'
-            '<details class="catbox"><summary>展开 / 收起：%d 个品类 · %d 个型号（Expand all categories）</summary>%s</details>'
-            % (len(cats), total, "".join(rows)))
+            % (key, esc(en), esc(cn), len(items), len(items), slug, links))
+    return ('<h2><span data-i18n="cat_h2">Browse all models by category</span>'
+            '<span class="zh-extra"> 按品类浏览全部型号</span></h2>'
+            '<p class="lead" data-i18n="cat_home_lead">Each category lists its first 100 models — click View all '
+            'for the whole list. The block collapses and scrolls on its own.</p>'
+            '<details class="catbox"><summary><span data-i18n="catbox_open" data-v-c="%d" data-v-n="%d">'
+            'Expand / collapse: %d categories · %d models</span></summary>%s</details>'
+            % (len(cats), total, len(cats), total, "".join(rows)))
 
 
 def inject_home(cfg, cats, by_cat):
@@ -602,6 +674,10 @@ def build_static(items, cats, log=print):
     by_cat = {}
     for it in items:
         by_cat.setdefault(it["cat"], []).append(it)
+
+    # 导航条上放“热销 4 类 + 型号最多的 1 类”，顺序按 order_cats
+    NAV_KEYS[:] = [c["key"] for c in order_cats(
+        [{"key": c["key"], "n": len(by_cat.get(c["key"], []))} for c in cats])]
 
     cdir = os.path.join(HERE, "c")
     catdir = os.path.join(HERE, "category")

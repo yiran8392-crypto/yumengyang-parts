@@ -5,26 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Page not found | Guangzhou Yumengyang Auto Parts</title>
 <meta name="robots" content="noindex,follow">
+<script>try{var l=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("ymy_lang")||"en").toLowerCase();l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":"en";var d=document.documentElement;d.setAttribute("data-lang",l);if(l==="ar")d.setAttribute("dir","rtl")}catch(e){}</script>
+<script defer src="https://yiran8392-crypto.github.io/yumengyang-parts/assets/i18n.js"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",Arial,sans-serif;background:#f5f7f9;color:#16222c;
+body{margin:0;font-family:Inter,"Segoe UI",system-ui,Arial,"Microsoft YaHei",sans-serif;background:#f6f8fa;color:#16232e;
 display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
-.box{max-width:560px;text-align:center}
-.code{font-size:72px;font-weight:800;color:#dbe6ee;line-height:1}
-h1{font-size:22px;margin:12px 0 8px}
-p{color:#6b7c8c;font-size:14px;line-height:1.7;margin:0 0 22px}
-a.btn{display:inline-block;background:#0e2438;color:#fff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;font-size:14px}
-a.wa{display:inline-block;background:#25d366;color:#062b16;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:800;font-size:14px;margin-left:8px}
-small{display:block;margin-top:26px;color:#9aabb9;font-size:12px}
+.box{max-width:600px;text-align:center}
+.top{display:flex;justify-content:center;margin-bottom:18px}
+.code{font-size:72px;font-weight:700;color:#dbe6ee;line-height:1}
+h1{font-size:24px;margin:12px 0 10px;font-weight:700}
+p{color:#5d7186;font-size:15px;line-height:1.7;margin:0 0 24px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#0d2233;color:#fff;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:600;font-size:15px}
+a.wa{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#25d366;color:#062b16;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:700;font-size:15px;margin-inline-start:10px}
+small{display:block;margin-top:28px;color:#8698a9;font-size:12.5px}
+.langsel{-webkit-appearance:none;appearance:none;height:42px;min-width:130px;padding:0 34px 0 14px;border-radius:10px;
+font:inherit;font-size:14px;font-weight:600;color:#16232e;background:#fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%235d7186' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center/12px 8px;
+border:1px solid #cfdae4;cursor:pointer}
+html[dir="rtl"] .langsel{padding:0 14px 0 34px;background-position:left 12px center}
 </style>
 </head>
 <body>
 <div class="box">
+  <div class="top"><label class="sr-only" for="langsel">Language</label><select id="langsel" class="langsel dark" aria-label="Language" translate="no"><option value="en">English</option><option value="zh">简体中文</option><option value="ar">العربية</option><option value="ru">Русский</option></select></div>
   <div class="code">404</div>
-  <h1>Page not found</h1>
-  <p>The part may have moved. Search by OE number on the home page, or just message us on WhatsApp.<br>
-  <span lang="zh-CN">型号页可能换过链接，回到首页按 OE 号或车型搜一下，或者直接发 WhatsApp 问我们。</span></p>
-  <a class="btn" href="https://yiran8392-crypto.github.io/yumengyang-parts/">Back to the lookup home</a>
+  <h1 data-i18n="nf_h1">Page not found</h1>
+  <p data-i18n="nf_p">The part may have moved. Search by OE number on the home page, or message us on WhatsApp.</p>
+  <a class="btn" href="https://yiran8392-crypto.github.io/yumengyang-parts/" data-i18n="nf_back">Back to the lookup home</a>
   <a class="wa" href="https://wa.me/8615915859048?text=Hi%2C%20I%20could%20not%20find%20a%20part%20on%20your%20website." target="_blank" rel="noopener">WhatsApp</a>
   <small><span class="notranslate" translate="no">广州驭盟扬汽配</span> · <span class="notranslate" translate="no">Guangzhou Yumengyang Auto Parts Co., Ltd.</span></small>
 </div>
