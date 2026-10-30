@@ -509,6 +509,8 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
     ogurl = ""
     if canonical and site:
         can = '\n<link rel="canonical" href="%s">' % esc(canonical)
+        # 四语共用一个 URL（JS 切换），所以只声明 x-default 指回本页英文版
+        can += '\n<link rel="alternate" hreflang="x-default" href="%s">' % esc(canonical)
         ogurl = '\n<meta property="og:url" content="%s">' % esc(canonical)
     ld = "".join('\n<script type="application/ld+json">%s</script>' % json.dumps(x, ensure_ascii=False)
                  for x in (site_ld(cfg) + (ld_list or [])))
