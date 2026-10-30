@@ -5,7 +5,8 @@
 #
 # 按《推广物料\部署说明.md》上传到 Cloudflare Pages、项目名填 ymy-parts 的话，
 # 下面这一行就是对的，不用改。
-# 换成自己的域名（比如 https://parts.yumengyang.com）就改这里，再跑一次。
+# 换成自己的域名（比如 https://parts.yumengyang.com）：别手改这一行，
+# 直接双击《推广物料\切换域名.cmd》，它连 CNAME 和检查一起做了。
 
 域名=https://yiran8392-crypto.github.io/yumengyang-parts
 WhatsApp=8615915859048
