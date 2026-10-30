@@ -130,15 +130,65 @@
     h += '</dl><p class="vinnote">' + esc(p.brands.length
       ? T("vin_note", "Matched against each model's fitment field. The VIN alone is not a 100% guarantee - send a part photo or the licence if you need certainty.")
       : T("vin_unknown_wmi", "This WMI is not in our offline table - the VIN alone cannot tell the brand."));
-    return h + "</p></div>";
+    return h + "</p>" + (p.full ? histHTML(p.raw) : "") + "</div>";
+  }
+
+  /* ---------- 历史查询：机器人群里这个车架号查过哪些件（按 WMI 分片，按需加载） ---------- */
+  var LOADED = {}, LOADING = {}, LASTQ = "", BYSKU = null;
+  function skuIndex() {
+    if (BYSKU) return BYSKU;
+    BYSKU = {};
+    var all = (window.SITE_DATA && window.SITE_DATA.items) || [], i, k;
+    for (i = 0; i < all.length; i++) {
+      k = nrm(all[i].m);
+      if (k && !BYSKU[k]) BYSKU[k] = all[i];
+    }
+    return BYSKU;
+  }
+  function histHTML(vin) {
+    var M = window.VINMAPS && window.VINMAPS[vin.slice(0, 3)];
+    if (!M || !M.v || !M.v[vin]) return "";
+    var ids = M.v[vin], dic = M.s || [], idx = skuIndex(), chips = "", n = 0, i, sku, it;
+    for (i = 0; i < ids.length && n < 40; i++) {
+      sku = dic[ids[i]];
+      if (!sku) continue;
+      n++;
+      it = idx[nrm(sku)];
+      chips += it
+        ? '<a class="vsku on" href="c/' + encodeURIComponent(it.s || ("p" + it.i)) + '.html">' + esc(sku) +
+          " <em>" + esc(it.n || "") + "</em></a>"
+        : '<span class="vsku">' + esc(sku) + "</span>";
+    }
+    if (!chips) return "";
+    return '<div class="vinhist"><h4>' + esc(T("vin_hist_t", "Parts looked up before for this VIN")) +
+      ' <b>' + n + "</b></h4><div class=\"vinhistlist\">" + chips + "</div>" +
+      '<p class="vinnote">' + esc(T("vin_hist_note", "Historical lookups only - please confirm against the actual vehicle.")) + "</p></div>";
+  }
+  function loadShard(wmi, cb) {
+    if (LOADED[wmi] !== undefined) { cb(); return; }
+    if (LOADING[wmi]) return;
+    LOADING[wmi] = 1;
+    var s = document.createElement("script");
+    s.src = "data/vinmap/" + wmi + ".js";
+    s.onload = function () { LOADED[wmi] = 1; delete LOADING[wmi]; cb(); };
+    s.onerror = function () { LOADED[wmi] = 0; delete LOADING[wmi]; cb(); };
+    document.head.appendChild(s);
   }
   function sync(q, total) {
     var box = document.getElementById("vinpanel");
     if (!box) return;
     if (!isVin(q)) { box.hidden = true; box.innerHTML = ""; return; }
     if (total != null) LASTN = total;
+    LASTQ = q;
     box.hidden = false;
     box.innerHTML = panelHTML(q);
+    var v = clean(q);
+    if (v.length === 17 && LOADED[v.slice(0, 3)] === undefined) {
+      loadShard(v.slice(0, 3), function () {
+        var b2 = document.getElementById("vinpanel");
+        if (b2 && !b2.hidden && clean(LASTQ) === v) b2.innerHTML = panelHTML(LASTQ);
+      });
+    }
   }
   function fallbackHTML(q) {
     var p = parse(q), sug = (p && p.brands.length) ? p.brands.slice(0, 3) : ["Toyota", "Changan", "Honda"];

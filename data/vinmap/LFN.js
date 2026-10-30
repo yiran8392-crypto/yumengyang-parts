@@ -1,0 +1,1 @@
+window.VINMAPS=window.VINMAPS||{};VINMAPS["LFN"]={"s":["02-0513","03-0085","03-0299A"],"v":{"LFNA2218XGJT02598":[0,1,2]}};

@@ -455,3 +455,19 @@ html[dir="rtl"] .crumbspan{direction:ltr;display:inline-block}
   .vinbox dl{grid-template-columns:1fr;gap:2px 0}
   .vinbox dt{margin-top:6px}
 }
+/* ---------- 级联筛选（品牌→车型→年款→排量） ---------- */
+.cascade{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
+.ctitle{color:#cfe3f0;font-size:12.5px;letter-spacing:.02em}
+.fsel{font-family:inherit;font-size:13px;padding:7px 9px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.95);color:#16232e;max-width:180px}
+.fclear{border:0;background:rgba(255,255,255,.16);color:#dbe9f3;font-family:inherit;font-size:12.5px;padding:7px 11px;border-radius:999px;cursor:pointer}
+.fclear:hover{background:rgba(255,255,255,.28)}
+.fsum{color:#9fc6dd;font-size:12.5px}
+/* ---------- VIN 历史配件 ---------- */
+.vinhist{margin-top:12px;border-top:1px dashed #d6e2ea;padding-top:10px}
+.vinhist h4{margin:0 0 8px;font-size:13.5px;color:#16232e;font-weight:700}
+.vinhist h4 b{color:#0d5c86}
+.vinhistlist{display:flex;flex-wrap:wrap;gap:6px}
+.vsku{font-size:12px;padding:4px 8px;border-radius:7px;background:#eef4f8;color:#274b63;font-variant-numeric:tabular-nums;text-decoration:none}
+.vsku em{color:#7a8f9e;font-style:normal;font-size:11px;margin-inline-start:4px}
+.vsku.on{background:#e2f0ea;color:#12603c;font-weight:700}
+@media (max-width:430px){.fsel{max-width:46%}}

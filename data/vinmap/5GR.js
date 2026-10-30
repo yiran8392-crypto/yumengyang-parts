@@ -1,0 +1,1 @@
+window.VINMAPS=window.VINMAPS||{};VINMAPS["5GR"]={"s":["29-4477","NJK4477"],"v":{"5GRGN23818H103792":[0,1]}};

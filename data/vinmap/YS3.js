@@ -1,0 +1,1 @@
+window.VINMAPS=window.VINMAPS||{};VINMAPS["YS3"]={"s":["03-0320","10-GC012","10-GC020","29-9331"],"v":{"YS3FF49Y791005916":[0,1,2,3]}};

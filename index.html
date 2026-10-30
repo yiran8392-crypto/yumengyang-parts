@@ -43,6 +43,15 @@
       <button type="button" class="vtab" data-mode="vin" data-i18n="vin_tab_vin">VIN 17</button>
     </div>
     <div class="vinpanel" id="vinpanel" hidden></div>
+    <div class="cascade" id="cascade">
+      <span class="ctitle" data-i18n="f_title">Filter by vehicle</span>
+      <select id="f-b" class="fsel" aria-label="Brand"></select>
+      <select id="f-m" class="fsel" aria-label="Model"></select>
+      <select id="f-y" class="fsel" aria-label="Year"></select>
+      <select id="f-d" class="fsel" aria-label="Engine"></select>
+      <button id="f-clear" type="button" class="fclear" data-i18n="f_clear">Reset</button>
+      <span class="fsum" id="f-sum"></span>
+    </div>
     <section class="topsell" aria-labelledby="topsh">
       <div class="ts-head">
         <h2 id="topsh"><span data-i18n="top_h2">Best sellers</span><span class="zh-extra"> 热销品类</span></h2>
@@ -172,6 +181,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
 </a>
 
 <script src="data/data.js"></script>
+<script src="assets/facets.js"></script>
 <script src="assets/vin.js"></script>
 <script>
 (function(){
@@ -245,8 +255,48 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
     var b = e.target.closest('.chip'); if(!b) return;
     state.cat = b.dataset.cat;
     [].forEach.call($chips.children, function(c){ c.classList.toggle('on', c === b); });
+    fRebuild();
     render(true);
   });
+
+  /* ---------- 级联筛选：品牌 → 车型 → 年款 → 排量（从适配车型字段现解析） ---------- */
+  var $fb = document.getElementById('f-b'), $fm = document.getElementById('f-m'),
+      $fy = document.getElementById('f-y'), $fd = document.getElementById('f-d'),
+      $fclear = document.getElementById('f-clear'), $fsum = document.getElementById('f-sum');
+  var SEL = { b: '', m: '', y: 0, d: 0 };
+  var FON = !!(window.FACETS && $fb);
+  if(FON) window.FACETS.build(ALL);
+
+  function fFill(sel, list, anyLabel, suffix, cur){
+    var h = '<option value="">' + esc(anyLabel) + '</option>';
+    for(var i = 0; i < list.length; i++){
+      var v = list[i];
+      h += '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(v) + (suffix || '') + '</option>';
+    }
+    sel.innerHTML = h;
+  }
+  function fRebuild(){
+    if(!FON) return;
+    var o = window.FACETS.opts(ALL, SEL, state.cat);
+    fFill($fb, o.brands, T('f_brand_any', 'Any brand'), '', SEL.b);
+    fFill($fm, o.models, T('f_model_any', 'Any model'), '', SEL.m);
+    fFill($fy, o.years, T('f_year_any', 'Any year'), '', SEL.y || '');
+    fFill($fd, o.disps, T('f_disp_any', 'Any engine'), ' L', SEL.d || '');
+    var bits = [];
+    if(SEL.b) bits.push(SEL.b);
+    if(SEL.m) bits.push(SEL.m);
+    if(SEL.y) bits.push(SEL.y);
+    if(SEL.d) bits.push(SEL.d + 'L');
+    $fsum.textContent = bits.join(' · ');
+  }
+  if(FON){
+    fRebuild();
+    $fb.addEventListener('change', function(){ SEL.b = $fb.value; SEL.m = ''; SEL.y = 0; SEL.d = 0; fRebuild(); render(true); });
+    $fm.addEventListener('change', function(){ SEL.m = $fm.value; SEL.y = 0; SEL.d = 0; fRebuild(); render(true); });
+    $fy.addEventListener('change', function(){ SEL.y = +$fy.value || 0; SEL.d = 0; fRebuild(); render(true); });
+    $fd.addEventListener('change', function(){ SEL.d = +$fd.value || 0; render(true); });
+    $fclear.addEventListener('click', function(){ SEL = { b: '', m: '', y: 0, d: 0 }; fRebuild(); render(true); });
+  }
 
   /* ---------- 搜索 ---------- */
   var timer = null;
@@ -277,6 +327,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
     for(var i=0;i<ALL.length;i++){
       var it = ALL[i];
       if(cat !== 'all' && it.c !== cat) continue;
+      if(FON && !window.FACETS.match(it, SEL)) continue;
       if(tk.length){
         var ok = true, q = it._q;
         for(var j=0;j<tk.length;j++){
@@ -508,6 +559,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
   /* 切语言：按钮、计数、卡片重画一遍（产品数据本来就是英文，不重画） */
   document.addEventListener('i18n:change', function(){
     buildChips();
+    fRebuild();
     refreshStatic();
     var wasOpen = $modal.classList.contains('on');
     render(true);
