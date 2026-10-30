@@ -75,8 +75,12 @@
     if (v.length === 17) return /^[A-HJ-NPR-Z0-9]{17}$/.test(v);
     return (v.length === 6 || v.length === 8) && !!W[v.slice(0, 3)];
   }
+  function ALLITEMS() {
+    if (window.CATALOG && window.CATALOG.items) return window.CATALOG.items();
+    return (window.SITE_DATA && window.SITE_DATA.items) || [];
+  }
   function results(q) {
-    var p = parse(q), out = [], all = (window.SITE_DATA && window.SITE_DATA.items) || [], i, j, it, bs = [], b;
+    var p = parse(q), out = [], all = ALLITEMS(), i, j, it, bs = [], b;
     if (!p) return [];
     for (i = 0; i < p.brands.length; i++) { b = nrm(p.brands[i]); if (b) bs.push(b); }
     if (!bs.length) return [];
@@ -138,7 +142,7 @@
   function skuIndex() {
     if (BYSKU) return BYSKU;
     BYSKU = {};
-    var all = (window.SITE_DATA && window.SITE_DATA.items) || [], i, k;
+    var all = ALLITEMS(), i, k;
     for (i = 0; i < all.length; i++) {
       k = nrm(all[i].m);
       if (k && !BYSKU[k]) BYSKU[k] = all[i];

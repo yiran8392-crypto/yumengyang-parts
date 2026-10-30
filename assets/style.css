@@ -105,39 +105,51 @@ html[dir="rtl"] .langsel{padding:0 14px 0 36px;background-position:left 12px cen
 .herostat{margin-top:14px;font-size:13.5px;color:#9dbdd1}
 .herostat b{color:#fff;font-weight:700}
 
-/* ============ 首页：热销六宫格 ============ */
-.topsell{margin:26px 0 4px}
-.ts-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+/* ============ 首页：热销六格 → 横条卡（图左文右，一屏能看见下面的品类按钮） ============ */
+.topsell{margin:22px 0 4px}
+.ts-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 12px}
 .ts-head h2{margin:0;font-size:20px;font-weight:700;color:#fff;letter-spacing:-.01em}
 .ts-head h2 .zh-extra{font-weight:500;font-size:14px;color:#9dbbd0;margin-inline-start:6px}
 .ts-sub{margin:0;font-size:13.5px;color:#a7c2d5;max-width:660px}
-.ts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+/* 桌面每行 2 条、共 3 行 */
+.ts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .tscard{
-  display:flex;flex-direction:column;background:#fff;border:1px solid rgba(255,255,255,.14);
-  border-radius:14px;overflow:hidden;text-decoration:none;color:var(--ink);min-width:0;
+  display:flex;flex-direction:row;align-items:stretch;min-height:124px;max-height:140px;
+  background:#fff;border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;
+  text-decoration:none;color:var(--ink);min-width:0;
   box-shadow:0 1px 2px rgba(4,18,30,.18);
   transition:transform .16s ease,box-shadow .16s ease,border-color .16s;
 }
 .tscard:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(4,18,30,.30);border-color:#cfdae4}
-.tsimg{display:block;aspect-ratio:16/10;background:#f2f5f7;overflow:hidden}
-.tsimg img{width:100%;height:100%;object-fit:cover;display:block}
-.tsbd{display:block;padding:14px 16px 16px}
-.tsbd b{display:block;font-size:21px;line-height:1.25;font-weight:700;color:var(--ink);letter-spacing:-.01em}
-.tsbd em{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:3px}
-.tsbd .tsn{display:inline-block;margin-top:10px;font-size:13.5px;font-weight:600;color:#3d5a72;background:#f1f5f8;border:1px solid #e6edf2;border-radius:8px;padding:3px 10px}
+/* 图：约占 40% 宽，cover 裁切（原图 400×250，不重做） */
+.tsimg{flex:0 0 40%;display:block;background:#fff;overflow:hidden;min-width:0}
+.tsimg img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.tsbd{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:12px 16px;min-width:0}
+.tsbd b{display:block;font-size:19px;line-height:1.22;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.tsbd em{display:block;font-style:normal;font-size:12.5px;color:var(--muted);margin-top:1px}
+.tsbd .tsn{display:inline-block;align-self:flex-start;margin-top:8px;font-size:12.5px;font-weight:600;color:#3d5a72;background:#f1f5f8;border:1px solid #e6edf2;border-radius:8px;padding:2px 9px}
 html[dir="rtl"] .tsbd{text-align:right}
+html[dir="rtl"] .tsbd .tsn{align-self:flex-end}
+/* RTL：flex 会按书写方向自动把图排到右边，这里只保证图不被拉伸 */
+html[dir="rtl"] .tsimg{flex:0 0 40%}
 @media (max-width:900px){
-  .ts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .ts-grid{gap:10px}
+  .tscard{min-height:112px}
+  .tsimg{flex:0 0 36%}
+  .tsbd{padding:10px 12px}
+  .tsbd b{font-size:16.5px}
 }
 @media (max-width:600px){
-  .topsell{margin-top:20px}
-  /* 六格卡两列：一列时首页 hero 高达 3700px，搜索框下面全是销量卡，结果区被顶到 4 屏之后 */
-  .ts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .topsell{margin-top:18px}
+  /* 手机：一列横条，图左文右不变 */
+  .ts-grid{grid-template-columns:1fr;gap:9px}
+  .tscard{min-height:96px;max-height:none}
+  .tsimg{flex:0 0 34%}
+  .tsbd{padding:9px 12px}
+  .tsbd b{font-size:16px}
+  .tsbd em{font-size:11.5px}
+  .tsbd .tsn{font-size:11.5px;margin-top:4px;padding:1px 7px}
   .ts-head h2{font-size:18px}
-  .tsbd{padding:10px 12px 12px}
-  .tsbd b{font-size:15px;line-height:1.3}
-  .tsbd em{font-size:11.5px;margin-top:2px}
-  .tsbd .tsn{font-size:11.5px;margin-top:6px;padding:2px 7px}
 }
 
 /* ============ 结果区 ============ */
@@ -184,6 +196,8 @@ main{max-width:1200px;margin:0 auto;padding:26px 20px 70px}
 .xs{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
 .xs span{font-size:11.5px;background:#f1f5f8;color:#5b7285;padding:3px 7px;border-radius:6px;border:1px solid #e6edf2}
 .card mark{background:#ffe6a8;color:inherit;padding:0 1px;border-radius:2px}
+.name.dash{color:#a9b8c4;letter-spacing:.06em}
+.spec .dash{color:#a9b8c4;letter-spacing:.06em}
 
 .more{display:flex;justify-content:center;margin:30px 0 0}
 .more[hidden]{display:none}

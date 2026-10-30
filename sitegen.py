@@ -61,6 +61,7 @@ LANG_BOOT = ('<script>try{var l=(new URLSearchParams(location.search).get("lang"
 # 热销品类排最前，其余按型号数从多到少（首页按钮 / 导航 / 品类总览 / 首页目录块共用）
 HOT_ORDER = ["coil", "fuelpump", "o2", "plug"]
 NAV_KEYS = []          # build_static 里算好，给 sitehead 用
+LIVE_N = 0             # 有型号的品类数（0 型号的品类不进出入口）
 
 
 def order_cats(cats):
@@ -218,10 +219,11 @@ def money_free_note():
 
 
 # ------------------------------------------------------------------ 页面片段
-def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_list=None):
+def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_list=None, noindex=False):
     """canonical / og:url / og:image 只在填了真实域名时才输出；
     域名还是占位符时，页面照样能双击打开、能部署，只是没有这些标签（不会指错地方）。"""
     site = has_site(cfg)
+    robots = "noindex,follow" if noindex else "index,follow"
     img = ""
     if og_image and site:
         img = '\n<meta property="og:image" content="%s">' % esc(rel_url(cfg, og_image))
@@ -239,7 +241,7 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{title}</title>
 <meta name="description" content="{desc}">
-<meta name="robots" content="index,follow">{can}
+<meta name="robots" content="{robots}">{can}
 <meta property="og:type" content="{ogtype}">
 <meta property="og:site_name" content="Guangzhou Yumengyang Auto Parts">
 <meta property="og:title" content="{title}">
@@ -248,7 +250,7 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <link rel="stylesheet" href="../assets/style.css">
 {langboot}
 <script defer src="../assets/i18n.js"></script>{ld}
-</head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl,
+</head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
                  ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT)
 
 
@@ -264,7 +266,7 @@ def sitehead(cfg, active=""):
 <nav>%s<a href="../category/index.html" data-i18n="nav_all" data-v-n="%d">All %d categories</a></nav>
 <div class="tools">%s<a class="wapush" href="%s" target="_blank" rel="noopener" data-i18n="wa">WhatsApp Us</a></div>
 </div></header>""" % (NOTRANSLATE, BRAND_EN, NOTRANSLATE, BRAND_EN2,
-                       "".join(nav), len(CAT_META), len(CAT_META), lang_sel_html(),
+                       "".join(nav), LIVE_N or len(CAT_META), LIVE_N or len(CAT_META), lang_sel_html(),
                        esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
 
 
@@ -290,6 +292,8 @@ def spec_rows(it):
         rows.append(("spec_brand", esc(it["b"])))
     if it.get("a"):
         rows.append(("spec_fit", esc(it["a"])))
+    else:
+        rows.append(("spec_fit", '<span class="dash">&mdash;</span>'))
     if it.get("r"):
         rows.append(("spec_notes", esc(it["r"])))
     rows.append(("our_sku", esc(it["m"])))
@@ -476,16 +480,18 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
 </body></html>
 """ % (sitehead(cfg, cat), cat, esc(en), cat, esc(en), esc(cn), esc(one),
        len(all_items), len(all_items), cat, modh, lis, pager, sitefoot(cfg))
-    return head_block(cfg, title, desc, canonical, "assets/og/%s.jpg" % slug, "website") + "\n" + body
+    return head_block(cfg, title, desc, canonical, "assets/og/%s.jpg" % slug, "website",
+                      noindex=not all_items) + "\n" + body
 
 
 def page_cat_index(cfg, cats, by_cat):
-    total = sum(len(by_cat.get(c["key"], [])) for c in cats)
-    title = "All %d product categories — %d part numbers | Guangzhou Yumengyang Auto Parts" % (len(cats), total)
+    live = [c for c in order_cats(cats) if by_cat.get(c["key"])]   # 0 型号的品类不摆入口
+    total = sum(len(by_cat.get(c["key"], [])) for c in live)
+    title = "All %d product categories — %d part numbers | Guangzhou Yumengyang Auto Parts" % (len(live), total)
     desc = ("Ignition coils, ABS sensors, oxygen sensors, fuel pumps, TPMS, throttle bodies and more — "
             "%d part numbers with OE cross-reference." % total)
     cards = []
-    for c in order_cats(cats):
+    for c in live:
         key = c["key"]
         slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
         n = len(by_cat.get(key, []))
@@ -505,7 +511,7 @@ def page_cat_index(cfg, cats, by_cat):
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg), len(cats), total, len(cats), total, "".join(cards), sitefoot(cfg))
+""" % (sitehead(cfg), len(live), total, len(live), total, "".join(cards), sitefoot(cfg))
     return head_block(cfg, title, desc, rel_url(cfg, "category/index.html"), "", "website") + "\n" + body
 
 
@@ -653,6 +659,8 @@ def home_links(cfg, cats, by_cat, limit=100):
     for c in order_cats(cats):
         key = c["key"]
         items = by_cat.get(key, [])
+        if not items:
+            continue          # 0 型号的品类不摆入口（页面留着，但不从这里链出去）
         total += len(items)
         slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
         links = "".join('<a href="c/%s.html" title="%s">%s</a>' % (
@@ -712,7 +720,9 @@ def build_static(items, cats, log=print):
     for it in items:
         by_cat.setdefault(it["cat"], []).append(it)
 
-    # 导航条上放“热销 4 类 + 型号最多的 1 类”，顺序按 order_cats
+    # 导航条上放“热销 4 类 + 型号最多的 1 类”，顺序按 order_cats；0 型号的品类不进任何入口
+    global LIVE_N
+    LIVE_N = len([c for c in cats if by_cat.get(c["key"])])
     NAV_KEYS[:] = [c["key"] for c in order_cats(
         [{"key": c["key"], "n": len(by_cat.get(c["key"], []))} for c in cats])]
 
@@ -751,7 +761,8 @@ def build_static(items, cats, log=print):
 
     make_og_images(cfg, cats)
 
-    cat_files = []
+    cat_files = []          # 全部品类页（含 0 型号的）
+    live_cat_files = []     # 只进 sitemap 的那批
     for c in cats:
         key = c["key"]
         all_items = by_cat.get(key, [])
@@ -763,6 +774,8 @@ def build_static(items, cats, log=print):
             with open(os.path.join(catdir, fname), "w", encoding="utf-8", newline="\n") as f:
                 f.write(text)
             cat_files.append(fname)
+            if all_items:
+                live_cat_files.append(fname)
 
     with open(os.path.join(catdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(page_cat_index(cfg, cats, by_cat))
@@ -773,7 +786,7 @@ def build_static(items, cats, log=print):
             % (esc(cfg["site_url"] + "/"), today)]
     urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
                 % (esc(rel_url(cfg, "category/index.html")), today))
-    for fname in cat_files:
+    for fname in live_cat_files:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>'
                     % (esc(rel_url(cfg, "category/" + fname)), today))
     for it in items:

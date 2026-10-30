@@ -18,3 +18,6 @@ __pycache__/
 _backup/
 # 自测脚本 / 截图 / headless 浏览器 profile（本机用，不入库）
 _selftest/
+# 数据备份（清洗前的原样，本机留档）
+data/*.orig
+data/*.bak

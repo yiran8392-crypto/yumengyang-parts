@@ -57,7 +57,11 @@
   }
 
   function build(items) {
-    for (var i = 0; i < items.length; i++) parseItem(items[i]);
+    /* 可以分批喂（首页是按分片加载的）：已经解析过的跳过 */
+    for (var i = 0; i < items.length; i++) {
+      if (items[i]._fb) continue;
+      parseItem(items[i]);
+    }
   }
 
   function uniqSorted(arr) {

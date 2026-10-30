@@ -88,6 +88,12 @@ def register_extra_cats(cats):
 def main():
     t0 = time.time()
     payload = load_payload()
+    # 中文清洗 + OE 去重 + 拆包（data/meta.js + data/chunk-XX.js）：每次重渲染都过一遍，幂等
+    try:
+        import data_prep
+        payload, _st = data_prep.prepare(log=lambda m: print(m, flush=True))
+    except Exception as e:
+        print("  数据清洗/拆包跳过：%s" % e, flush=True)
     items = to_items(payload)
     cats = [{"key": c["key"], "name": c.get("name") or c["key"],
              "en": c.get("en") or c["key"], "n": c.get("n") or 0}

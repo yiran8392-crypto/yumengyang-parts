@@ -577,6 +577,15 @@ def write_data_js(items, cats):
             "r": it.get("r", ""), "p": it.get("p", ""), "t": it.get("t", ""),
             "s": it.get("s", ""),
         })
+    # 中文清洗 + OE 去重（词典在 data_prep.py）；清洗后重新算 slug，保证和 data.js 一致
+    try:
+        import data_prep
+        holder = {"items": rows}
+        data_prep.clean_payload(holder, log=print)
+        rows = holder["items"]
+        sitegen.make_slugs(rows)
+    except Exception as e:
+        print("  数据清洗失败（用原始数据）：%s" % e)
     payload = {
         "generated": time.strftime("%Y-%m-%d %H:%M"),
         "company": "Guangzhou Yumengyang Auto Parts Co., Ltd.",
