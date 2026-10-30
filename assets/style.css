@@ -680,3 +680,45 @@ html[dir="rtl"] .hotgrid{
   -webkit-mask-image:linear-gradient(270deg,#000 0,#000 calc(100% - 26px),transparent 100%);
   mask-image:linear-gradient(270deg,#000 0,#000 calc(100% - 26px),transparent 100%);
 }
+
+/* ==========================================================================
+   政策页（privacy.html / returns.html）+ 四栏页脚
+   ========================================================================== */
+.homefoot .fgrid{grid-template-columns:1.2fr 1fr 1fr .9fr}
+.policy{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+.doc{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:34px 40px 38px;
+  box-shadow:var(--shadow);max-width:860px}
+.doc h1{margin:6px 0 10px;font-size:clamp(24px,3vw,31px);line-height:1.25}
+.docmeta{margin:0 0 18px;font-size:12.5px;color:var(--faint);letter-spacing:.01em}
+.doclead{margin:0 0 22px;font-size:15px;color:#3d5266;line-height:1.72;padding-bottom:20px;border-bottom:1px solid #eef2f5}
+.dsec{padding:16px 0;border-top:1px solid #f0f4f7}
+.dsec:first-of-type{border-top:0;padding-top:0}
+.dsec h2{margin:0 0 7px;font-size:16px;font-weight:700;color:var(--ink);line-height:1.4}
+.dsec p{margin:0;font-size:14.5px;color:#374d61;line-height:1.75}
+.dsec code{background:#f1f5f8;border:1px solid #e6edf2;border-radius:5px;padding:1px 5px;font-size:13px}
+.doczh{margin:22px 0 0;border:1px dashed #cfdae4;border-radius:12px;background:#f8fafb;padding:2px 16px}
+.doczh>summary{cursor:pointer;min-height:46px;display:flex;align-items:center;font-weight:700;font-size:14.5px;color:#2f465a;list-style:none}
+.doczh>summary::-webkit-details-marker{display:none}
+.doczh>summary::before{content:"\25B8";color:#8b9dab;margin-inline-end:9px;transition:transform .15s}
+.doczh[open]>summary::before{transform:rotate(90deg)}
+html[dir="rtl"] .doczh>summary::before{content:"\25C2"}
+.doczh ul{margin:4px 0 16px;padding-inline-start:20px}
+.doczh li{font-size:13.8px;color:#3d5266;line-height:1.72;margin-bottom:7px}
+.doccontact{margin-top:24px;padding-top:18px;border-top:1px solid #eef2f5}
+.doccontact h2{margin:0 0 8px;font-size:15px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint)}
+.doccontact p{margin:0 0 8px;font-size:13.5px;color:#3d5266;line-height:1.7;word-break:break-word}
+.doccontact .btn-wa,.doccontact .btn-ghost{margin:10px 10px 0 0;min-height:48px;font-size:14.5px;padding:0 20px}
+html[dir="rtl"] .doccontact .btn-wa,html[dir="rtl"] .doccontact .btn-ghost{margin:10px 0 0 10px}
+html[dir="rtl"] .dsec p,html[dir="rtl"] .doclead{direction:ltr;text-align:right}
+@media (max-width:980px){
+  .homefoot .fgrid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  .doc{padding:22px 18px 26px}
+  .dsec p{font-size:14px}
+  .policy{padding:20px 16px 70px}
+  .homefoot .fgrid{grid-template-columns:1fr}
+}
+
+/* 阿语政策页：纯英文的地址/公司行保持 ltr + 右对齐，别让逗号跑到行首 */
+html[dir="rtl"] .docaddr,html[dir="rtl"] .docorg{direction:ltr;text-align:right}

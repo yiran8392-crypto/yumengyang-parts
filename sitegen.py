@@ -30,10 +30,17 @@ DEFAULT_CFG = {
     "whatsapp": "8615915859048",
     "company_en": "Guangzhou Yumengyang Auto Parts Co., Ltd.",
     "company_cn": "广州驭盟扬汽车零部件有限公司",
-    # 页脚公司信息：邮箱是占位（邮箱开通后，在 站点设置.txt 里加一行 邮箱=sales@真实域名 即可）
+    # 邮箱：sales@yumengyang.com 待开通（开通后改 站点设置.txt 里的 邮箱= 一行即可；
+    # 页面上只显示地址本身，不写任何"待开通 / 占位"字样）
     "email": "sales@yumengyang.com",
-    "address_en": "Guangzhou, Guangdong, China",
-    "address_cn": "中国 · 广东省广州市",
+    # 地址：英文站 / 阿语站 / 俄语站用 address_en，中文站用 address_cn
+    "address_en": "E05, Yiyou (Guangyuan East) Auto Parts City, Baiyun District, Guangzhou, China",
+    "address_cn": "广州市白云区益友（广元东）汽配城 E05 档",
+    # Organization JSON-LD 里的结构化地址（站点设置.txt 可覆盖，不填用这里的默认值）
+    "street": "E05, Yiyou (Guangyuan East) Auto Parts City",
+    "locality": "Baiyun District, Guangzhou",
+    "region": "Guangdong",
+    "country": "CN",
     "hours": "Mon–Sat 09:00–18:00 (GMT+8)",
 }
 
@@ -122,7 +129,12 @@ def load_cfg():
             "域名": "site_url", "site_url": "site_url", "网址": "site_url",
             "whatsapp": "whatsapp", "whatsapp号": "whatsapp", "号码": "whatsapp",
             "电话": "whatsapp", "邮箱": "email", "email": "email",
-            "地址": "address_en", "address": "address_en",
+            "地址": "address_en", "address": "address_en", "英文地址": "address_en",
+            "中文地址": "address_cn", "address_cn": "address_cn",
+            "街道": "street", "street": "street",
+            "城市": "locality", "locality": "locality",
+            "省份": "region", "region": "region",
+            "国家": "country", "country": "country",
             "工作时间": "hours", "hours": "hours",
         }
         for line in raw.splitlines():
@@ -263,9 +275,10 @@ def org_ld(cfg):
         "description": ("Chinese manufacturer and exporter of electronic fuel injection parts: ignition coils, "
                         "fuel pumps, oxygen sensors, ABS sensors, spark plugs and sensors."),
         "address": {"@type": "PostalAddress",
-                    "addressLocality": "Guangzhou",
-                    "addressRegion": "Guangdong",
-                    "addressCountry": "CN"},
+                    "streetAddress": cfg["street"],
+                    "addressLocality": cfg["locality"],
+                    "addressRegion": cfg["region"],
+                    "addressCountry": cfg["country"]},
         "contactPoint": [{
             "@type": "ContactPoint",
             "contactType": "sales",
@@ -431,13 +444,27 @@ def faq_ld(cfg):
     }
 
 
+def addr_span(cfg, cls=""):
+    """地址节点：英文页显示英文地址，中文页显示中文地址（data-v-cn 由 i18n.js 填）。
+    en / ar / ru 走 foot_addr 字典；en 没字典时回退节点原文（就是英文地址）。"""
+    c = ' class="%s"' % cls if cls else ""
+    return ('<span%s data-i18n="foot_addr" data-v-en="%s" data-v-cn="%s">%s</span>'
+            % (c, esc(cfg["address_en"]), esc(cfg["address_cn"]), esc(cfg["address_en"])))
+
+
+POLICY_LINKS_EN = [("foot_privacy", "Privacy Policy", "privacy.html"),
+                   ("foot_returns", "Refund & returns", "returns.html")]
+
+
 def homefoot_html(cfg, total):
     wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
+    pol = "".join('<p><a href="%s" data-i18n="%s">%s</a></p>' % (href, k, esc(t))
+                  for k, t, href in POLICY_LINKS_EN)
     return """<footer class="homefoot"><div class="wrap fgrid">
 <section class="fcol">
   <b class="notranslate" %(nt)s>%(cn)s</b>
   <p class="notranslate" %(nt)s>%(en)s</p>
-  <p data-i18n="foot_addr">%(addr)s</p>
+  <p>%(addr)s</p>
 </section>
 <section class="fcol">
   <h3 data-i18n="foot_contact">Contact</h3>
@@ -451,22 +478,28 @@ def homefoot_html(cfg, total):
   <p><a href="category/index.html" data-i18n="all_cat_h1">All product categories</a></p>
   <p><a href="sitemap.xml" data-i18n="sitemap">Sitemap</a></p>
 </section>
+<section class="fcol">
+  <h3 data-i18n="foot_legal">Policies</h3>
+  %(pol)s
+</section>
 </div>
 <div class="wrap fbot">
   <span data-i18n="foot_parts">Part numbers · real photos · fitment data</span>
   <span id="gen"></span>
 </div></footer>""" % {
         "nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
-        "addr": esc(cfg["address_en"]), "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
+        "addr": addr_span(cfg), "pol": pol,
+        "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
         "mail": esc(cfg["email"]), "hours": esc(cfg["hours"]),
-        "n": total, "ntxt": "{:,} part numbers · photos · fitment".format(total),
     }
 
 
 # ------------------------------------------------------------------ 页面片段
-def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_list=None, noindex=False):
+def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_list=None, noindex=False,
+               base="../"):
     """canonical / og:url / og:image 只在填了真实域名时才输出；
-    域名还是占位符时，页面照样能双击打开、能部署，只是没有这些标签（不会指错地方）。"""
+    域名还是占位符时，页面照样能双击打开、能部署，只是没有这些标签（不会指错地方）。
+    base 是到站点根目录的相对前缀：c/ 和 category/ 里的页面是 "../"，根目录页面（政策页）是 ""。"""
     site = has_site(cfg)
     robots = "noindex,follow" if noindex else "index,follow"
     img = ""
@@ -493,43 +526,46 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <meta property="og:description" content="{desc}">{ogurl}{img}
 <meta name="twitter:card" content="summary_large_image">
 {favicon}
-<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="{base}assets/style.css">
 {langboot}
-<script defer src="../assets/i18n.js"></script>{ld}
+<script defer src="{base}assets/i18n.js"></script>{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
-                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON)
+                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON, base=base)
 
 
-def sitehead(cfg, active=""):
+def sitehead(cfg, active="", base="../"):
     keys = NAV_KEYS or ["coil", "abs", "wire", "thermo", "plug"]
     nav = []
     for key in keys[:5]:
         slug, en, _one, _cn = CAT_META.get(key, (key, key, key, key))
         cls = ' class="on"' if active == key else ""
-        nav.append('<a href="../category/%s.html"%s data-cat="%s">%s</a>' % (slug, cls, key, esc(en)))
+        nav.append('<a href="%scategory/%s.html"%s data-cat="%s">%s</a>'
+                   % (base, slug, cls, key, esc(en)))
     return """<header class="sitehead"><div class="wrap">
-<a class="brand notranslate" %s href="../index.html">%s<em %s>%s</em></a>
-<nav>%s<a href="../category/index.html" data-i18n="nav_all" data-v-n="%d">All %d categories</a></nav>
+<a class="brand notranslate" %s href="%sindex.html">%s<em %s>%s</em></a>
+<nav>%s<a href="%scategory/index.html" data-i18n="nav_all" data-v-n="%d">All %d categories</a></nav>
 <div class="tools">%s<a class="wapush" href="%s" target="_blank" rel="noopener" data-i18n="wa">WhatsApp Us</a></div>
-</div></header>""" % (NOTRANSLATE, BRAND_EN, NOTRANSLATE, BRAND_EN2,
-                       "".join(nav), LIVE_N or len(CAT_META), LIVE_N or len(CAT_META), lang_sel_html(),
+</div></header>""" % (NOTRANSLATE, base, BRAND_EN, NOTRANSLATE, BRAND_EN2,
+                       "".join(nav), base, LIVE_N or len(CAT_META), LIVE_N or len(CAT_META), lang_sel_html(),
                        esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
 
 
-def sitefoot(cfg):
+def sitefoot(cfg, base="../"):
     wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
+    pol = " · ".join('<a href="%s%s" data-i18n="%s">%s</a>' % (base, href, k, esc(t))
+                     for k, t, href in POLICY_LINKS_EN)
     return """<footer class="sitefoot"><div class="wrap">
-<div class="sf-a"><b class="notranslate" %s>%s</b><br><span class="notranslate" %s>%s</span>
-<br><span data-i18n="foot_addr">%s</span> · <span data-i18n="foot_hours">Working hours</span>: %s</div>
-<div class="sf-b"><a href="%s" target="_blank" rel="noopener">WhatsApp %s</a> ·
-<a href="mailto:%s">%s</a><br>
-<a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
-<a href="../category/index.html" data-i18n="all_cat_h1">All product categories</a> ·
-<a href="../sitemap.xml" data-i18n="sitemap">Sitemap</a></div>
-</div></footer>""" % (NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
-                      esc(cfg["address_en"]), esc(cfg["hours"]),
-                      esc(wa), esc(wa_display(cfg["whatsapp"])),
-                      esc(cfg["email"]), esc(cfg["email"]))
+<div class="sf-a"><b class="notranslate" %(nt)s>%(cn)s</b><br><span class="notranslate" %(nt)s>%(en)s</span>
+<br>%(addr)s · <span data-i18n="foot_hours">Working hours</span>: %(hours)s</div>
+<div class="sf-b"><a href="%(wa)s" target="_blank" rel="noopener">WhatsApp %(wanum)s</a> ·
+<a href="mailto:%(mail)s">%(mail)s</a><br>
+<a href="%(base)sindex.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
+<a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a><br>
+%(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
+</div></footer>""" % {"nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
+                      "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
+                      "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
+                      "mail": esc(cfg["email"]), "base": base}
 
 
 SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
@@ -809,6 +845,186 @@ def page_cat_index(cfg, cats, by_cat):
 </body></html>
 """ % (sitehead(cfg), len(live), total, len(live), total, "".join(cards), sitefoot(cfg))
     return head_block(cfg, title, desc, rel_url(cfg, "category/index.html"), "", "website") + "\n" + body
+
+
+# ------------------------------------------------------------------ 政策页（英文为主 + 底部中文摘要）
+POLICY_DATE = "2026-10-30"
+POLICY_DATE_TXT = "30 October 2026"
+
+PRIVACY_SECTIONS = [
+    ("What this policy covers",
+     "This policy explains what data we handle when you use our part-number lookup site and when you "
+     "contact us about a part. It does not cover other companies' sites that we link to."),
+    ("Information you give us",
+     "We only receive what you send us: your name, company and country, the part numbers and quantities "
+     "you ask about, vehicle details, order information and any photos or documents you attach. You can "
+     "send this by WhatsApp, email or any other channel you choose."),
+    ("Information collected automatically",
+     "Our hosting provider keeps standard web-server logs (IP address, browser, page requested, time) to "
+     "run the site and block abuse. The site also remembers your language choice in your own browser "
+     "(local storage key <code>ymy_lang</code>); that value stays on your device and is not sent to us."),
+    ("Cookies",
+     "We do not set advertising or analytics cookies. The language preference is stored in your browser as "
+     "local storage, not as a cookie, and clearing your browser data removes it."),
+    ("How we use your information",
+     "To answer your inquiry, prepare a quotation, arrange production and shipping, keep the records our "
+     "accounting and export paperwork require, and to find and fix faults on the site. We do not use your "
+     "inquiry to build advertising profiles."),
+    ("Who we share it with",
+     "We share data only where it is needed to serve you: our hosting provider (GitHub Pages) processes "
+     "access logs; WhatsApp (Meta) handles messages you choose to send us there; freight forwarders, "
+     "couriers and customs authorities receive the shipping details required for delivery. "
+     "We do not sell or rent your data, and we do not pass your customer list to other buyers."),
+    ("How long we keep it",
+     "Inquiry and order records are kept for as long as we need them to serve you and to meet legal, tax "
+     "and export requirements. Marketing messages stop as soon as you ask us to stop."),
+    ("Your choices",
+     "You can ask us for a copy of the information you sent, ask us to correct it, or ask us to delete it. "
+     "Write to the email address below and we will act on the request. Deleting an inquiry record may end "
+     "our ability to quote or support that order."),
+    ("Security",
+     "We keep inquiry data on access-controlled systems and limit it to the staff who deal with your order. "
+     "No system is perfectly secure, and messages sent over WhatsApp or ordinary email are not end-to-end "
+     "encrypted by us."),
+    ("Children",
+     "This site is a business-to-business parts catalogue. It is not directed at children and we do not "
+     "knowingly collect their data."),
+    ("Changes to this policy",
+     "If we change how we handle data, we update this page and the date above. The version published here "
+     "is the one that applies."),
+]
+
+PRIVACY_ZH = [
+    "本政策说明：使用本站型号查询、或通过 WhatsApp / 邮件联系我们时，我们处理哪些数据。",
+    "你主动提供的：姓名、公司、国家、询价型号与数量、车型信息、订单信息，以及你附上的照片或文件。",
+    "自动记录的：托管方的服务器日志（IP、浏览器、访问页面、时间）；语言偏好存在你自己浏览器的 "
+    "localStorage（键名 ymy_lang），不上传给我们。",
+    "Cookie：本站不投放广告或统计 Cookie，语言偏好用 localStorage 保存，清浏览器数据即可清除。",
+    "用途：回复询盘、报价、安排生产与发货、保存报关与财务所需的记录、修复站点故障。",
+    "共享范围：托管方（GitHub Pages）处理访问日志；你主动使用的 WhatsApp 由 Meta 处理；货代、快递与海关"
+    "只拿到发货必需的信息。我们不出售、不出租你的数据，也不会把你的客户名单给别的买家。",
+    "你的权利：可以要求查看、更正或删除你发来的信息，发邮件到下方邮箱即可。",
+    "安全：询盘数据放在有访问控制的系统里，只给处理你订单的同事看；WhatsApp 和普通邮件本身不是端到端加密。",
+    "本页不面向未成年人；政策有变化时更新本页与上方日期。",
+]
+
+RETURNS_SECTIONS = [
+    ("Overview",
+     "We want the part to fit and to work. If something is wrong, contact us first — before you send "
+     "anything back — so we can confirm the case and give you a return authorization (RMA) number. "
+     "Parts sent back without an RMA number may be refused or delayed at customs."),
+    ("What the warranty covers",
+     "Our parts carry a warranty of 12 to 24 months depending on the part type. The exact term for your "
+     "order is written on the quotation and on the invoice, so the same number applies to both sides. "
+     "The warranty covers manufacturing defects that appear under normal use on the vehicle the part is "
+     "listed for."),
+    ("What is not covered",
+     "The warranty does not cover: damage from an accident, collision or fire; wrong installation or "
+     "installation with damaged wiring, connectors or voltage problems; misuse, neglect, water ingress or "
+     "unauthorized repair and modification; normal wear; a part ordered for the wrong vehicle because the "
+     "OE number or cross-reference was not checked; and transit damage that is not reported to us with the "
+     "carrier's record."),
+    ("How to make a claim",
+     "1) Send us the invoice or order number and the part number. 2) Send photos or a short video of the "
+     "part and, where possible, of the vehicle and the fault code. 3) Tell us the vehicle model, year and "
+     "engine, and what the part is doing wrong. 4) We review the case — each case is judged on its own "
+     "evidence, and we may ask for the part to be tested. 5) If the claim is accepted we issue an RMA "
+     "number and agree with you whether the part is replaced, credited or refunded."),
+    ("Shipping and timing",
+     "Return freight is paid by the buyer unless the fault is ours (wrong part sent, part not as "
+     "described, or a defect confirmed by us). We confirm who pays in writing before the return ships. "
+     "Inspection and the replacement or credit are handled case by case; we give you the expected timing "
+     "in writing with the RMA number rather than promising a fixed number of days here."),
+    ("Replacements and refunds",
+     "Where a claim is accepted we replace the part, issue a credit note against your next order, or refund "
+     "the invoice value — whichever we agree in writing. Refunds go back through the original payment "
+     "channel where that is possible."),
+    ("Contact",
+     "Send claims and questions to the WhatsApp number or email address below. Please include the order "
+     "number so we can find your file quickly."),
+]
+
+RETURNS_ZH = [
+    "先把问题告诉我们，再寄回：没有 RMA 号的退货可能被拒收或在海关卡住。",
+    "质保范围：按品类 12–24 个月，具体年限写在报价单和发票上；保的是正常使用下出现的制造缺陷。",
+    "不保：事故/碰撞/火烧、装错或线路与电压问题导致的损坏、误用与私拆改装、正常磨损、"
+    "没核对 OE 号买错车型、以及没有当场向承运方登记的运输破损。",
+    "流程：提供发票或订单号 + 型号 → 拍照片/短视频（含车型与故障码更好）→ 说明车型年款与故障现象 → "
+    "我们逐案评估（可能要寄回检测）→ 通过后给 RMA 号，并确认换货、冲抵还是退款。",
+    "运费与时限：非我方责任由买家承担回运运费，谁付在寄回前书面确认；检测与换补时间逐案给出，"
+    "我们按 RMA 号书面告知预计时间，不在页面上写死天数。",
+    "换补与退款：按书面确认的方式换货、开冲抵单或退发票金额；能原路退回就原路退回。",
+    "联系：把订单号一起发到下方 WhatsApp 或邮箱，我们好尽快找到你的档案。",
+]
+
+
+def _sections_html(secs):
+    return "".join('<section class="dsec"><h2>%s</h2><p>%s</p></section>' % (esc(t), body)
+                   for t, body in secs)
+
+
+def page_policy(cfg, kind):
+    """kind = 'privacy' | 'returns'。英文正文 + 底部 <details> 中文摘要，同站同头同脚。"""
+    if kind == "privacy":
+        title = "Privacy Policy | Guangzhou Yumengyang Auto Parts"
+        desc = ("What data Guangzhou Yumengyang Auto Parts handles when you use the OE number lookup or "
+                "send an inquiry, why we keep it, and who we share it with.")
+        h1 = "Privacy Policy"
+        secs, zh, fname = PRIVACY_SECTIONS, PRIVACY_ZH, "privacy.html"
+        lead = ("We keep this short and specific: what we receive, why we keep it, and how to have it "
+                "removed.")
+    else:
+        title = "Refund & Returns Policy | Guangzhou Yumengyang Auto Parts"
+        desc = ("Warranty, returns and claims for Guangzhou Yumengyang Auto Parts: what is covered, what "
+                "is not, how to get an RMA number, and who pays the freight.")
+        h1 = "Refund & Returns"
+        secs, zh, fname = RETURNS_SECTIONS, RETURNS_ZH, "returns.html"
+        lead = ("Contact us before you ship anything back. Below is what the warranty covers, what it does "
+                "not, and how a claim is handled.")
+
+    zh_html = "".join("<li>%s</li>" % esc(x) for x in zh)
+    canon = rel_url(cfg, fname)
+    ld = {"@context": "https://schema.org", "@type": "WebPage",
+          "name": h1, "description": clean_text(desc), "dateModified": POLICY_DATE,
+          "inLanguage": "en", "isPartOf": {"@type": "WebSite", "url": cfg["site_url"] + "/"}}
+    if has_site(cfg):
+        ld["url"] = canon
+
+    wa = wa_link(cfg, "Hi, I have a question about %s." % h1.lower())
+    body = """<body class="docpage">
+%s
+<main class="policy">
+<nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span>%s</span></nav>
+<article class="doc">
+  <h1>%s</h1>
+  <p class="docmeta">%s · <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead">%s</p>
+  %s
+  <details class="doczh"><summary>中文摘要 · Chinese summary</summary><ul>%s</ul></details>
+  <section class="doccontact">
+    <h2 data-i18n="foot_contact">Contact</h2>
+    <p class="docorg"><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></p>
+    <p class="docaddr">%s</p>
+    <p><span data-i18n="foot_hours">Working hours</span>: %s</p>
+    <p data-i18n="foot_contact_via">Questions about this page? WhatsApp or email us — we answer within one working day.</p>
+    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+       <a class="btn-ghost" href="index.html" data-i18n="nf_back">Back to the lookup home</a></p>
+  </section>
+</article>
+</main>
+%s
+<script>(function(){function f(){try{var d=document.querySelector('.doczh');if(d&&window.I18N&&window.I18N.lang==='zh')d.open=true;}catch(e){}}
+document.addEventListener('DOMContentLoaded',f);document.addEventListener('i18n:change',f);
+try{if(document.documentElement.getAttribute('data-lang')==='zh')document.querySelector('.doczh').open=true;}catch(e){}})();</script>
+</body></html>
+""" % (sitehead(cfg, "", base=""), h1, esc(h1),
+       "Last updated " + POLICY_DATE_TXT, esc(lead), _sections_html(secs), zh_html,
+       NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
+       addr_span(cfg), esc(cfg["hours"]),
+       esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
+       sitefoot(cfg, base=""))
+    return head_block(cfg, title, desc, canon, "assets/og/ignition-coils.jpg", "website",
+                      [ld], base="") + "\n" + body
 
 
 def page_404(cfg):
@@ -1092,6 +1308,14 @@ def build_static(items, cats, log=print):
     with open(os.path.join(catdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(page_cat_index(cfg, cats, by_cat))
 
+    # 政策页（根目录）：privacy.html / returns.html
+    policy_files = []
+    for kind in ("privacy", "returns"):
+        fname = "%s.html" % kind
+        with open(os.path.join(HERE, fname), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page_policy(cfg, kind))
+        policy_files.append(fname)
+
     # sitemap
     today = time.strftime("%Y-%m-%d")
     urls = ['<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>'
@@ -1104,6 +1328,9 @@ def build_static(items, cats, log=print):
     for it in items:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
                     % (esc(rel_url(cfg, "c/%s.html" % it["s"])), today))
+    for fname in policy_files:
+        urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>'
+                    % (esc(rel_url(cfg, fname)), POLICY_DATE))
     sm = ('<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "\n".join(urls) + "\n</urlset>\n")
