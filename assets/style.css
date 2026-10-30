@@ -722,3 +722,28 @@ html[dir="rtl"] .dsec p,html[dir="rtl"] .doclead{direction:ltr;text-align:right}
 
 /* 阿语政策页：纯英文的地址/公司行保持 ltr + 右对齐，别让逗号跑到行首 */
 html[dir="rtl"] .docaddr,html[dir="rtl"] .docorg{direction:ltr;text-align:right}
+
+/* ==========================================================================
+   内链网络：同 OE / 同车型（服务端渲染，纯 <a>）
+   ========================================================================== */
+.linknet h2{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:15.5px}
+.linknet h2.lk2h{margin-top:18px}
+.lkgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
+.lk{display:grid;grid-template-columns:56px minmax(0,1fr) auto;grid-template-areas:"img sku oe" "img fit fit";
+  gap:2px 10px;padding:7px 10px;border:1px solid #e8eef3;border-radius:10px;background:#f8fafb;
+  text-decoration:none;color:inherit;min-width:0;transition:border-color .15s,background .15s}
+.lk:hover{background:#eef4f8;border-color:var(--line2)}
+.lkimg{grid-area:img;display:block;width:56px;height:56px;border-radius:7px;overflow:hidden;background:#fff;align-self:center}
+.lkimg img{width:100%;height:100%;object-fit:contain;padding:3px}
+.lkimg.none{background:repeating-linear-gradient(45deg,#f4f7fa,#f4f7fa 6px,#eef2f6 6px,#eef2f6 12px)}
+.lk b{grid-area:sku;font-size:13.5px;font-weight:700;color:#1f3b52;word-break:break-all;line-height:1.3;align-self:end}
+.lkoe{grid-area:oe;font-size:11.5px;color:#7c8fa0;font-variant-numeric:tabular-nums;white-space:nowrap;align-self:end}
+.lkf{grid-area:fit;font-size:11.5px;color:#7b8d9d;line-height:1.35;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+html[dir="rtl"] .lk b,html[dir="rtl"] .lkf{direction:ltr;text-align:right}
+@media (max-width:760px){
+  .lkgrid{grid-template-columns:1fr;gap:6px}
+  .lk{grid-template-columns:48px minmax(0,1fr) auto;padding:6px 8px;gap:1px 8px}
+  .lkimg{width:48px;height:48px}
+  .lkf{-webkit-line-clamp:2}
+}

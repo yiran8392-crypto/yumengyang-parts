@@ -18,6 +18,7 @@
 import html
 import json
 import os
+import random
 import re
 import time
 from urllib.parse import quote
@@ -595,7 +596,260 @@ def spec_rows(it):
                    for k, v in rows)
 
 
-def page_model(cfg, it, cat, related):
+# ==================================================================== 内链网络
+# 两块：① 同 OE / 同交叉号的其他型号  ② 同车型的热门件（不同品类、带图）
+# 全部在生成时算好、写死成 <a>，页面里没有 JS 参与。每页 8–12 条，目标 10 条。
+LINK_CAP = 12                 # 每页内链总数上限（需求 8–12）
+BLOCK_MIN = 4                 # 单块最少 4 条（不够就逐级兜底）
+LINK_TARGET = 10              # 常规每页 10 条，留 2 个空位给孤立页补齐
+LINK_MIN = 8                  # 低于这个数就从同品类里补齐
+LINK_EACH = 6                 # 单块最多 6 条
+TOKEN_SCAN = 240              # 每个关键词最多扫多少个候选（按热度预排过）
+WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9.]*")
+TOKEN_STOP = {
+    "THE", "AND", "FOR", "WITH", "WITHOUT", "NEW", "OLD", "FROM", "ALL", "SET", "KIT",
+    "FRONT", "REAR", "LEFT", "RIGHT", "LH", "RH", "UPPER", "LOWER", "INNER", "OUTER",
+    "AT", "MT", "CVT", "DCT", "DSG", "EFI", "MPI", "GDI", "LPG", "CNG", "TURBO", "TDI",
+    "TSI", "TDCI", "SUV", "MPV", "SEDAN", "HATCHBACK", "COUPE", "WAGON", "PICKUP",
+    "VAN", "TRUCK", "BUS", "CAB", "ENG", "ENGINE", "MODEL", "VERSION", "IMPORTED",
+    "DOMESTIC", "PRESENT", "YEARS", "YEAR", "EXPORT", "OEM", "OES", "PIN", "WIRE",
+    "GEN", "GEN1", "GEN2", "GEN3", "GEN4", "GEN5", "GEN6", "PLUS", "PRO", "MAX",
+    "SPORT", "BASE", "TYPE", "PART", "SERIES", "CYL", "CYLINDER", "VALVE",
+}
+
+
+def norm_code(s):
+    """OE / 交叉号归一：去掉空格、连字符、点、括号等，全部大写。"""
+    return re.sub(r"[^0-9A-Z]", "", (s or "").upper())
+
+
+def fit_tokens(text, limit=8):
+    """从适配车型里抽品牌 / 车系关键词（Toyota、Camry、Hilux、JAC、Wuling…）。"""
+    out, seen = [], set()
+    for w in WORD_RE.findall(text or ""):
+        t = w.upper().strip(".")
+        if len(t) < 3 or len(t) > 14 or t in TOKEN_STOP or t in seen:
+            continue
+        seen.add(t)
+        out.append(t)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def build_link_index(items):
+    """建两张倒排表：归一码 -> 型号；车型关键词 -> 型号（按热度预排，方便只扫前几十个）。"""
+    token_map = {}
+    code_map = {}
+    by_i = {}
+    for it in items:
+        by_i[it["i"]] = it
+        codes = set()
+        for c in [it.get("oe")] + list(it.get("x") or []):
+            n = norm_code(c)
+            if len(n) >= 4:
+                codes.add(n)
+        it["_codes"] = codes
+        for n in codes:
+            code_map.setdefault(n, []).append(it["i"])
+        toks = fit_tokens(it.get("a"))
+        it["_toks"] = toks
+        for t in toks:
+            token_map.setdefault(t, []).append(it["i"])
+    # 每个关键词的候选按「销量星数降序 + 编号升序」预排，扫描时只取前 120 个，够用且快
+    for t, lst in token_map.items():
+        lst.sort(key=lambda i: (-_sales_rank(by_i[i]), i))
+    return by_i, code_map, token_map
+
+
+def _rank_pick(cands, it, limit):
+    """排序：同品类优先 → 销量星数高 → 编号小；去重、去掉自己。"""
+    seen, out = {it["i"]}, []
+    for x in cands:
+        if x["i"] in seen:
+            continue
+        seen.add(x["i"])
+        out.append(x)
+    out.sort(key=lambda x: (x["cat"] != it["cat"], -_sales_rank(x), x["i"]))
+    return out[:limit]
+
+
+def pick_same_code(it, by_i, code_map, limit=LINK_EACH):
+    """同 OE / 同交叉号的其他型号。"""
+    cands = []
+    for n in it["_codes"]:
+        for j in code_map.get(n, ())[:300]:
+            if j != it["i"]:
+                cands.append(by_i[j])
+    return _rank_pick(cands, it, limit)
+
+
+def pick_same_cat_token(it, by_i, token_map, limit=LINK_EACH, exclude=()):
+    """兜底：同品类 + 有共同车型关键词。"""
+    score = {}
+    for t in it["_toks"]:
+        for j in token_map.get(t, ())[:TOKEN_SCAN]:
+            if j == it["i"] or j in exclude:
+                continue
+            if by_i[j]["cat"] != it["cat"]:
+                continue
+            score[j] = score.get(j, 0) + 1
+    cands = [by_i[j] for j in score]
+    cands.sort(key=lambda x: (-score[x["i"]], -_sales_rank(x), x["i"]))
+    pool = cands[:60]
+    random.Random(it["i"] * 31 + 7).shuffle(pool)      # 同分里打散，入链才会摊到全站
+    pool.sort(key=lambda x: -score[x["i"]])
+    return pool[:limit]
+
+
+def pick_same_vehicle(it, by_i, token_map, limit=LINK_EACH, exclude=()):
+    """同车型的热门件：不同品类、带图、按共享关键词数 + 热度排。"""
+    score = {}
+    for t in it["_toks"]:
+        for j in token_map.get(t, ())[:TOKEN_SCAN]:
+            if j == it["i"] or j in exclude:
+                continue
+            x = by_i[j]
+            if x["cat"] == it["cat"] or not (x.get("p") or x.get("t")):
+                continue
+            score[j] = score.get(j, 0) + 1
+    cands = [by_i[j] for j in score]
+    cands.sort(key=lambda x: (-score[x["i"]], -_sales_rank(x), x["i"]))
+    pool = cands[:60]
+    random.Random(it["i"] * 17 + 3).shuffle(pool)
+    pool.sort(key=lambda x: -score[x["i"]])
+    return pool[:limit]
+
+
+def pick_links(it, by_i, code_map, token_map):
+    """算出这页的两块内链。
+    目标：A 块（同 OE / 同交叉号）4–6 条、B 块（同车型热门件）4–6 条，总数 8–12；
+    两块都不足 4 条时按「同品类 / 不同品类」逐级兜底，保证配比稳定、不重复、不含自己。"""
+    rnd = random.Random(it["i"] * 101 + 13)
+    mine = {it["i"]}
+
+    # ---- A：同 OE / 同交叉号 → 同品类+同车型关键词 → 同品类随机
+    a = pick_same_code(it, by_i, code_map)
+    if len(a) < BLOCK_MIN:
+        have = {x["i"] for x in a}
+        a += [x for x in pick_same_cat_token(it, by_i, token_map, exclude=have, limit=LINK_EACH)
+              if x["i"] not in have]
+    if len(a) < BLOCK_MIN:
+        have = {x["i"] for x in a}
+        pool = [by_i[j] for j in by_i
+                if by_i[j]["cat"] == it["cat"] and j not in have and j not in mine]
+        pool.sort(key=lambda x: (-_sales_rank(x), x["i"]))
+        head = pool[:60]
+        rnd.shuffle(head)
+        a += head
+    a = a[:LINK_EACH]
+
+    # ---- B：同车型热门件（不同品类、带图）→ 不同品类随机（带图的优先）
+    used = {x["i"] for x in a} | mine
+    b = pick_same_vehicle(it, by_i, token_map, exclude=used)
+    if len(b) < BLOCK_MIN:
+        have = used | {x["i"] for x in b}
+        pool = [by_i[j] for j in by_i if by_i[j]["cat"] != it["cat"] and j not in have]
+        withpic = [x for x in pool if x.get("p") or x.get("t")]
+        pool = withpic or pool
+        pool.sort(key=lambda x: (-_sales_rank(x), x["i"]))
+        head = pool[:80]
+        rnd.shuffle(head)
+        b += head
+    b = b[:LINK_EACH]
+
+    # 总数压到 10 条（两块仍各 ≥4），给后面「孤立页补齐」留 2 个空位
+    while len(a) + len(b) > LINK_TARGET and (len(a) > BLOCK_MIN or len(b) > BLOCK_MIN):
+        if len(a) >= len(b) and len(a) > BLOCK_MIN:
+            a.pop()
+        elif len(b) > BLOCK_MIN:
+            b.pop()
+        else:
+            break
+    return a, b
+
+
+def repair_orphans(items):
+    """覆盖补齐：算完全站后，把「没人链」的页挂到同品类里有空位的页上（每页仍 ≤12 条、每块 ≤6 条）。
+    这样每个型号页至少被 1 个其他页链到，孤立页降到 0。"""
+    indeg = {}
+    for it in items:
+        for x in it["_lnk_oe"] + it["_lnk_veh"]:
+            indeg[x["i"]] = indeg.get(x["i"], 0) + 1
+    by_cat = {}
+    for it in items:
+        by_cat.setdefault(it["cat"], []).append(it)
+    orphans = [it for it in items if indeg.get(it["i"], 0) == 0]
+    fixed = 0
+    for o in orphans:
+        best = None
+        for h in by_cat.get(o["cat"], ()):
+            if h["i"] == o["i"]:
+                continue
+            na, nb = len(h["_lnk_oe"]), len(h["_lnk_veh"])
+            if na + nb >= LINK_CAP:
+                continue
+            if any(x["i"] == o["i"] for x in h["_lnk_oe"] + h["_lnk_veh"]):
+                continue
+            if na < LINK_EACH and na <= nb:
+                slot = h["_lnk_oe"]
+            elif nb < LINK_EACH:
+                slot = h["_lnk_veh"]
+            elif na < LINK_EACH:
+                slot = h["_lnk_oe"]
+            else:
+                continue
+            key = (na + nb, h["i"])
+            if best is None or key < best[0]:
+                best = (key, slot)
+        if best is None:
+            continue
+        best[1].append(o)
+        indeg[o["i"]] = 1
+        fixed += 1
+    return len(orphans), fixed
+
+
+def _fit_summary(it, n=44):
+    """一句适配摘要：截到 n 个字符左右，尽量在词边界断。"""
+    t = clean_text(it.get("a"))
+    if not t:
+        return (it.get("b") or "")[:n]
+    if len(t) > n:
+        cut = t[:n].rsplit(" ", 1)[0].rstrip(" ,;()/-")
+        t = cut + "…"
+    return t
+
+
+def _link_card(x):
+    """一张内链卡：小图（可选）+ 料号 + OE + 一句适配。纯 <a>，无 JS。"""
+    img = x.get("t") or x.get("p")
+    pic = ('<span class="lkimg"><img src="../%s" alt="" width="56" height="56" loading="lazy" '
+           'decoding="async"></span>' % esc(img)) if img else '<span class="lkimg none" aria-hidden="true"></span>'
+    oe = x.get("oe")
+    oe_html = '<span class="lkoe">OE %s</span>' % esc(oe) if oe else ""
+    return ('<a class="lk" href="../c/%s.html">%s<b>%s</b><span class="lkf">%s</span>%s</a>'
+            % (esc(x["s"]), pic, esc(x["m"]), esc(_fit_summary(x)), oe_html))
+
+
+def link_blocks_html(it):
+    a = it.get("_lnk_oe") or []
+    b = it.get("_lnk_veh") or []
+    if not a and not b:
+        return ""
+    out = ['<section class="pdp-block linknet" aria-labelledby="lnk1">']
+    if a:
+        out.append('<h2 id="lnk1"><span data-i18n="lk_oe_t">Same OE / cross-reference</span></h2>')
+        out.append('<div class="lkgrid">%s</div>' % "".join(_link_card(x) for x in a))
+    if b:
+        out.append('<h2 id="lnk2" class="lk2h"><span data-i18n="lk_veh_t">Popular for the same vehicle</span>'
+                   '</h2>')
+        out.append('<div class="lkgrid">%s</div>' % "".join(_link_card(x) for x in b))
+    out.append("</section>")
+    return "".join(out)
+
+
+def page_model(cfg, it, cat, related=None):
     one = type_name(cat)
     primary = it.get("oe") or it.get("m")
     hint = fitment_hint(it.get("a"), it.get("b"))
@@ -678,22 +932,8 @@ def page_model(cfg, it, cat, related):
         it.get("m"), (" (OE %s)" % it["oe"]) if it.get("oe") else "")
     wa = wa_link(cfg, wa_text)
 
-    rel_html = ""
-    if related:
-        cards = []
-        for r in related:
-            rimg = r.get("t") or r.get("p")
-            roe = r.get("oe") or r["m"]
-            pic2 = ('<span class="relimg"><img src="../%s" width="120" height="120" loading="lazy" '
-                    'decoding="async" alt="%s"></span>' % (esc(rimg), esc(roe))
-                    if rimg else '<span class="relimg none" aria-hidden="true"></span>')
-            cards.append('<a class="relcard" href="../c/%s.html">%s<b>%s</b><span class="rsku">%s</span></a>'
-                         % (esc(r["s"]), pic2, esc(roe), esc(r["m"])))
-        rel_html = ('<section class="pdp-block relblock"><h2><span data-i18n="rel_more_h">More</span> '
-                    '<span data-cat="%s">%s</span></h2>'
-                    '<p class="relnote" data-i18n="rel_note">Same category, same family — check the OE '
-                    'number before ordering.</p><div class="relgrid">%s</div></section>'
-                    % (cat, esc(CAT_META[cat][1]), "".join(cards)))
+    # ---------------- 内链两块（服务端渲染的纯 <a>，爬虫不走 JS 也能爬）
+    rel_html = link_blocks_html(it)
 
     terms = """<section class="pdp-block terms">
 <h2 data-i18n="block_terms">Warranty, lead time, MOQ &amp; samples</h2>
@@ -1270,21 +1510,19 @@ def build_static(items, cats, log=print):
                     pass
 
     counts = {}
+    # 内链：先建两张倒排表，再给每个型号算好两块链接（写死在 HTML 里，不靠 JS）
+    t_link = time.time()
+    by_i, code_map, token_map = build_link_index(items)
+    for it in items:
+        it["_lnk_oe"], it["_lnk_veh"] = pick_links(it, by_i, code_map, token_map)
+    n_orphan, n_fixed = repair_orphans(items)
+    log("  内链：孤立页 %d 个，补齐 %d 个" % (n_orphan, n_fixed))
+    log("  内链索引：%d 个归一码 / %d 个车型关键词（%.1f 秒）"
+        % (len(code_map), len(token_map), time.time() - t_link))
+
     for idx, it in enumerate(items):
         cat = it["cat"]
-        siblings = by_cat.get(cat, [])
-        pos = None
-        for k, s in enumerate(siblings):
-            if s["i"] == it["i"]:
-                pos = k
-                break
-        rel = []
-        if pos is not None:
-            for d in (1, 2, 3, -1, -2, -3):
-                j = pos + d
-                if 0 <= j < len(siblings):
-                    rel.append(siblings[j])
-        htmltext = page_model(cfg, it, cat, rel)
+        htmltext = page_model(cfg, it, cat)
         with open(os.path.join(cdir, it["s"] + ".html"), "w", encoding="utf-8", newline="\n") as f:
             f.write(htmltext)
         counts[cat] = counts.get(cat, 0) + 1
@@ -1318,8 +1556,8 @@ def build_static(items, cats, log=print):
             f.write(page_policy(cfg, kind))
         policy_files.append(fname)
 
-    # sitemap
-    today = time.strftime("%Y-%m-%d")
+    # sitemap：lastmod 用本次生成的时间戳（带时区），内容是每页都变了，别再用「今天」糊过去
+    today = __import__("datetime").datetime.now().astimezone().replace(microsecond=0).isoformat()
     urls = ['<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>'
             % (esc(cfg["site_url"] + "/"), today)]
     urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
