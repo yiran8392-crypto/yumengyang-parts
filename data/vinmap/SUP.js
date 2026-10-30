@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["SUP"]={"s":["03-0013"],"v":{"SUPTF69YD3W154463":[0]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["SUP"]={"s":["03-0013"],"v":{"SUPTF69YD3W154463":[0]},"m":{"03-0013":"19005252"}};

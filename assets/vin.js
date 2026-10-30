@@ -148,16 +148,21 @@
   function histHTML(vin) {
     var M = window.VINMAPS && window.VINMAPS[vin.slice(0, 3)];
     if (!M || !M.v || !M.v[vin]) return "";
-    var ids = M.v[vin], dic = M.s || [], idx = skuIndex(), chips = "", n = 0, i, sku, it;
+    var ids = M.v[vin], dic = M.s || [], mp = M.m || {}, idx = null, chips = "", n = 0, i, sku, it, slug;
     for (i = 0; i < ids.length && n < 40; i++) {
       sku = dic[ids[i]];
       if (!sku) continue;
       n++;
-      it = idx[nrm(sku)];
-      chips += it
-        ? '<a class="vsku on" href="c/' + encodeURIComponent(it.s || ("p" + it.i)) + '.html">' + esc(sku) +
-          " <em>" + esc(it.n || "") + "</em></a>"
-        : '<span class="vsku">' + esc(sku) + "</span>";
+      slug = mp[sku.toUpperCase()];
+      if (!slug) {
+        idx = idx || skuIndex();
+        it = idx[nrm(sku)];
+        if (it) slug = it.s || ("p" + it.i);
+      }
+      chips += slug
+        ? '<a class="vsku on" href="c/' + encodeURIComponent(slug) + '.html">' + esc(sku) +
+          " <em>" + esc((it && it.n) || "") + "</em></a>"
+        : '<span class="vsku nf" title="' + esc(T("vin_sku_hist", "historical code")) + '">' + esc(sku) + "</span>";
     }
     if (!chips) return "";
     return '<div class="vinhist"><h4>' + esc(T("vin_hist_t", "Parts looked up before for this VIN")) +

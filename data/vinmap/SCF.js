@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["SCF"]={"s":["TS08"],"v":{"SCFVUJAW1MTV00788":[0]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["SCF"]={"s":["TS08"],"v":{"SCFVUJAW1MTV00788":[0]},"m":{}};

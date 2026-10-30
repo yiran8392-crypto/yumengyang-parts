@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["LVB"]={"s":["TS10"],"v":{"LVBC3ZBB8RS060748":[0]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["LVB"]={"s":["TS10"],"v":{"LVBC3ZBB8RS060748":[0]},"m":{}};

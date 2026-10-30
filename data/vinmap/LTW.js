@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["LTW"]={"s":["03-0448","TS10"],"v":{"LTWM35U11NC204672":[0,1]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["LTW"]={"s":["03-0448","TS10"],"v":{"LTWM35U11NC204672":[0,1]},"m":{"03-0448":"lda-d32a"}};

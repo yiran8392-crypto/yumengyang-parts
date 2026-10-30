@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["JT2"]={"s":["15-0077","B58B30C","TS10"],"v":{"JT2DB45AXPW055589":[0,1,2]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["JT2"]={"s":["15-0077","B58B30C","TS10"],"v":{"JT2DB45AXPW055589":[0,1,2]},"m":{"15-0077":"0280142543"}};

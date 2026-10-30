@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["LMP"]={"s":["03-0457","15-0010","TS10"],"v":{"LMPJ11MA5LA003110":[0,1,2]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["LMP"]={"s":["03-0457","15-0010","TS10"],"v":{"LMPJ11MA5LA003110":[0,1,2]},"m":{"03-0457":"f01r00a166","15-0010":"f01r00ka11"}};

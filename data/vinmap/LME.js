@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["LME"]={"s":["TS10"],"v":{"LMELBL1P2NRC00679":[0]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["LME"]={"s":["TS10"],"v":{"LMELBL1P2NRC00679":[0]},"m":{}};

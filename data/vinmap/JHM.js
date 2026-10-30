@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["JHM"]={"s":["03-0231"],"v":{"JHMRN38502C202784":[0]}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["JHM"]={"s":["03-0231"],"v":{"JHMRN38502C202784":[0]},"m":{"03-0231":"30520-pna-007"}};
