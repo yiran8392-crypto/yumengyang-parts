@@ -16,3 +16,5 @@ __pycache__/
 
 # 下架备份（只在本机，恢复用）
 _backup/
+# 自测脚本 / 截图 / headless 浏览器 profile（本机用，不入库）
+_selftest/

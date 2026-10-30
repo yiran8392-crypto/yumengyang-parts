@@ -77,9 +77,10 @@ html[dir="rtl"] .langsel{padding:0 14px 0 36px;background-position:left 12px cen
 .searchbar svg{position:absolute;inset-inline-start:18px;width:21px;height:21px;fill:#8ba0b1;pointer-events:none}
 #q{
   width:100%;height:56px;border:0;outline:0;background:transparent;border-radius:14px;
-  padding:0 128px 0 52px;font-size:17px;color:var(--ink);font-family:inherit;
+  padding:0 56px 0 52px;font-size:17px;color:var(--ink);font-family:inherit;
 }
-html[dir="rtl"] #q{padding:0 52px 0 128px}
+/* 只有真的显示 Clear 按钮时才给右侧留位置，否则占位文字被砍掉一截 */
+#q.hasval{padding-inline-end:132px}
 #q::placeholder{color:#93a5b4}
 #q:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
 #clear{
@@ -130,12 +131,26 @@ html[dir="rtl"] .tsbd{text-align:right}
 }
 @media (max-width:600px){
   .topsell{margin-top:20px}
-  .ts-grid{grid-template-columns:1fr;gap:12px}
+  /* 六格卡两列：一列时首页 hero 高达 3700px，搜索框下面全是销量卡，结果区被顶到 4 屏之后 */
+  .ts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .ts-head h2{font-size:18px}
-  .tsbd b{font-size:19px}
+  .tsbd{padding:10px 12px 12px}
+  .tsbd b{font-size:15px;line-height:1.3}
+  .tsbd em{font-size:11.5px;margin-top:2px}
+  .tsbd .tsn{font-size:11.5px;margin-top:6px;padding:2px 7px}
 }
 
 /* ============ 结果区 ============ */
+/* 一旦有搜索词 / 级联筛选 / 品类筛选：热销六格和 hero 文案收起，结果区直接提到首屏
+   （首页 index.html 里 render() 会给 body 加 .searching） */
+body.searching .topsell,
+body.searching .ts-sub,
+body.searching .hero h1,
+body.searching .hero .sub,
+body.searching .herostat{display:none}
+body.searching .hero{padding-bottom:20px}
+body.searching .chips{margin-top:14px}
+
 main{max-width:1200px;margin:0 auto;padding:26px 20px 70px}
 .bar{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:4px 0 18px;flex-wrap:wrap}
 .count{font-size:15px;color:var(--muted)}
@@ -190,6 +205,16 @@ main{max-width:1200px;margin:0 auto;padding:26px 20px 70px}
   font-size:13.5px;cursor:pointer;font-family:inherit
 }
 .empty .tips button:hover{background:#eef4f8}
+.empty .fnote{margin:0 0 12px;font-size:13.5px;color:var(--muted)}
+.empty .fnote span{color:var(--faint);margin-inline-end:6px}
+.empty .fnote b{color:var(--ink);font-weight:600;background:#eef4f8;border:1px solid #dfe8ee;border-radius:6px;padding:2px 8px}
+.empty .tips.relax{margin-top:14px;padding-top:14px;border-top:1px dashed #e2e8ee}
+.empty .tips.relax button{background:#fff;border-color:#cfdae4;color:#33485c;font-weight:600}
+.empty .tips.relax button.strong{background:var(--navy);border-color:var(--navy);color:#fff}
+.empty .tips.relax button.strong:hover{filter:brightness(1.15);background:var(--navy)}
+.empty .emptywa{margin:20px 0 0}
+.empty .emptywa .btn-wa{display:inline-flex;gap:8px;font-size:14.5px;min-height:46px}
+.empty .emptynote{font-size:12.5px;color:var(--faint);margin:10px auto 0;max-width:520px}
 
 /* ============ 详情弹窗 ============ */
 .modal{
@@ -381,8 +406,8 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(
   .detail h2{font-size:22px}
   .kv{grid-template-columns:110px 1fr;font-size:14px}
   #q,#q::placeholder{font-size:16.5px}
-  #q{padding:0 112px 0 48px}
-  html[dir="rtl"] #q{padding:0 48px 0 112px}
+  #q{padding:0 48px}
+  #q.hasval{padding-inline-end:112px}
   .bar{gap:6px;margin-bottom:14px}
   .sitehead .wrap{padding:10px 16px;gap:10px}
   .sitehead nav{gap:2px;order:3;width:100%}
@@ -471,3 +496,19 @@ html[dir="rtl"] .crumbspan{direction:ltr;display:inline-block}
 .vsku em{color:#7a8f9e;font-style:normal;font-size:11px;margin-inline-start:4px}
 .vsku.on{background:#e2f0ea;color:#12603c;font-weight:700}
 @media (max-width:430px){.fsel{max-width:46%}}
+
+/* ---------- 移动端收尾（写在最后，压过前面的 760 / 430 断点） ---------- */
+@media (max-width:600px){
+  /* 23 个品类按钮在手机上会堆成 8~10 行、把 hero 撑到 1300px：改成一行横向滑动 */
+  .chips{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:8px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%)}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto}
+  /* 悬浮 WhatsApp 收成圆形按钮，别再横着一大条压住卡片和页脚 */
+  .fab{width:52px;height:52px;min-height:52px;padding:0;justify-content:center;gap:0}
+  .fab .fabt{display:none}
+  .fab svg{width:24px;height:24px}
+  footer .wrap{padding-bottom:88px}
+  .fsel{min-height:40px;font-size:14px}
+}

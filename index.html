@@ -70,7 +70,7 @@
 
 <main>
   <div class="bar">
-    <div class="count" id="count"></div>
+    <div class="count" id="count" role="status" aria-live="polite"></div>
     <div class="hint" id="hint"></div>
   </div>
   <div class="grid" id="grid"></div>
@@ -175,9 +175,9 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
   </div>
 </div>
 
-<a class="fab" href="https://wa.me/8615915859048?text=Hi%2C%20I%20need%20a%20quotation%20for%20auto%20parts." target="_blank" rel="noopener">
-  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
-  WhatsApp
+<a class="fab" href="https://wa.me/8615915859048?text=Hi%2C%20I%20need%20a%20quotation%20for%20auto%20parts." target="_blank" rel="noopener" aria-label="WhatsApp us">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
+  <span class="fabt">WhatsApp</span>
 </a>
 
 <script src="data/data.js"></script>
@@ -241,6 +241,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
     all.innerHTML = T('chip_all', 'All') + ' <b>' + TOTAL.toLocaleString() + '</b>';
     $chips.appendChild(all);
     CAT_LIST.forEach(function(c){
+      if(!c.n) return;   /* 0 个型号的品类不摆按钮：点进去必然是空结果 */
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'chip' + (state.cat === c.key ? ' on' : '');
@@ -302,14 +303,15 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
   var timer = null;
   $q.addEventListener('input', function(){
     $clear.classList.toggle('on', !!$q.value);
+    $q.classList.toggle('hasval', !!$q.value);
     clearTimeout(timer);
     timer = setTimeout(function(){ state.q = $q.value.trim(); render(true); }, 110);
   });
   $q.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){ $q.value = ''; state.q = ''; $clear.classList.remove('on'); render(true); }
+    if(e.key === 'Escape'){ $q.value = ''; state.q = ''; $clear.classList.remove('on'); $q.classList.remove('hasval'); render(true); }
   });
   $clear.addEventListener('click', function(){
-    $q.value = ''; state.q = ''; $q.focus(); $clear.classList.remove('on'); render(true);
+    $q.value = ''; state.q = ''; $q.focus(); $clear.classList.remove('on'); $q.classList.remove('hasval'); render(true);
   });
 
   function tokens(q){
@@ -361,19 +363,48 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
       '<div class="bd"><div class="model">' + esc(it.m) + '</div>' + alt + oe + xs + '</div></a>';
   }
 
+  /* ---------- 有搜索词 / 选了筛选 / 选了品类：收起热销六格，把结果区提到首屏 ---------- */
+  var WA_BASE = (function(){
+    var a = document.querySelector('.fab');
+    return (a && a.href) ? a.href.split('?')[0] : 'https://wa.me/8615915859048';
+  })();
+  var wasFilt = null;
+
+  function filtering(){
+    return !!(state.q || state.cat !== 'all' || SEL.b || SEL.m || SEL.y || SEL.d);
+  }
+  function bringResultsIntoView(){
+    var bar = document.querySelector('main .bar');
+    if(!bar) return;
+    var r = bar.getBoundingClientRect();
+    if(r.top >= 0 && r.top < window.innerHeight - 260) return;   /* 已经在首屏就别乱跳 */
+    var y = Math.max(0, r.top + (window.pageYOffset || document.documentElement.scrollTop || 0) - 10);
+    var soft = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    try { window.scrollTo({ top: y, behavior: soft ? 'smooth' : 'auto' }); }
+    catch(e){ window.scrollTo(0, y); }
+  }
+  function syncFilterUI(){
+    var f = filtering();
+    if(f === wasFilt) return;
+    wasFilt = f;
+    document.body.classList.toggle('searching', f);
+    if(f) bringResultsIntoView();
+  }
+
   function render(reset){
     if(reset){
       state.list = filter();
       state.shown = 0;
       $grid.innerHTML = '';
     }
+    syncFilterUI();
     var list = state.list, total = list.length;
     if(window.VIN) window.VIN.sync(state.q, total);
     if(!total){
       $grid.innerHTML = '';
       $morewrap.hidden = true;
       $count.textContent = T('no_match', 'No match');
-      $hint.textContent = '';
+      $hint.textContent = filtering() ? T('hint_relax', 'Loosen a filter or try another spelling') : '';
       showEmpty();
       return;
     }
@@ -401,19 +432,55 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
       $empty.innerHTML = window.VIN.fallbackHTML(kw);
       return;
     }
+    /* 级联筛选选满还 0 结果：把已选条件和「放宽」按钮直接摆出来，别让用户自己猜 */
+    var act = [];
+    if(SEL.b) act.push(['b', SEL.b]);
+    if(SEL.m) act.push(['m', SEL.m]);
+    if(SEL.y) act.push(['y', String(SEL.y)]);
+    if(SEL.d) act.push(['d', SEL.d + 'L']);
+    var fnote = act.length
+      ? '<p class="fnote"><span>' + esc(T('empty_filters', 'Active filters')) + '</span> ' +
+        act.map(function(p){ return '<b>' + esc(p[1]) + '</b>'; }).join(' · ') + '</p>'
+      : '';
+    var relax = act.length
+      ? '<div class="tips relax">' +
+        act.map(function(p){
+          return '<button type="button" data-drop="' + p[0] + '">' + esc(T('empty_drop', 'Remove')) +
+            ' ' + esc(p[1]) + ' ✕</button>';
+        }).join('') +
+        '<button type="button" class="strong" data-drop="all">' + esc(T('empty_reset', 'Reset all filters')) + '</button></div>'
+      : '';
+    var msg = 'Hi, I am looking for ' + (kw || '') +
+      (act.length ? ' (' + act.map(function(p){ return p[1]; }).join(' / ') + ')' : '') +
+      '. I could not find it on your website - can you check availability, price and MOQ?';
     $empty.innerHTML = '<div class="empty"><div class="big">🔍</div>' +
       '<h3>' + esc(T('no_match', 'No match')) + (kw ? '「' + esc(kw) + '」' : '') + '</h3>' +
+      fnote +
       '<p>' + esc(T('empty_p', 'Try the last 6 digits of the number, drop the hyphens (9091902248), or search an English model name (Camry / Golf / Audi A4).')) + '</p>' +
       '<div class="tips">' +
         '<button data-t="90919-02248">90919-02248</button>' +
         '<button data-t="WL18-AD001">WL18-AD001</button>' +
         '<button data-t="Camry">Camry</button>' +
         '<button data-t="Audi A4">Audi A4</button>' +
-      '</div></div>';
+      '</div>' + relax +
+      '<p class="emptywa"><a class="btn-wa sm" href="' + esc(WA_BASE + '?text=' + encodeURIComponent(msg)) +
+        '" target="_blank" rel="noopener">' +
+        esc(T('empty_wa', 'Ask us on WhatsApp — it may be off-catalogue')) + '</a></p>' +
+      '<p class="emptynote">' + esc(T('empty_note', 'We stock {n} part numbers and add new ones every week. Send the OE number or a photo.').replace('{n}', TOTAL.toLocaleString())) + '</p>' +
+      '</div>';
   }
   $empty.addEventListener('click', function(e){
-    var b = e.target.closest('button[data-t]'); if(!b) return;
-    $q.value = b.dataset.t; state.q = b.dataset.t; $clear.classList.add('on'); render(true);
+    var b = e.target.closest('button[data-t]');
+    if(b){ $q.value = b.dataset.t; state.q = b.dataset.t; $clear.classList.add('on'); $q.classList.add('hasval'); render(true); return; }
+    var d = e.target.closest('button[data-drop]');
+    if(!d) return;
+    var k = d.dataset.drop;
+    if(k === 'b' || k === 'all'){ SEL = { b: '', m: '', y: 0, d: 0 }; }
+    else if(k === 'm'){ SEL.m = ''; SEL.y = 0; SEL.d = 0; }
+    else if(k === 'y'){ SEL.y = 0; SEL.d = 0; }
+    else if(k === 'd'){ SEL.d = 0; }
+    fRebuild();
+    render(true);
   });
 
   $more.addEventListener('click', function(){ render(false); });
@@ -533,7 +600,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
     return out;
   }
   var dl = deepLink();
-  if(dl.q){ $q.value = dl.q; state.q = dl.q; $clear.classList.add('on'); }
+  if(dl.q){ $q.value = dl.q; state.q = dl.q; $clear.classList.add('on'); $q.classList.add('hasval'); }
   if(dl.cat){
     state.cat = dl.cat;
     [].forEach.call($chips.children, function(c){ c.classList.toggle('on', c.dataset.cat === dl.cat); });
