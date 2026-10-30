@@ -428,3 +428,30 @@ html[dir="rtl"] .crumbspan{direction:ltr;display:inline-block}
   .brandline .bl-cn{display:none}
   .sitehead .brand em{display:none}
 }
+
+/* ---------- VIN 车架号查询（首页搜索栏下方） ---------- */
+.vintabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.vtab{border:0;cursor:pointer;font-family:inherit;font-size:12.5px;line-height:1;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#dbe9f3;letter-spacing:.02em;transition:background .15s}
+.vtab:hover{background:rgba(255,255,255,.26)}
+.vtab.on{background:#fff;color:#0d3b57;font-weight:700}
+.vinpanel{margin:12px 0 0}
+.vinpanel[hidden]{display:none}
+.vinbox{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 12px 34px rgba(4,18,30,.22);color:var(--ink);text-align:start}
+.vinhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vinbadge{background:#0d3b57;color:#fff;font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 7px;border-radius:6px}
+.vinraw{font-size:15px;font-weight:700;letter-spacing:.08em;font-variant-numeric:tabular-nums;word-break:break-all}
+.vinok{color:#137a45;font-size:12.5px}
+.vinbad{color:#b3402a;font-size:12.5px}
+.vinwarn{color:#a8600a;font-size:11.5px}
+.vinbox dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:12px 0 0;font-size:13.5px}
+.vinbox dt{color:#6b7d8c;white-space:nowrap}
+.vinbox dd{margin:0;min-width:0;word-break:break-word}
+.vinbox dd em{color:#8698a9;font-style:normal;font-size:12px}
+.vsub{color:#8698a9;font-size:12px}
+.vinnote{font-size:12.5px;line-height:1.55;color:#6b7d8c;margin:10px 0 0}
+.vinempty .tips button{cursor:pointer;font-family:inherit}
+.vinempty .vinwa{display:inline-block;background:#25d366;color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:11px;text-decoration:none;margin-top:6px}
+@media (max-width:430px){
+  .vinbox dl{grid-template-columns:1fr;gap:2px 0}
+  .vinbox dt{margin-top:6px}
+}

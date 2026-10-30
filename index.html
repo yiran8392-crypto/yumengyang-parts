@@ -35,6 +35,14 @@
       <input id="q" type="search" autocomplete="off" spellcheck="false" data-i18n-ph="home_ph" placeholder="OE number / cross-reference / SKU / model — e.g. 90919-02248, WL18-AD001, Camry">
       <button id="clear" type="button" data-i18n="clear">Clear</button>
     </div>
+    <div class="vintabs" id="vintabs" role="group" aria-label="Search mode">
+      <button type="button" class="vtab on" data-mode="auto" data-i18n="vin_tab_auto">Auto</button>
+      <button type="button" class="vtab" data-mode="oe" data-i18n="vin_tab_oe">OE</button>
+      <button type="button" class="vtab" data-mode="sku" data-i18n="vin_tab_sku">SKU</button>
+      <button type="button" class="vtab" data-mode="model" data-i18n="vin_tab_model">Model</button>
+      <button type="button" class="vtab" data-mode="vin" data-i18n="vin_tab_vin">VIN 17</button>
+    </div>
+    <div class="vinpanel" id="vinpanel" hidden></div>
     <section class="topsell" aria-labelledby="topsh">
       <div class="ts-head">
         <h2 id="topsh"><span data-i18n="top_h2">Best sellers</span><span class="zh-extra"> 热销品类</span></h2>
@@ -164,6 +172,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
 </a>
 
 <script src="data/data.js"></script>
+<script src="assets/vin.js"></script>
 <script>
 (function(){
   "use strict";
@@ -259,6 +268,11 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
 
   function filter(){
     var tk = tokens(state.q), cat = state.cat;
+    /* VIN 车架号：17 位 / VIN 模式下 6、8 位前缀，交给 assets/vin.js 解析 */
+    if(window.VIN && window.VIN.match(state.q)){
+      var vr = window.VIN.results(state.q);
+      return cat === 'all' ? vr : vr.filter(function(it){ return it.c === cat; });
+    }
     var out = [];
     for(var i=0;i<ALL.length;i++){
       var it = ALL[i];
@@ -303,6 +317,7 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
       $grid.innerHTML = '';
     }
     var list = state.list, total = list.length;
+    if(window.VIN) window.VIN.sync(state.q, total);
     if(!total){
       $grid.innerHTML = '';
       $morewrap.hidden = true;
@@ -330,6 +345,11 @@ X1 X2 X5 X6 730 740">7585492-02</a><a href="c/f01r00e024.html" title="五菱宏�
 
   function showEmpty(){
     var kw = state.q;
+    /* VIN 识别不到品牌 / 品牌库里没有适配：给照片 + WhatsApp 兜底，不留白 */
+    if(window.VIN && window.VIN.match(kw)){
+      $empty.innerHTML = window.VIN.fallbackHTML(kw);
+      return;
+    }
     $empty.innerHTML = '<div class="empty"><div class="big">🔍</div>' +
       '<h3>' + esc(T('no_match', 'No match')) + (kw ? '「' + esc(kw) + '」' : '') + '</h3>' +
       '<p>' + esc(T('empty_p', 'Try the last 6 digits of the number, drop the hyphens (9091902248), or search an English model name (Camry / Golf / Audi A4).')) + '</p>' +
