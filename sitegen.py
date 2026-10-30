@@ -30,7 +30,22 @@ DEFAULT_CFG = {
     "whatsapp": "8615915859048",
     "company_en": "Guangzhou Yumengyang Auto Parts Co., Ltd.",
     "company_cn": "广州驭盟扬汽车零部件有限公司",
+    # 页脚公司信息：邮箱是占位（邮箱开通后，在 站点设置.txt 里加一行 邮箱=sales@真实域名 即可）
+    "email": "sales@yumengyang.com",
+    "address_en": "Guangzhou, Guangdong, China",
+    "address_cn": "中国 · 广东省广州市",
+    "hours": "Mon–Sat 09:00–18:00 (GMT+8)",
 }
+
+# 首页信任条 / 产品页条款块用的口径。
+# 只放公司能给的说法：质保区间、退货率、电喷件覆盖率、支持小批量。
+# 价格、库存、MOQ 具体数量、交期天数一律不写死（见《怎么用.md》：内部数据不对外）。
+TRUST = [
+    ("12–24 mo", "trust_warranty", "Warranty on every part"),
+    ("0.03%", "trust_return", "Return rate"),
+    ("≈95%", "trust_cover", "EFI parts covered"),
+    ("Small batch", "trust_moq", "Orders accepted"),
+]
 
 # 品牌显示（别在模板里散着写名字，改一处全站生效）
 # translate="no" + class="notranslate" 是给浏览器自动翻译看的：Edge / Chrome / iOS Safari
@@ -40,6 +55,12 @@ BRAND_EN = "Yumengyang"
 BRAND_EN2 = "Auto Parts"
 BRAND_CN = "广州驭盟扬汽配"
 NOTRANSLATE = 'translate="no"'
+
+# 内联 SVG favicon：省掉每个页面一次 /favicon.ico 404 请求（3G 上有用）
+FAVICON = ('<link rel="icon" href="data:image/svg+xml,'
+           "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+           "%3Crect width='32' height='32' rx='7' fill='%230d2233'/%3E"
+           "%3Ccircle cx='16' cy='16' r='7' fill='%23e8622a'/%3E%3C/svg%3E\">")
 
 # 界面多语言：文案字典在 assets/i18n.js（全站共用一个文件，页面里只放 data-i18n 标记）。
 # 这里只负责语言切换器的 HTML 和“首屏防闪”的小脚本。
@@ -100,7 +121,9 @@ def load_cfg():
         alias = {
             "域名": "site_url", "site_url": "site_url", "网址": "site_url",
             "whatsapp": "whatsapp", "whatsapp号": "whatsapp", "号码": "whatsapp",
-            "电话": "whatsapp",
+            "电话": "whatsapp", "邮箱": "email", "email": "email",
+            "地址": "address_en", "address": "address_en",
+            "工作时间": "hours", "hours": "hours",
         }
         for line in raw.splitlines():
             line = line.strip()
@@ -218,6 +241,228 @@ def money_free_note():
     return "Price and MOQ on request."
 
 
+def wa_display(num):
+    """8615915859048 -> +86 159 1585 9048（页脚用，看得懂的形式）"""
+    num = num or ""
+    if len(num) == 13 and num.startswith("86"):
+        return "+86 %s %s %s" % (num[2:5], num[5:9], num[9:])
+    return "+" + num
+
+
+# ------------------------------------------------------------------ 结构化数据
+def org_ld(cfg):
+    """Organization：公司名 / logo / 地址 / 联系方式 / 语言。全站每页都带。"""
+    base = cfg["site_url"] + "/"
+    ld = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": cfg["company_en"],
+        "alternateName": cfg["company_cn"],
+        "url": base,
+        "logo": rel_url(cfg, "assets/og/ignition-coils.jpg"),
+        "description": ("Chinese manufacturer and exporter of electronic fuel injection parts: ignition coils, "
+                        "fuel pumps, oxygen sensors, ABS sensors, spark plugs and sensors."),
+        "address": {"@type": "PostalAddress",
+                    "addressLocality": "Guangzhou",
+                    "addressRegion": "Guangdong",
+                    "addressCountry": "CN"},
+        "contactPoint": [{
+            "@type": "ContactPoint",
+            "contactType": "sales",
+            "telephone": "+" + cfg["whatsapp"],
+            "email": cfg["email"],
+            "areaServed": "Worldwide",
+            "availableLanguage": ["en", "zh", "ar", "ru"],
+        }],
+    }
+    return ld
+
+
+def website_ld(cfg, total):
+    """WebSite + SearchAction：站内搜索框指向首页 ?q=。"""
+    base = cfg["site_url"] + "/"
+    return {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "%s · OE / cross-reference lookup" % cfg["company_en"].split(" Co.")[0],
+        "alternateName": BRAND_CN,
+        "url": base,
+        "inLanguage": ["en", "zh", "ar", "ru"],
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {"@type": "EntryPoint", "urlTemplate": base + "?q={search_term_string}"},
+            "query-input": "required name=search_term_string",
+        },
+        "publisher": {"@type": "Organization", "name": cfg["company_en"], "url": base},
+    }
+
+
+def site_ld(cfg):
+    """全站（型号页 / 品类页 / 首页）都要带的 Organization + WebSite。"""
+    if not has_site(cfg):
+        return []
+    return [org_ld(cfg), website_ld(cfg, cfg.get("_total", 0))]
+
+
+# ------------------------------------------------------------------ 首页内容块
+# 文案：英文原文写在 HTML 里（data-i18n 兜底），zh / ar / ru 在 assets/i18n.js。
+FAQ_ITEMS = [
+    ("faq_q1", "What is your MOQ?",
+     "faq_a1", "MOQ depends on the part and the packing. Send us the models and quantities you need "
+               "and we confirm the MOQ line by line."),
+    ("faq_q2", "How long does delivery take?",
+     "faq_a2", "Stock items leave our Guangzhou warehouse within days. Production orders depend on "
+               "quantity — we confirm the exact shipping date in the quotation."),
+    ("faq_q3", "What warranty do you give?",
+     "faq_a3", "12 to 24 months depending on the part type. The exact term is written on the quotation "
+               "and the invoice, so it is the same for you and for us."),
+    ("faq_q4", "Can I return or exchange a part?",
+     "faq_a4", "Yes. Send photos of the problem and we replace or credit the faulty parts. Our return "
+               "rate is 0.03%, so it is rare."),
+    ("faq_q5", "Can I get samples for testing?",
+     "faq_a5", "Yes. Samples are available on request before a bulk order; the buyer covers the freight."),
+    ("faq_q6", "How do I pay?",
+     "faq_a6", "Bank transfer (T/T) is our standard term. The payment terms are confirmed on the "
+               "invoice before you pay."),
+]
+
+WHY = [
+    ("why_q_t", "OE-grade quality", "why_q_v",
+     "Built to OE specification for the electrics and sensors we make, under our own brand WEILI.",
+     '<path d="M12 3 5 6v5.4c0 4.4 3 8.2 7 9.6 4-1.4 7-5.2 7-9.6V6l-7-3z"/><path d="m9 12.2 2.1 2.1 4.2-4.2"/>'),
+    ("why_p_t", "About 1/3 of OEM price", "why_p_v",
+     "Factory-direct pricing, no importer and no distributor in between.",
+     '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><path d="M7.6 7.6h.01"/>'),
+    ("why_r_t", "24-hour quotation", "why_r_v",
+     "Send the OE number or a photo with quantity — a priced offer comes back within one working day.",
+     '<circle cx="12" cy="12" r="9"/><path d="M12 7.4V12l3.3 2.1"/>'),
+    ("why_s_t", "Worldwide shipping", "why_s_v",
+     "Guangzhou port to your door, with packing matched to the part so nothing is damaged on the way.",
+     '<circle cx="12" cy="12" r="9"/><path d="M3.2 9h17.6M3.2 15h17.6"/>'
+     '<path d="M12 3c2.2 2.4 3.3 5.7 3.3 9s-1.1 6.6-3.3 9c-2.2-2.4-3.3-5.7-3.3-9S9.8 5.4 12 3z"/>'),
+]
+
+
+def trust_html(cfg):
+    cells = "".join(
+        '<div class="tb-cell"><b>%s</b><span data-i18n="%s">%s</span></div>'
+        % (esc(v), k, esc(lbl)) for v, k, lbl in TRUST)
+    return ('<section class="trustbar" aria-label="Company facts"><div class="wrap tb-wrap">%s</div></section>'
+            % cells)
+
+
+def why_html(cfg):
+    cards = "".join(
+        '<div class="wh"><span class="whi"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg></span>'
+        '<b data-i18n="%s">%s</b><p data-i18n="%s">%s</p></div>'
+        % (svg, kt, esc(t), kv, esc(v)) for kt, t, kv, v, svg in WHY)
+    return ('<section class="whyus" id="why">'
+            '<h2><span data-i18n="why_h">Why buyers overseas order from us</span>'
+            '<span class="zh-extra"> 为什么选我们</span></h2>'
+            '<p class="lead" data-i18n="why_lead">We are the factory, not a trading layer: the same part '
+            'numbers, tested, at a fraction of the OEM price.</p>'
+            '<div class="whgrid">%s</div></section>' % cards)
+
+
+SALES_RE = re.compile(r"Sales index:\s*(\*+)")
+
+
+def _sales_rank(it):
+    m = SALES_RE.search(it.get("r") or "")
+    return len(m.group(1)) if m else 0
+
+
+def hot_html(cfg, cats, by_cat, per_cat=2, keys=None):
+    """最新/热门型号横条：按数据里的 Sales index（*–*****）取，跨品类，带图带 OE。
+    无星级也不强凑：每个品类取前 per_cat 个有图的，按星级降序、再按下标稳定排序。"""
+    keys = keys or TOP_KEYS
+    picked = []
+    for key in keys:
+        items = [it for it in (by_cat.get(key) or []) if it.get("p")]
+        if not items:
+            continue
+        items = sorted(items, key=lambda it: (-_sales_rank(it), it["i"]))
+        picked.extend(items[:per_cat])
+    if not picked:
+        return ""
+    cards = []
+    for it in picked:
+        key = it["cat"]
+        slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
+        img = it.get("t") or it.get("p")
+        oe = it.get("oe") or it["m"]
+        cards.append(
+            '<a class="hotcard" href="c/%s.html">'
+            '<span class="hotimg"><img src="%s" width="160" height="160" loading="lazy" decoding="async" '
+            'alt="%s"></span>'
+            '<b>%s</b><span class="hotoe">OE %s</span><span class="hotcat" data-cat="%s">%s</span></a>'
+            % (esc(it["s"]), esc(img), esc("%s %s" % (one, oe)), esc(it["m"]), esc(oe), key, esc(en)))
+    return ('<section class="hotstrip" id="hot">'
+            '<div class="hs-head"><h2><span data-i18n="hot_h">Popular part numbers</span>'
+            '<span class="zh-extra"> 热门型号</span></h2>'
+            '<a class="hs-all" href="category/index.html"><span data-i18n="hot_all">All categories</span> →</a></div>'
+            '<p class="hs-sub" data-i18n="hot_sub">Best-selling models this season — every card opens the '
+            'fitment list, photos and a WhatsApp quote button.</p>'
+            '<div class="hotgrid">%s</div></section>' % "".join(cards))
+
+
+def faq_html(cfg):
+    items = "".join(
+        '<details class="fq"%s><summary><span data-i18n="%s">%s</span></summary>'
+        '<div class="fqa" data-i18n="%s">%s</div></details>'
+        % (" open" if i == 0 else "", qk, esc(q), ak, esc(a))
+        for i, (qk, q, ak, a) in enumerate(FAQ_ITEMS))
+    return ('<section class="faq" id="faq">'
+            '<h2><span data-i18n="faq_h">Frequently asked questions</span>'
+            '<span class="zh-extra"> 常见问题</span></h2>'
+            '<p class="lead" data-i18n="faq_lead">Six things buyers ask before the first order. '
+            'Anything else — send it on WhatsApp, we answer in one working day.</p>'
+            '%s</section>' % items)
+
+
+def faq_ld(cfg):
+    """FAQPage：跟上面 FAQ_ITEMS 同一份文案，避免正文和结构化数据对不上。"""
+    return {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [{"@type": "Question", "name": q,
+                        "acceptedAnswer": {"@type": "Answer", "text": a}}
+                       for _qk, q, _ak, a in FAQ_ITEMS],
+    }
+
+
+def homefoot_html(cfg, total):
+    wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
+    return """<footer class="homefoot"><div class="wrap fgrid">
+<section class="fcol">
+  <b class="notranslate" %(nt)s>%(cn)s</b>
+  <p class="notranslate" %(nt)s>%(en)s</p>
+  <p data-i18n="foot_addr">%(addr)s</p>
+</section>
+<section class="fcol">
+  <h3 data-i18n="foot_contact">Contact</h3>
+  <p><a href="%(wa)s" target="_blank" rel="noopener">WhatsApp %(wanum)s</a></p>
+  <p><span data-i18n="foot_email">Email</span>: <a href="mailto:%(mail)s">%(mail)s</a></p>
+  <p><span data-i18n="foot_hours">Working hours</span>: %(hours)s</p>
+</section>
+<section class="fcol">
+  <h3 data-i18n="foot_links">Find a part</h3>
+  <p><a href="index.html" data-i18n="lookup">OE / cross-reference lookup</a></p>
+  <p><a href="category/index.html" data-i18n="all_cat_h1">All product categories</a></p>
+  <p><a href="sitemap.xml" data-i18n="sitemap">Sitemap</a></p>
+</section>
+</div>
+<div class="wrap fbot">
+  <span data-i18n="foot_parts">Part numbers · real photos · fitment data</span>
+  <span id="gen"></span>
+</div></footer>""" % {
+        "nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
+        "addr": esc(cfg["address_en"]), "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
+        "mail": esc(cfg["email"]), "hours": esc(cfg["hours"]),
+        "n": total, "ntxt": "{:,} part numbers · photos · fitment".format(total),
+    }
+
+
 # ------------------------------------------------------------------ 页面片段
 def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_list=None, noindex=False):
     """canonical / og:url / og:image 只在填了真实域名时才输出；
@@ -233,7 +478,7 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
         can = '\n<link rel="canonical" href="%s">' % esc(canonical)
         ogurl = '\n<meta property="og:url" content="%s">' % esc(canonical)
     ld = "".join('\n<script type="application/ld+json">%s</script>' % json.dumps(x, ensure_ascii=False)
-                 for x in (ld_list or []))
+                 for x in (site_ld(cfg) + (ld_list or [])))
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -247,11 +492,12 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">{ogurl}{img}
 <meta name="twitter:card" content="summary_large_image">
+{favicon}
 <link rel="stylesheet" href="../assets/style.css">
 {langboot}
 <script defer src="../assets/i18n.js"></script>{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
-                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT)
+                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON)
 
 
 def sitehead(cfg, active=""):
@@ -271,10 +517,19 @@ def sitehead(cfg, active=""):
 
 
 def sitefoot(cfg):
+    wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
     return """<footer class="sitefoot"><div class="wrap">
-<div><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></div>
-<div><a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> · <a href="../sitemap.xml" data-i18n="sitemap">Sitemap</a></div>
-</div></footer>""" % (NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]))
+<div class="sf-a"><b class="notranslate" %s>%s</b><br><span class="notranslate" %s>%s</span>
+<br><span data-i18n="foot_addr">%s</span> · <span data-i18n="foot_hours">Working hours</span>: %s</div>
+<div class="sf-b"><a href="%s" target="_blank" rel="noopener">WhatsApp %s</a> ·
+<a href="mailto:%s">%s</a><br>
+<a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
+<a href="../category/index.html" data-i18n="all_cat_h1">All product categories</a> ·
+<a href="../sitemap.xml" data-i18n="sitemap">Sitemap</a></div>
+</div></footer>""" % (NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
+                      esc(cfg["address_en"]), esc(cfg["hours"]),
+                      esc(wa), esc(wa_display(cfg["whatsapp"])),
+                      esc(cfg["email"]), esc(cfg["email"]))
 
 
 SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
@@ -336,23 +591,28 @@ def page_model(cfg, it, cat, related):
     page_path = "c/%s.html" % slug
     canonical = rel_url(cfg, page_path)
 
+    # Product schema 必备四件套：brand / sku / mpn(=OE 号) / image（没实拍图就退回品类分享图）
     ld = {
         "@context": "https://schema.org",
         "@type": "Product",
         "name": "%s %s" % (one, primary),
         "sku": it.get("m", ""),
-        "mpn": it.get("m", ""),
+        "mpn": it.get("oe") or it.get("m", ""),
         "brand": {"@type": "Brand", "name": it.get("b") or "WEILI"},
         "category": CAT_META[cat][1],
         "description": clean_text(desc),
+        "image": [rel_url(cfg, it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat)))],
+        "manufacturer": {"@type": "Organization", "name": cfg["company_en"]},
     }
     if has_site(cfg):
         ld["url"] = canonical
-    if it.get("p"):
-        ld["image"] = [rel_url(cfg, it["p"])]
     props = []
     if it.get("oe"):
         props.append({"@type": "PropertyValue", "name": "OE Number", "value": it["oe"]})
+    if it.get("m"):
+        props.append({"@type": "PropertyValue", "name": "Our SKU", "value": it["m"]})
+    if it.get("b"):
+        props.append({"@type": "PropertyValue", "name": "Brand", "value": it["b"]})
     for x in (it.get("x") or [])[:8]:
         props.append({"@type": "PropertyValue", "name": "Cross Reference", "value": x})
     if props:
@@ -382,11 +642,44 @@ def page_model(cfg, it, cat, related):
 
     rel_html = ""
     if related:
-        rel_html = ('<section class="pdp-block"><h2><span data-i18n="more">More</span> '
-                    '<span data-cat="%s">%s</span></h2><ul class="rel">%s</ul></section>' % (
-                        cat, esc(CAT_META[cat][1]),
-                        "".join('<li><a href="../c/%s.html">%s</a></li>'
-                                % (esc(r["s"]), esc(r.get("oe") or r["m"])) for r in related)))
+        cards = []
+        for r in related:
+            rimg = r.get("t") or r.get("p")
+            roe = r.get("oe") or r["m"]
+            pic2 = ('<span class="relimg"><img src="../%s" width="120" height="120" loading="lazy" '
+                    'decoding="async" alt="%s"></span>' % (esc(rimg), esc(roe))
+                    if rimg else '<span class="relimg none" aria-hidden="true"></span>')
+            cards.append('<a class="relcard" href="../c/%s.html">%s<b>%s</b><span class="rsku">%s</span></a>'
+                         % (esc(r["s"]), pic2, esc(roe), esc(r["m"])))
+        rel_html = ('<section class="pdp-block relblock"><h2><span data-i18n="rel_more_h">More</span> '
+                    '<span data-cat="%s">%s</span></h2>'
+                    '<p class="relnote" data-i18n="rel_note">Same category, same family — check the OE '
+                    'number before ordering.</p><div class="relgrid">%s</div></section>'
+                    % (cat, esc(CAT_META[cat][1]), "".join(cards)))
+
+    terms = """<section class="pdp-block terms">
+<h2 data-i18n="block_terms">Warranty, lead time, MOQ &amp; samples</h2>
+<div class="tgrid">
+  <div class="tc"><b data-i18n="t_warranty">Warranty</b>
+    <span data-i18n="t_warranty_v">12–24 months depending on the part type. The exact term is written on the quotation and the invoice.</span></div>
+  <div class="tc"><b data-i18n="t_lead">Lead time</b>
+    <span data-i18n="t_lead_v">Stock items leave our Guangzhou warehouse in days; production depends on quantity. We confirm the date per order.</span></div>
+  <div class="tc"><b data-i18n="t_moq">MOQ</b>
+    <span data-i18n="t_moq_v">Set per model and packing. Send your list and we confirm the MOQ line by line — small first orders are fine.</span></div>
+  <div class="tc"><b data-i18n="t_sample">Samples</b>
+    <span data-i18n="t_sample_v">Available on request before a bulk order for testing; the buyer covers the freight.</span></div>
+</div>
+</section>"""
+
+    cta_text = ("Hi, please quote %s%s. Quantity: ____. Vehicle / year: ____. Ship to: ____."
+                % (it.get("m"), (" (OE %s)" % it["oe"]) if it.get("oe") else ""))
+    big_cta = """<section class="pdp-cta">
+<div class="pcta-t"><b data-i18n="cta_h">Need a price for this part?</b>
+<span data-i18n="cta_p">Send the model and the OE number on WhatsApp — we reply with the price, MOQ and packing within one working day.</span></div>
+<a class="btn-wa big" href="%s" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
+  <span data-i18n="cta_btn" data-v-n="%s">WhatsApp: %s</span></a>
+</section>""" % (esc(wa_link(cfg, cta_text)), esc(it["m"]), esc(it["m"]))
 
     total_txt = "{:,}".format(cfg.get("_total", 0))
     body = """<body class="pdp">
@@ -410,9 +703,11 @@ def page_model(cfg, it, cat, related):
     </div>
   </div>
 </div>
+%s
 <section class="pdp-block"><h2 data-i18n="block_app">Vehicle application</h2>%s</section>
 %s
 <section class="pdp-block"><h2 data-i18n="block_buy">Buying this part</h2><p data-i18n="buy_text" data-v-company="%s" data-v-brand="%s">%s supplies these parts under our own brand %s. Send us the OE number on WhatsApp and we will confirm availability, price, MOQ and packing. Samples for testing are available on request.</p></section>
+%s
 </main>
 %s
 </body></html>
@@ -420,10 +715,11 @@ def page_model(cfg, it, cat, related):
        cat, esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
        (" · brand " + esc(it["b"])) if it.get("b") else "",
        spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
-       total_txt, total_txt, app_html,
-       rel_html, esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
+       total_txt, total_txt,
+       terms, app_html, rel_html,
        esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
-       sitefoot(cfg))
+       esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
+       big_cta, sitefoot(cfg))
 
     og_img = it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat))
     return head_block(cfg, title, desc, canonical, og_img, "product", [ld, crumbs]) + "\n" + body
@@ -526,6 +822,7 @@ def page_404(cfg):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Page not found | Guangzhou Yumengyang Auto Parts</title>
 <meta name="robots" content="noindex,follow">
+{FAVICON}
 {LANG_BOOT}
 <script defer src="{js}"></script>
 <style>
@@ -560,7 +857,7 @@ html[dir="rtl"] .langsel{{padding:0 14px 0 34px;background-position:left 12px ce
 </html>
 """.format(LANG_BOOT=LANG_BOOT, js=esc(js), sel=sel, home=esc(home),
            wa=esc(wa_link(cfg, "Hi, I could not find a part on your website.")),
-           cn=esc(BRAND_CN), en=esc(cfg["company_en"]))
+           cn=esc(BRAND_CN), en=esc(cfg["company_en"]), FAVICON=FAVICON)
 
 
 def make_og_images(cfg, cats):
@@ -683,30 +980,45 @@ def home_links(cfg, cats, by_cat, limit=100):
             % (len(cats), total, len(cats), total, "".join(rows)))
 
 
+def _ld_block(items):
+    return "".join('\n<script type="application/ld+json">%s</script>' % json.dumps(x, ensure_ascii=False)
+                   for x in items)
+
+
 def inject_home(cfg, cats, by_cat):
+    """把首页里所有动态块按标记重写一遍（标记外面的手写 HTML 不动）。"""
     path = os.path.join(HERE, "index.html")
     if not os.path.exists(path):
         return
     h = open(path, encoding="utf-8").read()
-    block = home_links(cfg, cats, by_cat)
-    h2, n = re.subn(r"(<!-- HOME_LINKS_START -->)(.*?)(<!-- HOME_LINKS_END -->)",
-                    lambda m: m.group(1) + "\n" + block + "\n" + m.group(3),
-                    h, count=1, flags=re.S)
-    if not n:
-        return
-    cards = top_cards(cfg, cats, by_cat)
-    h2 = re.sub(r"(<!-- TOP_CARDS_START -->)(.*?)(<!-- TOP_CARDS_END -->)",
-                lambda m: m.group(1) + "\n" + cards + "\n" + m.group(3),
-                h2, count=1, flags=re.S)
-    h2 = h2.replace("https://your-domain.com", cfg["site_url"])
-    h2 = h2.replace("8615915859048", cfg["whatsapp"])
+    total = sum(len(v) for v in by_cat.values())
+
+    def put(text, name, block):
+        pat = r"(<!-- %s_START -->)(.*?)(<!-- %s_END -->)" % (name, name)
+        new, n = re.subn(pat, lambda m: m.group(1) + "\n" + block + "\n" + m.group(3),
+                         text, count=1, flags=re.S)
+        if not n:
+            print("  [warn] 首页缺少标记 %s_START/END，跳过" % name, flush=True)
+            return text
+        return new
+
+    h = put(h, "TOP_CARDS", top_cards(cfg, cats, by_cat))
+    h = put(h, "HOME_TRUST", trust_html(cfg))
+    h = put(h, "HOME_WHY", why_html(cfg))
+    h = put(h, "HOME_HOT", hot_html(cfg, cats, by_cat))
+    h = put(h, "HOME_FAQ", faq_html(cfg))
+    h = put(h, "HOME_FOOT", homefoot_html(cfg, total))
+    h = put(h, "SITE_LD", _ld_block(site_ld(cfg) + [faq_ld(cfg)]))
+    h = put(h, "HOME_LINKS", home_links(cfg, cats, by_cat))
+
+    h = h.replace("https://your-domain.com", cfg["site_url"])
+    h = h.replace("8615915859048", cfg["whatsapp"])
     if not has_site(cfg):
         # 没有真实域名：去掉会指错地方的 canonical / og:url / og:image
-        h2 = re.sub(r'\n<link rel="canonical"[^>]*>', "", h2)
-        h2 = re.sub(r'\n<meta property="og:url"[^>]*>', "", h2)
-        h2 = re.sub(r'\n<meta property="og:image"[^>]*>', "", h2)
-        h2 = re.sub(r'\n?<script type="application/ld\+json">\{"@context":"https://schema\.org","@type":"WebSite".*?</script>', "", h2, flags=re.S)
-    open(path, "w", encoding="utf-8", newline="\n").write(h2)
+        h = re.sub(r'\n<link rel="canonical"[^>]*>', "", h)
+        h = re.sub(r'\n<meta property="og:url"[^>]*>', "", h)
+        h = re.sub(r'\n<meta property="og:image"[^>]*>', "", h)
+    open(path, "w", encoding="utf-8", newline="\n").write(h)
 
 
 # ------------------------------------------------------------------ 主入口
