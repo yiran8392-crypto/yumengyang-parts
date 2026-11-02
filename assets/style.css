@@ -747,3 +747,70 @@ html[dir="rtl"] .lk b,html[dir="rtl"] .lkf{direction:ltr;text-align:right}
   .lkimg{width:48px;height:48px}
   .lkf{-webkit-line-clamp:2}
 }
+
+/* ============================================================
+   2026-11-02 · 分享/复制按钮 + 采购指南（guides/）
+   ============================================================ */
+.sharebar{display:contents}
+.btn-share,.btn-copy{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 16px;
+  border:1px solid var(--line2);border-radius:12px;background:#fff;color:#2f465a;
+  font:inherit;font-size:13.5px;font-weight:600;line-height:1.2;text-decoration:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s,color .15s
+}
+.btn-share svg,.btn-copy svg{width:18px;height:18px;flex:0 0 auto;fill:currentColor}
+.btn-share{color:#0f8a4a}
+.btn-share:hover{background:#eefaf2;border-color:#9fe0b8}
+.btn-copy:hover{background:#f7fafc;border-color:#b3c4d3}
+.btn-copy.ok{background:#eefaf2;border-color:#9fe0b8;color:#0f8a4a}
+.btn-share .sbt,.btn-copy .sbt{white-space:nowrap}
+html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1)}
+@media (max-width:520px){
+  .btn-share,.btn-copy{min-height:48px;padding:0 14px;font-size:13px}
+}
+
+/* 指南正文（沿用 .doc / .dsec 的骨架，补表格、列表、段落间距） */
+.guide{max-width:none}
+.doc .gp{margin:0}
+.doc .gp+.gp,.doc .gp+p,.doc .dsec p+p{margin-top:10px}
+.doc .dsec ul,.doc .dsec ol{margin:10px 0 2px;padding-inline-start:20px}
+.doc .dsec li{font-size:14.5px;color:#374d61;line-height:1.75;margin:0 0 7px}
+.doc .dsec li:last-child{margin-bottom:0}
+.doc .dsec li b{color:var(--ink)}
+.doc .dsec h2{margin-top:2px}
+.doc .dsec>.gtable{margin-top:12px}
+.gtable{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e9eff4;border-radius:10px}
+.gtable table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+.gtable th{text-align:start;padding:10px 14px;background:#f6f9fb;color:#5a7186;font-weight:700;
+  font-size:12px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid #e9eff4;white-space:nowrap}
+.gtable td{text-align:start;padding:10px 14px;border-top:1px solid #eef3f7;color:#33485c;line-height:1.55;
+  vertical-align:top}
+.gtable tbody tr:first-child td{border-top:0}
+.gtable code,.doc .dsec code{background:#f1f5f8;border:1px solid #e6edf2;border-radius:5px;padding:1px 6px;
+  font-size:13px;font-variant-numeric:tabular-nums}
+.gtip{background:#f7fbf8;border:1px solid #d8ecde;border-radius:10px;padding:11px 14px;margin-top:12px}
+.gmore{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:24px 0 0;padding-top:16px;
+  border-top:1px solid #eef2f5;font-size:13.5px}
+.gmore b{color:var(--faint);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.gmore a{background:#f4f7fa;border:1px solid #e6edf2;border-radius:8px;padding:7px 11px;text-decoration:none;color:#33485c}
+.gmore a:hover{background:#e9f1f6;border-color:var(--line2)}
+
+/* 指南目录卡 */
+.guidecards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin:20px 0 6px}
+.guidecard{display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:#fbfdfe;
+  border:1px solid #e6edf2;border-radius:12px;text-decoration:none;color:#2f465a;transition:transform .15s,box-shadow .15s,border-color .15s}
+.guidecard:hover{transform:translateY(-2px);border-color:#cfdae4;box-shadow:0 10px 24px rgba(13,34,51,.08)}
+.guidecard b{font-size:15.5px;line-height:1.35;color:var(--ink)}
+.guidecard span{font-size:13px;line-height:1.6;color:var(--muted)}
+.guidecard em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--accent);margin-top:auto}
+
+/* 首页底部「采购指南」一条 */
+.guidesstrip{max-width:1120px;margin:30px auto 0;padding:0 20px;display:flex;flex-wrap:wrap;gap:12px;
+  align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--line);
+  border-radius:14px;padding:18px 22px}
+.guidesstrip b{font-size:15px;color:var(--ink)}
+.guidesstrip p{margin:4px 0 0;font-size:13px;color:var(--muted);line-height:1.6}
+.guidesstrip .gsl{display:flex;flex-wrap:wrap;gap:8px}
+.guidesstrip a{display:inline-block;background:#f4f7fa;border:1px solid #e6edf2;border-radius:8px;
+  padding:8px 12px;text-decoration:none;font-size:13px;color:#33485c}
+.guidesstrip a:hover{background:#e9f1f6;border-color:var(--line2)}

@@ -23,6 +23,18 @@ import re
 import time
 from urllib.parse import quote
 
+try:
+    import guides_content
+except Exception:                      # 指南模块缺失时站点照常生成，只是没有 guides/
+    guides_content = None
+
+# 站点自己的号码（分享按钮不强制发给某个号，先让客户自己选人）
+SHARE_ICON = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 '
+              '10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>')
+COPY_ICON = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5l5-5M8 13.2l-1.6 1.6a3.6 3.6 0 005 5'
+             'l1.7-1.7M16 10.8l1.6-1.6a3.6 3.6 0 00-5-5l-1.7 1.7" fill="none" stroke="currentColor" '
+             'stroke-width="1.9" stroke-linecap="round"/></svg>')
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 CFG_FILE = os.path.join(HERE, "站点设置.txt")
 
@@ -477,6 +489,7 @@ def homefoot_html(cfg, total):
   <h3 data-i18n="foot_links">Find a part</h3>
   <p><a href="index.html" data-i18n="lookup">OE / cross-reference lookup</a></p>
   <p><a href="category/index.html" data-i18n="all_cat_h1">All product categories</a></p>
+  <p><a href="guides/index.html" data-i18n="guides_link">Buying guides</a></p>
   <p><a href="sitemap.xml" data-i18n="sitemap">Sitemap</a></p>
 </section>
 <section class="fcol">
@@ -497,7 +510,7 @@ def homefoot_html(cfg, total):
 
 # ------------------------------------------------------------------ 页面片段
 def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_list=None, noindex=False,
-               base="../"):
+               base="../", extra_scripts=""):
     """canonical / og:url / og:image 只在填了真实域名时才输出；
     域名还是占位符时，页面照样能双击打开、能部署，只是没有这些标签（不会指错地方）。
     base 是到站点根目录的相对前缀：c/ 和 category/ 里的页面是 "../"，根目录页面（政策页）是 ""。"""
@@ -531,9 +544,10 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 {favicon}
 <link rel="stylesheet" href="{base}assets/style.css">
 {langboot}
-<script defer src="{base}assets/i18n.js"></script>{ld}
+<script defer src="{base}assets/i18n.js"></script>{extra}{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
-                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON, base=base)
+                 ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON, base=base,
+                 extra=extra_scripts)
 
 
 def sitehead(cfg, active="", base="../"):
@@ -564,6 +578,7 @@ def sitefoot(cfg, base="../"):
 <a href="mailto:%(mail)s">%(mail)s</a><br>
 <a href="%(base)sindex.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
 <a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a><br>
+<a href="%(base)sguides/index.html" data-i18n="guides_link">Buying guides</a> ·
 %(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
 </div></footer>""" % {"nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
                       "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
@@ -849,6 +864,56 @@ def link_blocks_html(it):
     return "".join(out)
 
 
+SHARE_BRAND_WORDS = ("bosch", "delphi", "delco", "denso", "marelli", "siemens", "vdo", "sagem", "bremi",
+                     "ngk", "valeo", "hitachi", "huco", "beru", "champion", "motorcraft", "acdelco", "weili",
+                     "standard", "era", "facelift")
+
+
+def share_fit(it):
+    """分享文案里的那句适配：适配字段第一段常常是品牌（「Bosch Safe」），发出去像废话，
+    这种情况跳到第一段之后的车型段再挑一次。"""
+    apps = clean_text(it.get("a"))
+    hint = fitment_hint(apps, it.get("b"))
+    if not apps or "," not in apps:
+        return hint
+    segs = [s.strip() for s in re.split(r"[;|,]", apps) if s.strip()]
+    if len(segs) < 2:
+        return hint
+    first = segs[0].lower()
+    if any(w in first for w in SHARE_BRAND_WORDS):
+        alt = fitment_hint(", ".join(segs[1:]), it.get("b"))
+        if alt:
+            return alt
+    return hint
+
+
+def share_payload(cfg, it, cat):
+    """型号页的分享文案：料号 + OE + 一句适配 + 页面 URL（服务端先渲染英文版，
+    切到 zh / ar / ru 时 assets/share.js 就地重写 href 和按钮文字）。"""
+    sku = it.get("m") or ""
+    oe = (" (OE %s)" % it["oe"]) if it.get("oe") else ""
+    fit = share_fit(it)
+    page = "c/%s.html" % it["s"]
+    url = rel_url(cfg, page) if has_site(cfg) else page
+    text = "Check this part: %s%s. " % (sku, oe)
+    if fit:
+        text += "Fits %s. " % fit
+    text += "OE-grade replacement - price and MOQ on WhatsApp: %s" % url
+    return text, url, sku, it.get("oe") or "", fit
+
+
+def share_bar_html(cfg, it, cat):
+    """WhatsApp 分享 + 复制链接，两个小按钮，摆在原有 CTA 右边（同一条 flex 行，不另起一块）。"""
+    text, url, sku, oe, fit = share_payload(cfg, it, cat)
+    href = "https://wa.me/?text=" + quote(text, safe="")
+    return """<div class="sharebar" data-sharebar>
+  <a class="btn-share js-share" href="%s" target="_blank" rel="noopener nofollow"
+     data-url="%s" data-sku="%s" data-oe="%s" data-fit="%s"
+     title="Share on WhatsApp" aria-label="Share on WhatsApp">%s<span class="sbt">Share on WhatsApp</span></a>
+  <button type="button" class="btn-copy js-copy" data-url="%s" title="Copy link" aria-label="Copy link">%s<span class="sbt">Copy link</span></button>
+</div>""" % (esc(href), esc(url), esc(sku), esc(oe), esc(fit), SHARE_ICON, esc(url), COPY_ICON)
+
+
 def page_model(cfg, it, cat, related=None):
     one = type_name(cat)
     primary = it.get("oe") or it.get("m")
@@ -978,6 +1043,7 @@ def page_model(cfg, it, cat, related=None):
         <span data-i18n="btn_wa">WhatsApp for price &amp; MOQ</span>
       </a>
       <a class="btn-ghost" href="../index.html?q=%s" data-i18n="btn_search_all" data-v-n="%s">Search all %s parts</a>
+      %s
     </div>
   </div>
 </div>
@@ -993,14 +1059,15 @@ def page_model(cfg, it, cat, related=None):
        cat, esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
        (" · brand " + esc(it["b"])) if it.get("b") else "",
        spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
-       total_txt, total_txt,
+       total_txt, total_txt, share_bar_html(cfg, it, cat),
        terms, app_html, rel_html,
        esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
        esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
        big_cta, sitefoot(cfg))
 
     og_img = it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat))
-    return head_block(cfg, title, desc, canonical, og_img, "product", [ld, crumbs]) + "\n" + body
+    return head_block(cfg, title, desc, canonical, og_img, "product", [ld, crumbs],
+                      extra_scripts='\n<script defer src="../assets/share.js"></script>') + "\n" + body
 
 
 def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
@@ -1265,8 +1332,236 @@ try{if(document.documentElement.getAttribute('data-lang')==='zh')document.queryS
        addr_span(cfg), esc(cfg["hours"]),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
        sitefoot(cfg, base=""))
-    return head_block(cfg, title, desc, canon, "assets/og/ignition-coils.jpg", "website",
+    return head_block(cfg, title, desc, canon, "assets/og/og-default.webp", "website",
                       [ld], base="") + "\n" + body
+
+
+def make_og_default(cfg):
+    """全站默认分享卡 assets/og/og-default.webp（1200×630）：首页 / 政策页 / 指南页都用它。
+    型号页仍然用它自己的产品图（head_block 里按 it["p"] 传进去）。"""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except Exception:
+        return ""
+    outdir = os.path.join(HERE, "assets", "og")
+    os.makedirs(outdir, exist_ok=True)
+
+    def font(size, bold=True):
+        names = ["segoeuib.ttf", "arialbd.ttf"] if bold else ["segoeui.ttf", "arial.ttf"]
+        for n in names:
+            p = os.path.join(r"C:\Windows\Fonts", n)
+            if os.path.exists(p):
+                try:
+                    return ImageFont.truetype(p, size)
+                except Exception:
+                    pass
+        try:
+            return ImageFont.load_default(size)
+        except Exception:
+            return ImageFont.load_default()
+
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), (13, 34, 51))
+    d = ImageDraw.Draw(img)
+    for y in range(H):
+        t = y / float(H)
+        d.line([(0, y), (W, y)], fill=(int(13 + 12 * t), int(34 + 34 * t), int(51 + 46 * t)))
+    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    gd.ellipse([W - 300, -180, W + 160, 280], fill=(232, 98, 42, 58))
+    gd.ellipse([-160, H - 120, 260, H + 220], fill=(37, 211, 102, 26))
+    img = Image.alpha_composite(img.convert("RGBA"), glow).convert("RGB")
+    d = ImageDraw.Draw(img)
+
+    d.text((72, 74), "YUMENGYANG  ·  AUTO PARTS", font=font(24), fill=(232, 98, 42))
+    total = cfg.get("_total") or 0
+    head = "{:,}+ OE part numbers".format(total - (total % 100))
+    d.text((72, 176), head, font=font(78), fill=(255, 255, 255))
+    d.text((72, 288), "OE-grade  ·  1/3 of OEM price", font=font(42), fill=(159, 192, 214))
+    d.text((72, 356), "Ignition coils · ABS sensors · fuel pumps · oxygen sensors",
+           font=font(27, False), fill=(139, 166, 186))
+    d.line([(72, 442), (W - 72, 442)], fill=(40, 82, 112), width=2)
+    d.text((72, 474), "Guangzhou Yumengyang Auto Parts Co., Ltd.", font=font(28, False), fill=(207, 224, 236))
+    site = (cfg.get("site_url") or "").replace("https://", "").replace("http://", "").rstrip("/")
+    d.text((72, 524), site, font=font(30), fill=(255, 255, 255))
+    wa = cfg["whatsapp"]
+    wa_pretty = ("+%s %s %s %s" % (wa[:2], wa[2:5], wa[5:9], wa[9:])) if len(wa) == 13 and wa.startswith("86") else ("+" + wa)
+    d.text((72, 570), "WhatsApp %s  ·  reply within one working day" % wa_pretty,
+           font=font(24, False), fill=(139, 166, 186))
+    path = os.path.join(outdir, "og-default.webp")
+    img.save(path, "WEBP", quality=88, method=6)
+    return path
+
+
+# ------------------------------------------------------------------ 采购指南（SEO 内容页）
+GUIDE_LINK_RE = re.compile(r"\[\[L:([^|\]]+)\|([^\]]+)\]\]")
+
+
+def _norm_key(t):
+    return re.sub(r"[^a-z0-9]", "", (t or "").lower())
+
+
+def make_guide_resolver(items):
+    """[[L:...]] → 相对链接。找不到的型号退回首页搜索，绝不写出死链。"""
+    oe_map = {}
+    for it in items:
+        key = _norm_key(it.get("oe"))
+        if key and key not in oe_map:
+            oe_map[key] = it["s"]
+
+    def resolve(target):
+        t = (target or "").strip()
+        low = t.lower()
+        if low.startswith("cat/"):
+            key = t[4:]
+            return "../category/%s.html" % cat_slug(key) if key in CAT_META else "../category/index.html"
+        if low.startswith("part/"):
+            oe = t[5:].strip()
+            slug = oe_map.get(_norm_key(oe))
+            return "../c/%s.html" % slug if slug else "../index.html?q=%s" % quote(oe, safe="")
+        if low.startswith("guides/"):
+            return "./" + t[7:]
+        if low in ("home", "index.html", "/", ""):
+            return "../index.html"
+        return "../index.html"
+
+    return resolve
+
+
+def _guide_text(raw, resolve):
+    def rep(m):
+        return '<a href="%s">%s</a>' % (esc(resolve(m.group(1))), esc(m.group(2)))
+    return GUIDE_LINK_RE.sub(rep, raw or "")
+
+
+def guide_blocks_html(blocks, resolve):
+    """块状正文 → HTML。h2 开一段 .dsec（沿用政策页的排版）。"""
+    out, open_sec = [], False
+    for b in blocks:
+        kind = b[0]
+        if kind == "h2":
+            if open_sec:
+                out.append("</section>")
+            out.append('<section class="dsec"><h2>%s</h2>' % _guide_text(b[1], resolve))
+            open_sec = True
+            continue
+        if not open_sec:
+            out.append('<section class="dsec">')
+            open_sec = True
+        if kind in ("p", "tip"):
+            out.append('<p class="%s">%s</p>' % ("gtip" if kind == "tip" else "gp",
+                                                 _guide_text(b[1], resolve)))
+        elif kind in ("ul", "ol"):
+            out.append("<%s>%s</%s>" % (kind, "".join("<li>%s</li>" % _guide_text(x, resolve)
+                                                      for x in b[1]), kind))
+        elif kind == "table":
+            head = "".join("<th>%s</th>" % _guide_text(h, resolve) for h in b[1])
+            rows = "".join("<tr>%s</tr>" % "".join("<td>%s</td>" % _guide_text(c, resolve) for c in r)
+                           for r in b[2])
+            out.append('<div class="gtable"><table><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>'
+                       % (head, rows))
+    if open_sec:
+        out.append("</section>")
+    return "".join(out)
+
+
+def guide_url(cfg, slug):
+    return rel_url(cfg, "guides/%s.html" % slug)
+
+
+def page_guide(cfg, g, resolve):
+    slug = g["slug"]
+    canonical = guide_url(cfg, slug)
+    og = "assets/og/og-default.webp"
+    ld = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": g["title"],
+        "description": clean_text(g["desc"]),
+        "datePublished": g["date"],
+        "dateModified": g["date"],
+        "inLanguage": "en",
+        "articleSection": "Buying guides",
+        "author": {"@type": "Organization", "name": cfg["company_en"], "url": cfg["site_url"] + "/"},
+        "publisher": {"@type": "Organization", "name": cfg["company_en"],
+                      "logo": {"@type": "ImageObject", "url": rel_url(cfg, og)}},
+        "image": [rel_url(cfg, og)],
+        "mainEntityOfPage": {"@type": "WebPage", "@id": canonical},
+    }
+    if has_site(cfg):
+        ld["url"] = canonical
+    crumbs = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": rel_url(cfg, "")},
+        {"@type": "ListItem", "position": 2, "name": "Buying guides", "item": rel_url(cfg, "guides/index.html")},
+        {"@type": "ListItem", "position": 3, "name": g["h1"]},
+    ]}
+    others = [x for x in guides_content.GUIDES if x["slug"] != slug]
+    more = "".join('<a href="./%s.html">%s</a>' % (esc(x["slug"]), esc(x["nav"])) for x in others)
+    wa = wa_link(cfg, "Hi, I read your guide. I have a question about a part number.")
+    body = """<body class="docpage">
+%s
+<main class="policy">
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
+<a href="./index.html" data-i18n="guides_h">Buying guides</a> &rsaquo; <span>%s</span></nav>
+<article class="doc guide">
+  <h1>%s</h1>
+  <p class="docmeta">%s · %d min read · <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead">%s</p>
+  %s
+  <nav class="gmore"><b data-i18n="guides_more">More guides</b><a href="./index.html" data-i18n="guides_h">Buying guides</a>%s</nav>
+  <section class="doccontact">
+    <h2 data-i18n="foot_contact">Contact</h2>
+    <p class="docorg"><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></p>
+    <p class="docaddr">%s</p>
+    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+       <a class="btn-ghost" href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a></p>
+  </section>
+</article>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, "", base="../"), esc(g["h1"]), esc(g["h1"]),
+       "Published " + g["date"], g.get("minutes", 6), esc(g["lead"]),
+       guide_blocks_html(g["body"], resolve), more,
+       NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
+       esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
+    return head_block(cfg, g["title"] + " | Yumengyang Auto Parts", g["desc"], canonical, og, "article",
+                      [ld, crumbs], base="../") + "\n" + body
+
+
+def page_guides_index(cfg):
+    cards = []
+    for g in guides_content.GUIDES:
+        cards.append(
+            '<a class="guidecard" href="./%s.html"><b>%s</b><span>%s</span>'
+            '<em>%d min read →</em></a>' % (esc(g["slug"]), esc(g["h1"]), esc(g["desc"]),
+                                            g.get("minutes", 6)))
+    total_txt = "{:,}".format(cfg.get("_total", 0))
+    title = "Buying guides: OE numbers, VIN and ABS sensors | Yumengyang Auto Parts"
+    desc = ("Three practical guides for mechanics and parts buyers: find an ignition coil by OE number, "
+            "read a VIN, and diagnose an ABS sensor before ordering.")
+    body = """<body class="docpage">
+%s
+<main class="policy">
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="guides_h">Buying guides</span></nav>
+<article class="doc guide">
+  <h1 data-i18n="guides_h">Buying guides</h1>
+  <p class="doclead" data-i18n="guides_lead">Short, practical notes from our workshop and export desk: how to read a part number, how to place a car from its VIN, and how to diagnose before you order. Product data stays in English; the interface follows your language.</p>
+  <div class="guidecards">%s</div>
+  <section class="dsec">
+    <h2 data-i18n="guides_use">What you can do next</h2>
+    <ul>
+      <li><a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> — %s part numbers by OE, cross-reference or vehicle.</li>
+      <li><a href="../category/index.html" data-i18n="all_cat_h1">All product categories</a> — browse the full catalogue.</li>
+    </ul>
+  </section>
+</article>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, "", base="../"), "".join(cards), esc(total_txt), sitefoot(cfg, base="../"))
+    return head_block(cfg, title, desc, rel_url(cfg, "guides/index.html"), "assets/og/og-default.webp",
+                      "website", base="../") + "\n" + body
 
 
 def page_404(cfg):
@@ -1528,6 +1823,10 @@ def build_static(items, cats, log=print):
         counts[cat] = counts.get(cat, 0) + 1
 
     make_og_images(cfg, cats)
+    try:
+        make_og_default(cfg)                        # assets/og/og-default.webp（首页/政策页/指南页）
+    except Exception as e:
+        log("  [warn] 默认分享图没生成：%s" % e)
 
     cat_files = []          # 全部品类页（含 0 型号的）
     live_cat_files = []     # 只进 sitemap 的那批
@@ -1556,6 +1855,21 @@ def build_static(items, cats, log=print):
             f.write(page_policy(cfg, kind))
         policy_files.append(fname)
 
+    # 采购指南（guides/）：正文在 guides_content.py，这里只负责套模板 + 解析内链
+    guide_files = []
+    if guides_content is not None and getattr(guides_content, "GUIDES", None):
+        gdir = os.path.join(HERE, "guides")
+        os.makedirs(gdir, exist_ok=True)
+        resolve = make_guide_resolver(items)
+        with open(os.path.join(gdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page_guides_index(cfg))
+        guide_files.append("index.html")
+        for g in guides_content.GUIDES:
+            with open(os.path.join(gdir, g["slug"] + ".html"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(page_guide(cfg, g, resolve))
+            guide_files.append(g["slug"] + ".html")
+        log("  采购指南：%d 篇 + 目录页" % (len(guides_content.GUIDES)))
+
     # sitemap：lastmod 用本次生成的时间戳（带时区），内容是每页都变了，别再用「今天」糊过去
     today = __import__("datetime").datetime.now().astimezone().replace(microsecond=0).isoformat()
     urls = ['<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>'
@@ -1568,6 +1882,11 @@ def build_static(items, cats, log=print):
     for it in items:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
                     % (esc(rel_url(cfg, "c/%s.html" % it["s"])), today))
+    # 采购指南：内容页 priority 与品类页看齐，目录页略低
+    for fname in guide_files:
+        pr = "0.6" if fname == "index.html" else "0.7"
+        urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>%s</priority></url>'
+                    % (esc(rel_url(cfg, "guides/" + fname)), today, pr))
     for fname in policy_files:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>'
                     % (esc(rel_url(cfg, fname)), POLICY_DATE))
