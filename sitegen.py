@@ -398,6 +398,13 @@ def _sales_rank(it):
     return len(m.group(1)) if m else 0
 
 
+def public_notes(t):
+    """对外显示的备注：去掉内部「Sales index 销量指数」这一段（那是我们的热销打分，
+    不该给买家看），其余段（Qty/vehicle 每车用量等）照常保留。"""
+    segs = [s.strip() for s in re.split(r"[|｜]", t or "") if s.strip()]
+    return " | ".join(s for s in segs if not SALES_RE.search(s))
+
+
 def hot_html(cfg, cats, by_cat, per_cat=2, keys=None):
     """最新/热门型号横条：按数据里的 Sales index（*–*****）取，跨品类，带图带 OE。
     无星级也不强凑：每个品类取前 per_cat 个有图的，按星级降序、再按下标稳定排序。"""
@@ -603,8 +610,9 @@ def spec_rows(it):
         rows.append(("spec_fit", esc(it["a"])))
     else:
         rows.append(("spec_fit", '<span class="dash">&mdash;</span>'))
-    if it.get("r"):
-        rows.append(("spec_notes", esc(it["r"])))
+    notes = public_notes(it.get("r"))
+    if notes:
+        rows.append(("spec_notes", esc(notes)))
     rows.append(("our_sku", esc(it["m"])))
     label = dict(SPEC_LABELS)
     return "".join('<tr><th data-i18n="%s">%s</th><td>%s</td></tr>' % (k, label.get(k, k), v)
@@ -745,6 +753,8 @@ def pick_links(it, by_i, code_map, token_map):
 
     # ---- A：同 OE / 同交叉号 → 同品类+同车型关键词 → 同品类随机
     a = pick_same_code(it, by_i, code_map)
+    # 只有真的按 OE/交叉号命中时，这一块的标题才配叫 "Same OE"；退化成同品类兜底时改名
+    it["_lnk_oe_exact"] = bool(a)
     if len(a) < BLOCK_MIN:
         have = {x["i"] for x in a}
         a += [x for x in pick_same_cat_token(it, by_i, token_map, exclude=have, limit=LINK_EACH)
@@ -854,7 +864,10 @@ def link_blocks_html(it):
         return ""
     out = ['<section class="pdp-block linknet" aria-labelledby="lnk1">']
     if a:
-        out.append('<h2 id="lnk1"><span data-i18n="lk_oe_t">Same OE / cross-reference</span></h2>')
+        if it.get("_lnk_oe_exact"):
+            out.append('<h2 id="lnk1"><span data-i18n="lk_oe_t">Same OE / cross-reference</span></h2>')
+        else:
+            out.append('<h2 id="lnk1"><span data-i18n="lk_rel_t">More from this category</span></h2>')
         out.append('<div class="lkgrid">%s</div>' % "".join(_link_card(x) for x in a))
     if b:
         out.append('<h2 id="lnk2" class="lk2h"><span data-i18n="lk_veh_t">Popular for the same vehicle</span>'
@@ -864,27 +877,84 @@ def link_blocks_html(it):
     return "".join(out)
 
 
-SHARE_BRAND_WORDS = ("bosch", "delphi", "delco", "denso", "marelli", "siemens", "vdo", "sagem", "bremi",
-                     "ngk", "valeo", "hitachi", "huco", "beru", "champion", "motorcraft", "acdelco", "weili",
-                     "standard", "era", "facelift")
+SHARE_BRAND_WORDS = ("bosch", "delphi", "delco", "denso", "marelli", "magneti", "siemens", "motorola", "uaes",
+                     "continental", "vdo", "sagem", "bremi", "ngk", "valeo", "hitachi", "huco", "beru",
+                     "champion", "motorcraft", "acdelco", "weili", "standard", "era", "facelift")
+
+# 剥掉品牌词之后剩下的残渣（「Siemens gen」→「gen」这种），不能当成车型写进标题
+HINT_JUNK = {"gen", "new", "old", "model", "models", "type", "single", "multi", "point", "points",
+             "car", "cars", "etc", "engine", "diesel", "petrol", "series", "all", "set",
+             "euro", "efi", "mpi", "gdi", "obd", "at", "mt"}
+
+# 词级清洗表：品牌 + 空壳词一起，剥开头连续命中的词
+LEAD_DROP = set(SHARE_BRAND_WORDS) | HINT_JUNK | {"multi-point", "single-point", "new-model"}
+
+
+def _clean_lead(text):
+    """把开头连着的供应商品牌词、空壳词（gen / new / multi-point / engine …）和裸数字全部剥掉，
+    这样 "Delphi gen, Wuling, Refine" → "Wuling, Refine"、"7 gen Accord" → "Accord"。"""
+    words = (text or "").split()
+    while words:
+        w = words[0].strip(".,()[]:;/")
+        low = w.lower()
+        if not w:
+            words.pop(0)
+            continue
+        parts = [p for p in re.split(r"[/\-–—]", low) if p]
+        if low in LEAD_DROP or (parts and parts[0] in LEAD_DROP):
+            words.pop(0)          # 品牌名 / 空壳词（含 "Siemens/VDO"、"multi-point" 这种连写）
+            continue
+        if re.fullmatch(r"[:\-–—/]+", w):
+            words.pop(0)
+            continue
+        if re.fullmatch(r"[0-9]+", w):
+            words.pop(0)          # 开头的裸数字（"7 gen Accord" 的 7）对车型没意义
+            continue
+        break
+    return " ".join(words)
+
+
+def _ok_hint(h):
+    """兜底：剥完品牌后只剩 gen / new 之类的残渣时，宁可不写这句，也别写出 "for gen"。"""
+    h = (h or "").strip()
+    if len(h) < 3:
+        return ""
+    if re.search(r"[:|;]", h):
+        return ""
+    words = [w.strip(".,()") for w in h.split()]
+    if words and all(w.lower() in HINT_JUNK for w in words):
+        return ""
+    # 去掉紧挨着的重复词（"Mazda Mazda CX-5" → "Mazda CX-5"、"Kia Kia" → "Kia"）
+    dedup = []
+    for w in words:
+        if dedup and dedup[-1].lower() == w.lower():
+            continue
+        dedup.append(w)
+    return " ".join(dedup)
 
 
 def share_fit(it):
-    """分享文案里的那句适配：适配字段第一段常常是品牌（「Bosch Safe」），发出去像废话，
-    这种情况跳到第一段之后的车型段再挑一次。"""
+    """分享文案 / 页面标题里的那句适配。
+    规则：① 剥掉开头的供应商品牌和空壳词；② 没有适配数据时**不拿我方品牌当车型**
+    （否则会写出 "for WEILI" 这种没人看得懂的话）；③ 只剩一个光秃秃的品牌名时，
+    往后找一段「品牌+车型」的，读起来更像一条真正的适配说明。"""
     apps = clean_text(it.get("a"))
-    hint = fitment_hint(apps, it.get("b"))
-    if not apps or "," not in apps:
-        return hint
     segs = [s.strip() for s in re.split(r"[;|,]", apps) if s.strip()]
-    if len(segs) < 2:
+    # 注意第二个参数传空串：不要退回 it["b"]（那是我方 WEILI）
+    hint = _ok_hint(fitment_hint(_clean_lead(apps), ""))
+    if hint and len(hint.split()) >= 2:
         return hint
-    first = segs[0].lower()
-    if any(w in first for w in SHARE_BRAND_WORDS):
-        alt = fitment_hint(", ".join(segs[1:]), it.get("b"))
-        if alt:
-            return alt
-    return hint
+    if hint and len(segs) >= 2:
+        for seg in segs[1:6]:
+            alt = _ok_hint(fitment_hint(_clean_lead(seg), ""))
+            if alt and len(alt.split()) >= 2:
+                return alt
+    if hint:
+        return hint
+    # 整段剥完没东西了（例如整段只有 "Bosch"），退到后面几段再试一次
+    if len(segs) >= 2:
+        return _ok_hint(fitment_hint(_clean_lead(", ".join(segs[1:])), ""))
+    return ""
 
 
 def share_payload(cfg, it, cat):
@@ -917,15 +987,21 @@ def share_bar_html(cfg, it, cat):
 def page_model(cfg, it, cat, related=None):
     one = type_name(cat)
     primary = it.get("oe") or it.get("m")
-    hint = fitment_hint(it.get("a"), it.get("b"))
+    # share_fit 会跳过「Bosch / Delphi」这类供应商开头的段，避免写出 "... for Bosch Safe" 这种标题
+    hint = share_fit(it)
     head = "%s %s" % (primary, one)
-    title = head + ((" for " + hint) if hint else "")
-    suffix = " | Guangzhou Yumengyang Auto Parts"
-    if len(title) + len(suffix) > 78:
-        suffix = " | Yumengyang Auto Parts"
-    if len(title) + len(suffix) > 78:
+    tail_part = (" for " + hint) if hint else ""
+    # 搜索结果大约 60 字符就截断，这里按「车型+全称后缀 → 车型+短后缀 → 只留车型 → 只留品名」逐级降。
+    # 优先保车型关键词（买家最关心），品牌后缀放最后考虑。
+    title = None
+    for _tp, _sfx in ((tail_part, " | Yumengyang Auto Parts"), (tail_part, " | Yumengyang"),
+                      (tail_part, ""), ("", " | Yumengyang"), ("", "")):
+        _cand = head + _tp + _sfx
+        if len(_cand) <= 62:
+            title = _cand
+            break
+    if title is None:
         title = head
-    title += suffix
 
     apps = clean_text(it.get("a"))
     fits = apps[:120].rstrip(" ,;") if apps else ""
@@ -1066,7 +1142,7 @@ def page_model(cfg, it, cat, related=None):
        big_cta, sitefoot(cfg))
 
     og_img = it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat))
-    return head_block(cfg, title, desc, canonical, og_img, "product", [ld, crumbs],
+    return head_block(cfg, title, desc, canonical, og_img, "website", [ld, crumbs],
                       extra_scripts='\n<script defer src="../assets/share.js"></script>') + "\n" + body
 
 

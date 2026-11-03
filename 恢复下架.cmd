@@ -47,8 +47,8 @@ if errorlevel 1 goto rendfail
 echo      页面重建完成。
 
 echo [3/3] 同步内部版 …
-if exist "D:\欧鲸鲸\default-workspace\型号查询站-内部版\build_internal.py" (
-  "%PY%" "D:\欧鲸鲸\default-workspace\型号查询站-内部版\build_internal.py" >nul 2>&1
+if exist "D:\欧鲸鲸\default-workspace\02-型号查询站\内部版\build_internal.py" (
+  "%PY%" "D:\欧鲸鲸\default-workspace\02-型号查询站\内部版\build_internal.py" >nul 2>&1
   echo      内部版已重建（带价格，只在本机）。
 ) else (
   echo      没找到内部版，跳过。

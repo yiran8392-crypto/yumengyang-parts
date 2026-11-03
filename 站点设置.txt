@@ -22,6 +22,8 @@ WhatsApp=8615915859048
 省份=Guangdong
 国家=CN
 
-# 邮箱：sales@yumengyang.com 还没开通，开通后改这一行（页面上只显示邮箱本身）
-邮箱=sales@yumengyang.com
+# 邮箱：填公司企业微信里能收信的地址（页面上只显示邮箱本身）。
+# 2026-11-03 改成 kefu@ —— sales@yumengyang.com 尚未开通，发过去会退信。
+# 等公司在企业邮后台给 kefu 加了 sales@ 别名，把这一行换回 sales@yumengyang.com 重跑一次即可。
+邮箱=yumengyangkefu@yumengyang.com
 工作时间=Mon–Sat 09:00–18:00 (GMT+8)
