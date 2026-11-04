@@ -25,3 +25,16 @@ data/*.bak
 优化建议清单-*.md
 审计报告.md
 *优化建议*.md
+# 补录脚本的核对产物（含内部来源文件名，本机留档）
+解析失败清单*.txt
+新增型号清单-*.csv
+data/*.before-more
+data/*.bak-*
+_shots/
+_diag*
+_dry*
+_dq*
+_v3.txt
+_rr.out.txt
+_rerender*
+_verify*

@@ -704,6 +704,22 @@ def main():
     for idx, it in enumerate(items, 1):
         it["i"] = idx
 
+    # ---- 安全阀：build.py 只认那 5 份英文版 Excel。源文件如果挪走了，
+    # ---- 解析出来的条数会远少于现有 data.js，这种情况直接停，绝不覆盖。
+    try:
+        raw_old = open(DATA_JS, encoding="utf-8").read()
+        _k = "window.SITE_DATA="
+        _i = raw_old.find(_k)
+        old_n = len(json.JSONDecoder().raw_decode(raw_old[_i + len(_k):])[0].get("items") or []) \
+            if _i >= 0 else 0
+    except Exception:
+        old_n = 0
+    if old_n >= 1000 and len(items) < old_n * 0.9:
+        log("\n!! 只解析到 %d 条，而现有 data.js 有 %d 条，差太多，已停止（不会覆盖）。"
+            % (len(items), old_n))
+        log("   5 份英文版 Excel 可能被挪走了；日常更新请双击「更新数据.cmd」（走 update_all.py）。")
+        return 1
+
     log("\n[2/4] 抽图 + 压缩 …")
     stats = build_images(items)
 

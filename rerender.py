@@ -95,9 +95,15 @@ def main():
     except Exception as e:
         print("  数据清洗/拆包跳过：%s" % e, flush=True)
     items = to_items(payload)
+    cnt = {}
+    for it in items:
+        cnt[it["cat"]] = cnt.get(it["cat"], 0) + 1
     cats = [{"key": c["key"], "name": c.get("name") or c["key"],
-             "en": c.get("en") or c["key"], "n": c.get("n") or 0}
+             "en": c.get("en") or c["key"], "n": cnt.get(c["key"], 0)}
             for c in (payload.get("cats") or [])]
+    for key, n in sorted(cnt.items()):
+        if key not in [c["key"] for c in cats]:
+            cats.append({"key": key, "name": key, "en": key, "n": n})
     if not items:
         raise SystemExit("data.js 里一条 data 都没有，停下。")
     extra = register_extra_cats(cats)

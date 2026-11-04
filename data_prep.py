@@ -24,7 +24,7 @@ DATA_DIR = os.path.join(HERE, "data")
 DATA_JS = os.path.join(DATA_DIR, "data.js")
 MAP_DIR = os.path.join(os.path.dirname(HERE), "型号查询站-清洗映射")
 CHUNK = 240                 # 每个分片多少条
-CLEAN_VER = 6               # 字典/规则版本，改了它才会重新清洗
+CLEAN_VER = 9               # 字典/规则版本，改了它才会重新清洗
 
 CJK = re.compile(r"[\u4e00-\u9fa5]")
 
@@ -226,6 +226,20 @@ def _score(it):
     return s
 
 
+def _ascii_punct(t):
+    """全角标点 → 半角（源表里「465Q（新款）」这种，英文站上很难看）。"""
+    if not t:
+        return t
+    for a, b in (("（", "("), ("）", ")"), ("【", "["), ("】", "]"), ("／", "/"),
+                 ("；", ";"), ("，", ","), ("、", ","), ("。", "."), ("～", "~"),
+                 ("＋", "+"), ("－", "-"), ("％", "%"), ("＃", "#"), ("！", "!"), ("？", "?")):
+        t = t.replace(a, b)
+    t = re.sub(r"\(\s+", "(", t)
+    t = re.sub(r"\s+\)", ")", t)
+    t = re.sub(r"(?<=[0-9A-Za-z])\((?=\S)", " (", t)
+    return t
+
+
 def clean_payload(payload, log=print):
     """清洗 + 去重。原地改 payload，返回统计。"""
     items = payload.get("items") or []
@@ -253,7 +267,9 @@ def clean_payload(payload, log=print):
             stats["unresolved"][k] = stats["unresolved"].get(k, 0) + 1
         if a.strip() and not na.strip():
             stats["fit_empty"] += 1
-        it["a"] = na.strip()
+        it["a"] = _ascii_punct(na.strip())
+        it["n"] = _ascii_punct((it.get("n") or "").strip())
+        it["r"] = _ascii_punct((it.get("r") or "").strip())
 
         for k in ("m", "oe"):
             v = it.get(k) or ""
