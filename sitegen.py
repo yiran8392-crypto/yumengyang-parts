@@ -190,10 +190,18 @@ def slugify(t):
     return t[:70]
 
 
-def make_slugs(items):
-    """优先 OE 号，其次内部型号；重复的加 -2、-3 后缀。"""
+def make_slugs(items, keep_existing=False):
+    """优先 OE 号，其次内部型号；重复的加 -2、-3 后缀。
+    keep_existing=True：已经有 s 的条目一律不动（补 OE 字段时不会让老 URL 变地址）。"""
     used, clash = set(), []
+    if keep_existing:
+        for it in items:
+            s = (it.get("s") or "").strip()
+            if s:
+                used.add(s)
     for it in items:
+        if keep_existing and (it.get("s") or "").strip():
+            continue
         base = slugify(it.get("oe") or "") or slugify(it.get("m") or "") or ("part-%d" % it["i"])
         slug = base
         n = 2
@@ -2080,7 +2088,7 @@ def build_static(items, cats, log=print):
     cfg = load_cfg()
     cfg["_total"] = len(items)
     t0 = time.time()
-    clash = make_slugs(items)
+    clash = make_slugs(items, keep_existing=True)
 
     by_cat = {}
     for it in items:

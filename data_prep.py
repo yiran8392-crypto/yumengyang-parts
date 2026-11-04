@@ -408,7 +408,7 @@ def fill_slugs(payload, log=None):
             log("  [warn] 补 slug 跳过：%s" % e)
         return 0
     before = sum(1 for it in items if not (it.get("s") or "").strip())
-    sitegen.make_slugs(items)
+    sitegen.make_slugs(items, keep_existing=True)   # 已有地址不动，只给空 slug 的补
     if log and before:
         log("  补 slug：%d 条空 slug → %d 条" % (before, sum(1 for it in items if it.get("s"))))
     return before

@@ -57,6 +57,7 @@ def to_items(payload):
             "r": row.get("r") or "",
             "p": row.get("p") or "",
             "t": row.get("t") or "",
+            "s": row.get("s") or "",      # 带上已有 slug，重渲染时保持老 URL 不变（和前端 chunk 一致）
         })
     return items
 
