@@ -28,6 +28,11 @@ try:
 except Exception:                      # 指南模块缺失时站点照常生成，只是没有 guides/
     guides_content = None
 
+try:
+    import brands as brandlib          # 品牌 / 车系词典（/brand/、/vehicle/ 落地页用）
+except Exception:
+    brandlib = None
+
 # 站点自己的号码（分享按钮不强制发给某个号，先让客户自己选人）
 SHARE_ICON = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 '
               '10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>')
@@ -586,6 +591,8 @@ def sitefoot(cfg, base="../"):
 <a href="%(base)sindex.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
 <a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a><br>
 <a href="%(base)sguides/index.html" data-i18n="guides_link">Buying guides</a> ·
+<a href="%(base)sbrand/index.html">Browse by brand</a> ·
+<a href="%(base)svehicle/index.html">Browse by vehicle</a> ·
 %(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
 </div></footer>""" % {"nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
                       "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
@@ -594,7 +601,11 @@ def sitefoot(cfg, base="../"):
 
 
 SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
-               ("spec_fit", "Vehicle fitment"), ("spec_notes", "Notes"), ("our_sku", "Our SKU")]
+               ("spec_fit", "Vehicle fitment"), ("spec_fit_brands", "Fits brands"),
+               ("spec_notes", "Notes"), ("our_sku", "Our SKU")]
+
+
+LIVE_BRAND_SLUGS = set()      # 真正生成了品牌页的 slug（型号页只链这些，避免死链）
 
 
 def spec_rows(it):
@@ -610,6 +621,11 @@ def spec_rows(it):
         rows.append(("spec_fit", esc(it["a"])))
     else:
         rows.append(("spec_fit", '<span class="dash">&mdash;</span>'))
+    if it.get("_brands") and brandlib is not None:
+        bl = [b for b in it["_brands"] if brandlib.brand_slug(b) in LIVE_BRAND_SLUGS][:4]
+        if bl:
+            rows.append(("spec_fit_brands", '<div class="tags">%s</div>' % "".join(
+                '<a href="../brand/%s.html">%s</a>' % (brandlib.brand_slug(b), esc(b)) for b in bl)))
     notes = public_notes(it.get("r"))
     if notes:
         rows.append(("spec_notes", esc(notes)))
@@ -1232,6 +1248,198 @@ def page_cat_index(cfg, cats, by_cat):
     return head_block(cfg, title, desc, rel_url(cfg, "category/index.html"), "", "website") + "\n" + body
 
 
+# ------------------------------------------------------------------ 品牌页 / 车型页（长尾落地页）
+def _cat_groups(items):
+    """按品类分组，型号多的品类排前面。"""
+    g = {}
+    for it in items:
+        g.setdefault(it["cat"], []).append(it)
+    return [(k, g[k]) for k in sorted(g, key=lambda c: (-len(g[c]), c))]
+
+
+def _model_grid(lst, per_cat=40):
+    """型号网格（和品类页同一个 modgrid 样式）。"""
+    lis = "".join(
+        '<li><a href="../c/%s.html"><b>%s</b><span>%s</span></a></li>' % (
+            esc(it["s"]), esc(it.get("oe") or it["m"]),
+            esc(it["m"]) if it.get("oe") else "")
+        for it in lst[:per_cat])
+    return '<ul class="modgrid">%s</ul>' % lis
+
+
+def _cat_blocks(items, per_cat=40):
+    blocks = []
+    for cat, lst in _cat_groups(items):
+        slug, en, _one, _cn = CAT_META.get(cat, (cat, cat, cat, cat))
+        more = ""
+        if len(lst) > per_cat:
+            more = ('<p class="stat"><a href="../category/%s.html">See all %d %s</a></p>'
+                    % (slug, len(lst), esc(en.lower())))
+        blocks.append('<div class="modlist"><h2><a href="../category/%s.html">%s</a> <em>(%d)</em></h2>%s%s</div>'
+                      % (slug, esc(en), len(lst), _model_grid(lst, per_cat), more))
+    return "".join(blocks)
+
+
+def _chips(links):
+    """一排小链接（车型 / 品牌跳转）。"""
+    if not links:
+        return ""
+    return ('<p class="stat">%s</p>' % " · ".join(
+        '<a href="%s">%s</a>' % (esc(h), esc(t)) for h, t in links))
+
+
+def _itemlist_ld(name, cfg, items, path_prefix):
+    return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": name,
+        "numberOfItems": len(items),
+        "itemListElement": [
+            {"@type": "ListItem", "position": n + 1,
+             "url": rel_url(cfg, "%s/%s.html" % (path_prefix, it["s"])),
+             "name": it.get("oe") or it["m"]}
+            for n, it in enumerate(items[:50])],
+    }
+
+
+def _crumbs_ld(cfg, trail):
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": i + 1, "name": name,
+             **({"item": rel_url(cfg, path)} if has_site(cfg) and path is not None else {})}
+            for i, (name, path) in enumerate(trail)],
+    }
+
+
+def page_brands_index(cfg, entries, cover):
+    total = cover
+    title = "Vehicle brands — %d brand pages, %d part numbers | Yumengyang Auto Parts" % (len(entries), total)
+    desc = ("Browse our part numbers by vehicle brand: Toyota, Hyundai, Kia, BMW, Ford, Volkswagen and %d more. "
+            "OE numbers, cross-references and photos on every part." % max(0, len(entries) - 5))
+    cards = "".join(
+        '<a class="catcard" href="%s.html"><b>%s</b><em>%d models →</em></a>' % (
+            esc(e["slug"]), esc(e["canon"]), e["n"])
+        for e in entries)
+    body = """<body>
+%s
+<main class="cat-main">
+<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>Brands</span></nav>
+<div class="cat-head">
+  <h1>Browse by vehicle brand</h1>
+  <p>Parts are grouped by the brand they fit. %d brands, %d part numbers — each part links to its OE number,
+  cross-reference, photos and a WhatsApp quote button.</p>
+  <div class="stat"><a href="../index.html">Search by OE number</a> ·
+  <a href="../vehicle/index.html">Browse by vehicle</a> · <a href="../category/index.html">All categories</a></div>
+</div>
+<div class="catcards">%s</div>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, base="../"), len(entries), total, cards, sitefoot(cfg))
+    return head_block(cfg, title, desc, rel_url(cfg, "brand/index.html"), "", "website",
+                      [_crumbs_ld(cfg, [("Home", ""), ("Brands", "brand/index.html")])]) + "\n" + body
+
+
+def page_brand(cfg, e):
+    canon, slug, items = e["canon"], e["slug"], e["items"]
+    n = e["n"]
+    cats = _cat_groups(items)
+    cat_txt = ", ".join(CAT_META.get(k, (k, k))[1] for k, _ in cats[:4])
+    title = "%s parts — %d part numbers with OE numbers | Yumengyang" % (canon, n)
+    desc = ("%s: %d part numbers — %s. Every part lists its OE number, cross-reference and photo. "
+            "Ask for a price and MOQ on WhatsApp." % (canon, n, cat_txt))
+    trail = [("Home", ""), ("Brands", "brand/index.html"), (canon, None)]
+    model_links = [("../vehicle/%s.html" % brandlib.token_slug(t), t) for t, _n in e["tokens"][:14]]
+    others = [("../brand/%s.html" % o["slug"], o["canon"]) for o in e["others"][:18]]
+    body = """<body>
+%s
+<main class="cat-main">
+<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <a href="index.html">Brands</a> &rsaquo; <span>%s</span></nav>
+<div class="cat-head">
+  <h1>%s parts <span class="stat">(%d part numbers)</span></h1>
+  <p>Ignition coils, sensors, fuel pumps and other parts for %s. Each part links to its OE number,
+  cross-reference, fitment and photos. Send us the OE number on WhatsApp for price, MOQ and packing.</p>
+  <div class="stat"><a href="../index.html?q=%s">Search %s parts by OE number</a> ·
+  <a href="../category/index.html">All categories</a></div>
+</div>
+%s
+<div class="modlist"><h2>Models and vehicles</h2>%s</div>
+<div class="modlist"><h2>Other brands</h2>%s</div>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, base="../"), esc(canon), esc(canon), n, esc(canon),
+       esc(canon), esc(canon), _cat_blocks(items),
+       _chips(model_links), _chips(others), sitefoot(cfg))
+    ld = [_crumbs_ld(cfg, trail), _itemlist_ld("%s parts" % canon, cfg, items, "c")]
+    return head_block(cfg, title, desc, rel_url(cfg, "brand/%s.html" % slug), "", "website", ld) + "\n" + body
+
+
+def page_vehicles_index(cfg, entries, cover):
+    total = cover
+    title = "Vehicle fitment — %d models covered, %d part numbers | Yumengyang Auto Parts" % (len(entries), total)
+    desc = ("Find parts by vehicle: %d models and generations, %d part numbers with OE numbers and "
+            "cross-references." % (len(entries), total))
+    chips = " · ".join(
+        '<a href="%s.html">%s <em>(%d)</em></a>' % (esc(e["slug"]), esc(e["token"]), e["n"])
+        for e in entries)
+    body = """<body>
+%s
+<main class="cat-main">
+<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>Vehicles</span></nav>
+<div class="cat-head">
+  <h1>Browse by vehicle</h1>
+  <p>Model names taken from our fitment data. %d vehicles, %d part numbers. Pick a vehicle to see every
+  compatible part with its OE number.</p>
+  <div class="stat"><a href="../index.html">Search by OE number</a> ·
+  <a href="../brand/index.html">Browse by brand</a> · <a href="../category/index.html">All categories</a></div>
+</div>
+<div class="modlist"><h2>All vehicles (%d)</h2><p class="vehiclechips">%s</p></div>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, base="../"), len(entries), total, len(entries), chips, sitefoot(cfg))
+    return head_block(cfg, title, desc, rel_url(cfg, "vehicle/index.html"), "", "website",
+                      [_crumbs_ld(cfg, [("Home", ""), ("Vehicles", "vehicle/index.html")])]) + "\n" + body
+
+
+def page_vehicle(cfg, e):
+    token, slug, items = e["token"], e["slug"], e["items"]
+    n = e["n"]
+    cats = _cat_groups(items)
+    cat_txt = ", ".join(CAT_META.get(k, (k, k))[1] for k, _ in cats[:4])
+    title = "%s parts — %d part numbers by OE number | Yumengyang" % (token.title(), n)
+    desc = ("Parts for %s: %d part numbers — %s. OE numbers, cross-references and photos; "
+            "quote on WhatsApp." % (token.title(), n, cat_txt))
+    trail = [("Home", ""), ("Vehicles", "vehicle/index.html"), (token.title(), None)]
+    brand_chips = [("../brand/%s.html" % b["slug"], b["canon"])
+                   for b in e["brands"] if b["slug"] in LIVE_BRAND_SLUGS][:6]
+    others = [("../vehicle/%s.html" % o["slug"], o["token"]) for o in e["others"][:16]]
+    body = """<body>
+%s
+<main class="cat-main">
+<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <a href="index.html">Vehicles</a> &rsaquo; <span>%s</span></nav>
+<div class="cat-head">
+  <h1>%s parts <span class="stat">(%d part numbers)</span></h1>
+  <p>Parts that fit the %s. Each part lists its OE number, cross-reference, fitment and photos.
+  Send us the OE number on WhatsApp for price, MOQ and packing.</p>
+  <div class="stat"><a href="../index.html?q=%s">Search by OE number</a> ·
+  <a href="../category/index.html">All categories</a></div>
+</div>
+%s
+<div class="modlist"><h2>Fits vehicles from</h2>%s</div>
+<div class="modlist"><h2>Other vehicles</h2>%s</div>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, base="../"), esc(token.title()), esc(token.title()), n, esc(token.title()),
+       esc(token), _cat_blocks(items), _chips(brand_chips), _chips(others), sitefoot(cfg))
+    ld = [_crumbs_ld(cfg, trail), _itemlist_ld("%s parts" % token.title(), cfg, items, "c")]
+    return head_block(cfg, title, desc, rel_url(cfg, "vehicle/%s.html" % slug), "", "website", ld) + "\n" + body
+
+
 # ------------------------------------------------------------------ 政策页（英文为主 + 底部中文摘要）
 POLICY_DATE = "2026-10-30"
 POLICY_DATE_TXT = "30 October 2026"
@@ -1814,7 +2022,22 @@ def _ld_block(items):
                    for x in items)
 
 
-def inject_home(cfg, cats, by_cat):
+def home_brands_html(cfg, entries):
+    """首页「按品牌浏览」区块（品牌页的首页入口）。"""
+    if not entries:
+        return ""
+    chips = "".join(
+        '<a href="brand/%s.html">%s <em>%d</em></a>' % (esc(e["slug"]), esc(e["canon"]), e["n"])
+        for e in entries)
+    return ('<h2><span data-i18n="brand_h2">Browse parts by vehicle brand</span>'
+            '<span class="zh-extra"> 按品牌浏览</span></h2>'
+            '<p class="lead" data-i18n="brand_home_lead">Parts grouped by the vehicle brand they fit — '
+            'Toyota, Hyundai, Kia, BMW, Ford, Volkswagen and more. Every brand page lists all its part numbers '
+            'with OE numbers and cross-references.</p>'
+            '<p class="lst">%s</p>' % chips)
+
+
+def inject_home(cfg, cats, by_cat, brand_entries=None):
     """把首页里所有动态块按标记重写一遍（标记外面的手写 HTML 不动）。"""
     path = os.path.join(HERE, "index.html")
     if not os.path.exists(path):
@@ -1837,6 +2060,8 @@ def inject_home(cfg, cats, by_cat):
     h = put(h, "HOME_HOT", hot_html(cfg, cats, by_cat))
     h = put(h, "HOME_FAQ", faq_html(cfg))
     h = put(h, "HOME_FOOT", homefoot_html(cfg, total))
+    if brand_entries:
+        h = put(h, "HOME_BRANDS", home_brands_html(cfg, brand_entries))
     h = put(h, "SITE_LD", _ld_block(site_ld(cfg) + [faq_ld(cfg)]))
     h = put(h, "HOME_LINKS", home_links(cfg, cats, by_cat))
 
@@ -1891,6 +2116,19 @@ def build_static(items, cats, log=print):
     log("  内链索引：%d 个归一码 / %d 个车型关键词（%.1f 秒）"
         % (len(code_map), len(token_map), time.time() - t_link))
 
+    # 品牌识别：型号页里要显示「Fits brands」并链到 /brand/（品牌页的入链主要靠这一行）
+    global LIVE_BRAND_SLUGS
+    if brandlib is not None:
+        for it in items:
+            it["_brands"] = brandlib.brand_hits(it.get("a"))
+        _bc = {}
+        for it in items:
+            for b in it["_brands"]:
+                _bc[b] = _bc.get(b, 0) + 1
+        LIVE_BRAND_SLUGS = {brandlib.brand_slug(b) for b, n in _bc.items() if n >= 8}
+    else:
+        LIVE_BRAND_SLUGS = set()
+
     for idx, it in enumerate(items):
         cat = it["cat"]
         htmltext = page_model(cfg, it, cat)
@@ -1922,6 +2160,82 @@ def build_static(items, cats, log=print):
 
     with open(os.path.join(catdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(page_cat_index(cfg, cats, by_cat))
+
+    # ---- 品牌页 / 车型页（从适配车型数据自动分组的长尾落地页）
+    brand_files, vehicle_files = [], []
+    bentries = []
+    if brandlib is not None:
+        # 先算车型页（品牌页的「热门车型」chips 只链已经生成出来的页，不产生死链）
+        vmap = {}
+        for it in items:
+            for t in brandlib.vehicle_tokens(it.get("a")):
+                vmap.setdefault(t, []).append(it)
+        ventries = []
+        for tok in sorted(vmap, key=lambda t: (-len(vmap[t]), t)):
+            lst = vmap[tok]
+            if len(lst) < 8:
+                continue
+            bcnt = {}
+            for it in lst:
+                for b in it.get("_brands") or ():
+                    bcnt[b] = bcnt.get(b, 0) + 1
+            ventries.append({"token": tok, "slug": brandlib.token_slug(tok), "items": lst, "n": len(lst),
+                             "brands": [{"canon": b, "slug": brandlib.brand_slug(b)}
+                                        for b in sorted(bcnt, key=lambda x: (-bcnt[x], x))]})
+        for e in ventries:
+            e["others"] = [x for x in ventries if x["slug"] != e["slug"]]
+        live_tokens = {e["token"] for e in ventries}
+
+        bmap = {}
+        for it in items:
+            for b in it.get("_brands") or ():
+                bmap.setdefault(b, []).append(it)
+        bentries = []
+        for canon in sorted(bmap, key=lambda c: (-len(bmap[c]), c)):
+            lst = bmap[canon]
+            if len(lst) < 8:
+                continue
+            toks = {}
+            for it in lst:
+                for t in brandlib.vehicle_tokens(it.get("a")):
+                    if t in live_tokens:
+                        toks[t] = toks.get(t, 0) + 1
+            bentries.append({"canon": canon, "slug": brandlib.brand_slug(canon), "items": lst, "n": len(lst),
+                             "tokens": sorted(toks.items(), key=lambda kv: (-kv[1], kv[0]))})
+        for e in bentries:
+            e["others"] = [x for x in bentries if x["slug"] != e["slug"]]
+
+        bdir = os.path.join(HERE, "brand")
+        os.makedirs(bdir, exist_ok=True)
+        for fn in os.listdir(bdir):
+            if fn.endswith(".html"):
+                try:
+                    os.remove(os.path.join(bdir, fn))
+                except OSError:
+                    pass
+        for e in bentries:
+            with open(os.path.join(bdir, e["slug"] + ".html"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(page_brand(cfg, e))
+            brand_files.append(e["slug"] + ".html")
+        with open(os.path.join(bdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page_brands_index(cfg, bentries, len({it["i"] for it in items if it.get("_brands")})))
+
+        vdir = os.path.join(HERE, "vehicle")
+        os.makedirs(vdir, exist_ok=True)
+        for fn in os.listdir(vdir):
+            if fn.endswith(".html"):
+                try:
+                    os.remove(os.path.join(vdir, fn))
+                except OSError:
+                    pass
+        for e in ventries:
+            with open(os.path.join(vdir, e["slug"] + ".html"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(page_vehicle(cfg, e))
+            vehicle_files.append(e["slug"] + ".html")
+        with open(os.path.join(vdir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page_vehicles_index(cfg, ventries,
+                                        len({it["i"] for t, lst in vmap.items() if len(lst) >= 8 for it in lst})))
+        log("  品牌页 %d 个 / 车型页 %d 个" % (len(bentries), len(ventries)))
 
     # 政策页（根目录）：privacy.html / returns.html
     policy_files = []
@@ -1955,6 +2269,18 @@ def build_static(items, cats, log=print):
     for fname in live_cat_files:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>'
                     % (esc(rel_url(cfg, "category/" + fname)), today))
+    # 品牌页 / 车型页（长尾入口）
+    if brand_files or vehicle_files:
+        urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
+                    % (esc(rel_url(cfg, "brand/index.html")), today))
+        for fname in brand_files:
+            urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>'
+                        % (esc(rel_url(cfg, "brand/" + fname)), today))
+        urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>'
+                    % (esc(rel_url(cfg, "vehicle/index.html")), today))
+        for fname in vehicle_files:
+            urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
+                        % (esc(rel_url(cfg, "vehicle/" + fname)), today))
     for it in items:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
                     % (esc(rel_url(cfg, "c/%s.html" % it["s"])), today))
@@ -1976,7 +2302,7 @@ def build_static(items, cats, log=print):
 
     open(os.path.join(HERE, "404.html"), "w", encoding="utf-8", newline="\n").write(page_404(cfg))
 
-    inject_home(cfg, cats, by_cat)
+    inject_home(cfg, cats, by_cat, bentries or None)
 
     log("  型号页 %d 个（slug 冲突加后缀 %d 个）" % (len(items), len(clash)))
     log("  品类页 %d 个（%d 条/页）· sitemap %d 条 URL" % (len(cat_files), PER_PAGE, len(urls)))

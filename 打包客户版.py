@@ -20,7 +20,7 @@ ROOT = "型号查询站-客户版"
 
 FILES = ["index.html", "404.html", "privacy.html", "returns.html", "robots.txt",
          "sitemap.xml", "START-HERE.txt"]
-DIRS = ["assets", "data", "images", "category", "c", "guides"]
+DIRS = ["assets", "data", "images", "category", "c", "guides", "brand", "vehicle"]
 SKIP_EXT = (".py", ".md", ".txt", ".csv", ".xls", ".xlsx", ".cmd", ".zip", ".orig", ".bak")
 SKIP_NAME = ("catalog.js.bak", "data.js.before-more", ".DS_Store")
 

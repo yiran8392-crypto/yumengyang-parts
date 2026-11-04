@@ -394,11 +394,32 @@ def load_payload(path=DATA_JS):
     return payload
 
 
+def fill_slugs(payload, log=None):
+    """拆包前统一补 slug。
+    import_more 新导入的型号只写数据、不写 s，前端卡片链接会变成 c/p<id>.html ← 404；
+    sitegen.make_slugs 用同一套规则（OE 优先、冲突加 -2），已有 s 的条目重算结果不变。"""
+    items = payload.get("items") or []
+    if not items:
+        return 0
+    try:
+        import sitegen
+    except Exception as e:               # 模块缺失时不动，避免把数据写坏
+        if log:
+            log("  [warn] 补 slug 跳过：%s" % e)
+        return 0
+    before = sum(1 for it in items if not (it.get("s") or "").strip())
+    sitegen.make_slugs(items)
+    if log and before:
+        log("  补 slug：%d 条空 slug → %d 条" % (before, sum(1 for it in items if it.get("s"))))
+    return before
+
+
 def prepare(write=True, log=print):
-    """读 data.js → 清洗去重 → 写回 + 拆包。返回 (payload, stats)。"""
+    """读 data.js → 清洗去重 → 补 slug → 写回 + 拆包。返回 (payload, stats)。"""
     payload = load_payload()
     if payload.get("_clean") != CLEAN_VER:
         stats = clean_payload(payload, log=log)
+        fill_slugs(payload, log=log)
         if write:
             write_map(stats)
             write_data_js(payload)
@@ -406,6 +427,9 @@ def prepare(write=True, log=print):
     else:
         stats = {"mapping": {}, "unresolved": {}, "dedupe": [], "brand": 0, "fit": 0,
                  "unspecified": 0, "fit_empty": 0, "dup_removed": 0}
+        n_fill = fill_slugs(payload, log=log)
+        if n_fill and write:            # 补了 slug 就顺手写回，data.js 和 chunk 保持一致
+            write_data_js(payload)
         info = write_chunks(payload) if write else {}
         log("  数据已清洗过（v%d），直接拆包" % CLEAN_VER)
     if info:
