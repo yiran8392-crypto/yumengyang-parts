@@ -43,6 +43,7 @@ def main():
             if not os.path.isdir(base):
                 continue
             for r, _dirs, files in os.walk(base):
+                _dirs[:] = [d for d in _dirs if not d.startswith("_")]   # images/_v1 这类备份不进包
                 for f in files:
                     if f.startswith(".") or f in SKIP_NAME:
                         continue
