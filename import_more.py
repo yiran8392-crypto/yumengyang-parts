@@ -610,8 +610,20 @@ def main():
                 if note not in old_r:
                     it["r"] = (old_r + " | " + note).strip(" |")
                     changed = True
+            # 同 OE、不同编码（同件不同厂编 / 油气两用版之类）：
+            # 站点一个 OE 只留一个型号页（slug 按 OE），所以新编码不另开页面，
+            # 但要挂进交叉号——客户手里拿的是这个号也得搜得到、看得见。
+            if not pack_of and norm(g["m"]) != norm(it.get("m")):
+                it.setdefault("x", [])
+                if not any(norm(v) == norm(g["m"]) for v in it["x"]):
+                    it["x"].append(g["m"])
+                    note = "Also listed as %s" % g["m"]
+                    old_r = it.get("r") or ""
+                    if note not in old_r:
+                        it["r"] = (old_r + " | " + note).strip(" |")
+                    changed = True
             for o in [g["oe"]] + g["x"]:
-                if o and norm(o) != norm(it.get("oe")) and o not in it.get("x", []):
+                if o and norm(o) != norm(it.get("oe")) and not any(norm(v) == norm(o) for v in it.get("x", [])):
                     it.setdefault("x", []).append(o)
                     changed = True
             for fld, src in (("a", "a"), ("b", "b")):
@@ -641,6 +653,11 @@ def main():
     for g in added:
         todo_img.setdefault(norm(g["m"]), g)
     img_plan = {}
+    # 站上已有、但没有图的型号：源表里若有同编码的嵌入图，也一并补（只填缺，绝不覆盖已有图）
+    site_nopic = {}
+    for it in items:
+        if not (it.get("p") or "").strip() and (it.get("m") or "").strip():
+            site_nopic.setdefault(norm(it["m"]), it)
     for spec in specs():
         path = spec["file"]
         if not path.lower().endswith(".xlsx"):
@@ -661,10 +678,18 @@ def main():
             if not (1 <= rn <= len(rows)):
                 continue
             code = cell(rows[rn - 1], spec["code"]).replace(" ", "")
-            g = todo_img.get(norm(code))
-            if g is not None and norm(code) not in img_plan:
-                img_plan[norm(code)] = (path, media, g)
-    print("能配图的新型号：%d 个" % len(img_plan))
+            k = norm(code)
+            if k in img_plan:
+                continue
+            g = todo_img.get(k)
+            if g is None:
+                si = site_nopic.get(k)
+                if si is not None and si.get("c") == spec["cat"]:
+                    g = {"m": si["m"], "cat": si["c"], "_site": si}
+            if g is not None:
+                img_plan[k] = (path, media, g)
+    print("能配图的型号：%d 个（其中站上缺图的 %d 个）" % (
+        len(img_plan), sum(1 for v in img_plan.values() if "_site" in v[2])))
 
     # ---- 品名清洗（全站中文品名）
     renamed = 0
@@ -698,26 +723,27 @@ def main():
         zips[path] = z
         cat = g["cat"]
         base = img_base(g["m"])
+        target = g.get("_site") or g      # 站上缺图的：直接写回站点条目；新增型号：写进临时 g
         d = os.path.join(IMG_ROOT, cat)
         os.makedirs(os.path.join(d, "t"), exist_ok=True)
         full = os.path.join(d, base + ".webp")
         thumb = os.path.join(d, "t", base + ".webp")
         if os.path.exists(full):
-            g["p"] = "images/%s/%s.webp" % (cat, base)
-            g["t"] = "images/%s/t/%s.webp" % (cat, base)
+            target["p"] = "images/%s/%s.webp" % (cat, base)
+            target["t"] = "images/%s/t/%s.webp" % (cat, base)
             continue
         try:
             im = prep_img(z.read(media))
             save_webp(im, full, 82, FULL_BYTES)
             save_webp(fit(im, THUMB_EDGE), thumb, THUMB_Q)
-            g["p"] = "images/%s/%s.webp" % (cat, base)
-            g["t"] = "images/%s/t/%s.webp" % (cat, base)
+            target["p"] = "images/%s/%s.webp" % (cat, base)
+            target["t"] = "images/%s/t/%s.webp" % (cat, base)
             n_img += 1
         except Exception as e:
             img_fail.append((g["m"], str(e)[:60]))
         if i % 50 == 0:
             print("  图片 %d/%d（%.1fs）" % (i, len(img_plan), time.time() - t1))
-    print("新写产品图 %d 张，失败 %d" % (n_img, len(img_fail)))
+    print("写产品图 %d 张（含给站上缺图型号补的），失败 %d" % (n_img, len(img_fail)))
 
     # ---- 合并进 data.js
     base_i = max(it["i"] for it in items) if items else 0
