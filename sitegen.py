@@ -610,6 +610,7 @@ def sitefoot(cfg, base="../"):
 
 SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
                ("spec_fit", "Vehicle fitment"), ("spec_fit_brands", "Fits brands"),
+               ("spec_years", "Years"), ("spec_displ", "Displacement"), ("spec_engine", "Engine code"),
                ("spec_notes", "Notes"), ("our_sku", "Our SKU")]
 
 
@@ -634,6 +635,16 @@ def spec_rows(it):
         if bl:
             rows.append(("spec_fit_brands", '<div class="tags">%s</div>' % "".join(
                 '<a href="../brand/%s.html">%s</a>' % (brandlib.brand_slug(b), esc(b)) for b in bl)))
+    # 结构化适配信息（从适配车型文本里解析出来的，没解析到就不显示）
+    if it.get("y"):
+        rows.append(("spec_years", '<span style="font-variant-numeric:tabular-nums">%s</span>'
+                     % esc(", ".join(it["y"]))))
+    if it.get("d"):
+        rows.append(("spec_displ", '<div class="tags">%s</div>'
+                     % "".join("<span>%s</span>" % esc(x) for x in it["d"])))
+    if it.get("e"):
+        rows.append(("spec_engine", '<div class="tags">%s</div>'
+                     % "".join("<span>%s</span>" % esc(x) for x in it["e"])))
     notes = public_notes(it.get("r"))
     if notes:
         rows.append(("spec_notes", esc(notes)))

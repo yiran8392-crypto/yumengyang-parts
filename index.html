@@ -24,6 +24,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d2233'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23e8622a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <script>try{var l=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("ymy_lang")||"en").toLowerCase();l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":"en";var d=document.documentElement;d.setAttribute("data-lang",l);if(l==="ar")d.setAttribute("dir","rtl")}catch(e){}</script>
+<script defer src="assets/search_i18n.js"></script>
 <script defer src="assets/i18n.js"></script>
 </head>
 <body>
@@ -338,8 +339,24 @@ Mercedes Sprinter2500">A9065400117</a><a href="c/a-212-905-58-05.html" title="Fr
     $q.value = ''; state.q = ''; $q.focus(); $clear.classList.remove('on'); $q.classList.remove('hasval'); render(true);
   });
 
+  /* 四语搜索：中文 / 阿拉伯语 / 俄语里的品牌·车系·品类，先映射成英文检索词再匹配 */
+  var SI18N_KEYS = null;
+  function mapQuery(q){
+    var d = window.SEARCH_I18N;
+    if(!q || !d) return q;
+    if(!SI18N_KEYS){
+      SI18N_KEYS = Object.keys(d).sort(function(a,b){ return b.length - a.length; });
+    }
+    var out = q;
+    for(var i=0;i<SI18N_KEYS.length;i++){
+      var k = SI18N_KEYS[i];
+      if(out.indexOf(k) !== -1) out = out.split(k).join(" " + d[k] + " ");
+    }
+    return out;
+  }
+
   function tokens(q){
-    return q.split(/\s+/).map(norm).filter(Boolean);
+    return mapQuery(q).split(/\s+/).map(norm).filter(Boolean);
   }
 
   function filter(){
