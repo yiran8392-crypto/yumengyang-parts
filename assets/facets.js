@@ -14,6 +14,7 @@
   var STOP = /^(single|multi|point|pickup|van|truck|bus|sedan|wagon|hatchback|suv|mpv|diesel|petrol|gas|series|new|old|with|and|for|all|type|model|version|front|rear|left|right|4wd|2wd)$/i;
   var YEARP = /\b((?:19|20)\d{2})\s*[-–~至]\s*((?:19|20)\d{2}|现在|今|present|\+)?|\b(\d{2})\s*-\s*(\d{2})\b|\b((?:19|20)\d{2})\b/g;
   var DISP = /\b(\d\.\d)\s*(?:L|T|升)?/gi;
+  var NOW_YEAR = new Date().getFullYear();
   var brandRe = new Map();
   for (var i = 0; i < B.length; i++) {
     brandRe.set(B[i], new RegExp("\\b" + B[i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"));
@@ -39,17 +40,18 @@
     });
     YEARP.lastIndex = 0;
     while ((m = YEARP.exec(a))) {
-      if (m[1]) { y1 = +m[1]; y2 = m[2] && /^\d{4}$/.test(m[2]) ? +m[2] : (m[2] ? 2030 : y1); }
+      // "2019- / 2019-present" 这类没写结束年的，算到今年，绝不写成 2030
+      if (m[1]) { y1 = +m[1]; y2 = m[2] && /^\d{4}$/.test(m[2]) ? +m[2] : (m[2] ? NOW_YEAR : y1); }
       else if (m[3]) { y1 = 2000 + +m[3]; y2 = 2000 + +m[4]; if (y1 > y2) { var t = y1; y1 = y2; y2 = t; } }
       else if (m[5]) { y1 = +m[5]; y2 = y1; }
-      if (y1 >= 1970 && y1 <= 2035) {
-        ymin = ymin ? Math.min(ymin, y1) : y1;
-        ymax = ymax ? Math.max(ymax, y2) : y2;
-      }
+      if (y2 > NOW_YEAR) y2 = NOW_YEAR;                 // 未来年份直接截到今年
+      if (y1 < 1970 || y1 > NOW_YEAR) continue;
+      ymin = ymin ? Math.min(ymin, y1) : y1;
+      ymax = ymax ? Math.max(ymax, y2) : y2;
     }
     DISP.lastIndex = 0;
     while ((m = DISP.exec(a))) {
-      var d = m[1];
+      var d = parseFloat(m[1]);                          // 存成数字，match 时才能和下拉的数值比
       if (d >= 0.5 && d <= 8.0 && disps.indexOf(d) < 0) disps.push(d);
     }
     it._fb = brands; it._fm = models;
@@ -102,11 +104,13 @@
       arr.sort(function (a, b) { return numeric ? (+a[0] - +b[0]) : (b[1] - a[1]); });
       return arr.slice(0, n).map(function (x) { return numeric ? +x[0] : x[0]; });
     }
+    // 年款：最新在前，全部列出（区间内每年都算适配，最多 60 个）
+    var ykeys = Object.keys(yc).map(Number).sort(function (a, b) { return b - a; }).slice(0, 60);
     return {
       brands: top(bc, 300, false),
       models: top(mc, 300, false),
-      years: top(yc, 40, true),
-      disps: top(dc, 30, true)
+      years: ykeys,
+      disps: top(dc, 60, true)
     };
   }
 
