@@ -23,6 +23,30 @@
   function parseItem(it) {
     var a = it.a || "";
     var brands = [], models = [], disps = [], ymin = 0, ymax = 0, m, y1, y2;
+
+    // ---- 年份：优先用 data.js 里的结构化 y 字段（fitment_parse.py 解析好的）
+    if (it.y && it.y.length) {
+      for (var q = 0; q < it.y.length; q++) {
+        var ys = String(it.y[q] || "").trim();
+        var my = /^((?:19|20)\d{2})(?:\s*[-–]\s*((?:19|20)\d{2})?)?$/.exec(ys);
+        if (!my) continue;
+        y1 = +my[1];
+        y2 = my[2] ? +my[2] : y1;
+        if (ys.charAt(ys.length - 1) === "-") y2 = NOW_YEAR;    // "2019-" = 至今
+        if (y2 > NOW_YEAR) y2 = NOW_YEAR;
+        if (y1 < 1970 || y1 > NOW_YEAR) continue;
+        ymin = ymin ? Math.min(ymin, y1) : y1;
+        ymax = ymax ? Math.max(ymax, y2) : y2;
+      }
+    }
+    // ---- 排量：优先结构化 d（"2.0T" / "1.6L" / "1.5"）
+    if (it.d && it.d.length) {
+      for (var w2 = 0; w2 < it.d.length; w2++) {
+        var dv = parseFloat(String(it.d[w2] || ""));
+        if (dv >= 0.5 && dv <= 8.0 && disps.indexOf(dv) < 0) disps.push(dv);
+      }
+    }
+    // ---- 品牌 / 车型：只能从文本解析
     brandRe.forEach(function (re, name) {
       var mm = re.exec(a);
       if (!mm) return;
@@ -38,21 +62,26 @@
         got++;
       }
     });
-    YEARP.lastIndex = 0;
-    while ((m = YEARP.exec(a))) {
-      // "2019- / 2019-present" 这类没写结束年的，算到今年，绝不写成 2030
-      if (m[1]) { y1 = +m[1]; y2 = m[2] && /^\d{4}$/.test(m[2]) ? +m[2] : (m[2] ? NOW_YEAR : y1); }
-      else if (m[3]) { y1 = 2000 + +m[3]; y2 = 2000 + +m[4]; if (y1 > y2) { var t = y1; y1 = y2; y2 = t; } }
-      else if (m[5]) { y1 = +m[5]; y2 = y1; }
-      if (y2 > NOW_YEAR) y2 = NOW_YEAR;                 // 未来年份直接截到今年
-      if (y1 < 1970 || y1 > NOW_YEAR) continue;
-      ymin = ymin ? Math.min(ymin, y1) : y1;
-      ymax = ymax ? Math.max(ymax, y2) : y2;
+    // ---- 结构化字段缺失时，退回文本解析兜底
+    if (!ymin) {
+      YEARP.lastIndex = 0;
+      while ((m = YEARP.exec(a))) {
+        // "2019- / 2019-present" 这类没写结束年的，算到今年，绝不写成 2030
+        if (m[1]) { y1 = +m[1]; y2 = m[2] && /^\d{4}$/.test(m[2]) ? +m[2] : (m[2] ? NOW_YEAR : y1); }
+        else if (m[3]) { y1 = 2000 + +m[3]; y2 = 2000 + +m[4]; if (y1 > y2) { var t = y1; y1 = y2; y2 = t; } }
+        else if (m[5]) { y1 = +m[5]; y2 = y1; }
+        if (y2 > NOW_YEAR) y2 = NOW_YEAR;
+        if (y1 < 1970 || y1 > NOW_YEAR) continue;
+        ymin = ymin ? Math.min(ymin, y1) : y1;
+        ymax = ymax ? Math.max(ymax, y2) : y2;
+      }
     }
-    DISP.lastIndex = 0;
-    while ((m = DISP.exec(a))) {
-      var d = parseFloat(m[1]);                          // 存成数字，match 时才能和下拉的数值比
-      if (d >= 0.5 && d <= 8.0 && disps.indexOf(d) < 0) disps.push(d);
+    if (!disps.length) {
+      DISP.lastIndex = 0;
+      while ((m = DISP.exec(a))) {
+        var d = parseFloat(m[1]);
+        if (d >= 0.5 && d <= 8.0 && disps.indexOf(d) < 0) disps.push(d);
+      }
     }
     it._fb = brands; it._fm = models;
     it._fy = ymin ? [ymin, ymax] : null; it._fd = disps;
