@@ -47,6 +47,8 @@ ENGINE_RE = re.compile("|".join(ENGINE_PAT))
 
 def norm_years(a):
     out = []
+    now = time.localtime().tm_year
+    ymax_ok = now + 1                        # 年份上限：明年（防止 GTH2040 这类零件号被当成年份）
     for m in Y_RANGE.finditer(a):
         y1 = int(m.group(1))
         y2raw = (m.group(2) or "").strip().lower()
@@ -54,21 +56,29 @@ def norm_years(a):
             y2 = int(y2raw)
             if y2 < y1:                       # 1998-06 这种
                 y2 += 2000 if y2 < 100 else 0
+            if y1 < 1980 or y1 > ymax_ok or y2 > ymax_ok:
+                continue
             out.append("%d-%d" % (y1, y2))
         elif y2raw in ("present", "now", "current"):
-            out.append("%d-" % y1)
+            if 1980 <= y1 <= ymax_ok:
+                out.append("%d-" % y1)
         elif m.group(2) is None:
-            out.append("%d-" % y1)            # "2019-  -present" 之类
+            if 1980 <= y1 <= ymax_ok:
+                out.append("%d-" % y1)        # "2019-  -present" 之类
     if not out:
         for m in Y_SHORT_RANGE.finditer(a):
             a1, a2 = int(m.group(1)), int(m.group(2))
             if a1 > a2:
                 continue
             base = 2000 if a1 < 90 else 1900
+            if base + a1 < 1980 or base + a2 > ymax_ok:
+                continue
             out.append("%d-%d" % (base + a1, base + a2))
     if not out:
         for m in Y_SINGLE.finditer(a):
-            out.append(m.group(1))
+            y = int(m.group(1))
+            if 1980 <= y <= ymax_ok:
+                out.append(m.group(1))
     seen, uniq = set(), []
     for x in out:
         if x not in seen:
