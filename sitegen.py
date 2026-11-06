@@ -1394,7 +1394,7 @@ def page_brand(cfg, e):
     # 跨品牌共通件单独一块，措辞诚实：这些车型也用这些件，但不是本品牌车型。
     xfit_block = ""
     if xfit_links:
-        xfit_block = ('<div class="modlist"><h2 data-i18n="brand_xfit_h2">Also fits these models</h2>%s</div>'
+        xfit_block = ('<div class="modlist"><h2 data-i18n="brand_xfit_h2">Cross-compatible models</h2>%s</div>'
                       % _chips(xfit_links))
     others = [("../brand/%s.html" % o["slug"], o["canon"]) for o in e["others"][:18]]
     body = """<body>
