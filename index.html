@@ -222,8 +222,26 @@ Mercedes Sprinter2500">A9065400117</a><a href="c/a-212-905-58-05.html" title="Fr
   }
   function prep(it){
     var c = CATS[it.c] || {};
-    it._q = norm([it.m, it.oe, (it.x||[]).join(" "), it.a, it.b, it.n, c.name, c.en].join(" "));
+    it._q = norm([it.m, it.oe, (it.x||[]).join(" "), it.a, it.b, it.n, c.name, c.en,
+                  expandYears(it.y), (it.d||[]).join(" "), (it.e||[]).join(" ")].join(" "));
     it._cat = c;
+  }
+  // 年份区间展开成单个年份（"2012-2020" → 2012 2013 … 2020），这样搜「2016」能命中覆盖 2016 的年款
+  var YEAR_NOW = new Date().getFullYear();
+  function expandYears(ys){
+    if(!ys || !ys.length) return "";
+    var out = [];
+    for(var i=0;i<ys.length;i++){
+      var s = String(ys[i]);
+      var m = /^(\d{4})(?:-(\d{4})?)?$/.exec(s);
+      if(!m) continue;
+      var a = +m[1];
+      var b = m[2] ? +m[2] : (s.charAt(s.length-1) === "-" ? YEAR_NOW : a);
+      if(b < a) continue;
+      if(b - a > 20) b = a + 20;
+      for(var y=a; y<=b; y++) out.push(y);
+    }
+    return out.join(" ");
   }
   ALL.forEach(prep);
 
@@ -356,7 +374,9 @@ Mercedes Sprinter2500">A9065400117</a><a href="c/a-212-905-58-05.html" title="Fr
   }
 
   function tokens(q){
-    return mapQuery(q).split(/\s+/).map(norm).filter(Boolean);
+    // 「卡罗拉2016年款」这类口语：先把「年款/年份/款/型号」这类虚词去掉，再分词
+    var s = mapQuery(q).replace(/年款|年份|款式|车型|型号|车款|款|年/g, " ");
+    return s.split(/\s+/).map(norm).filter(Boolean);
   }
 
   function filter(){
