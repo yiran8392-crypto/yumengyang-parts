@@ -133,6 +133,89 @@ BRAND_SLUG = {
     "SsangYong": "ssangyong", "Volkswagen": "volkswagen", "Daihatsu": "daihatsu",
 }
 
+# ---------------------------------------------------------------
+# 车系归属：这个车系「属于」哪个品牌
+# ---------------------------------------------------------------
+# 为什么必须显式写一张表，而不能按文本投票：
+#   适配文本里一个型号常写好几个车系，跨品牌共通件是真实存在的
+#   （90919-05059 这个丰田线圈也装长安逸动）。只按共现次数投票，
+#   会把 CROWN / HIGHLANDER / PRIUS 这类「丰田-雷克萨斯共线」的车系
+#   投给雷克萨斯，把 PASSAT 投给奥迪。所以归属写死，不猜。
+#   表里没有的车系 = 归属不明，只进品牌页的「也适用这些车系」，
+#   绝不冒充「本品牌车型」。
+MODEL_OWNER = {
+    # 日系
+    "CAMRY": "Toyota", "COROLLA": "Toyota", "CROWN": "Toyota", "HIGHLANDER": "Toyota",
+    "LEVIN": "Toyota", "PRADO": "Toyota", "PRIUS": "Toyota", "REIZ": "Toyota",
+    "VIOS": "Toyota", "YARIS": "Toyota",
+    "ACCORD": "Honda", "CITY": "Honda", "CIVIC": "Honda", "CRIDER": "Honda",
+    "CROSSTOUR": "Honda", "CRV": "Honda", "FIT": "Honda", "ODYSSEY": "Honda",
+    "SPIRIOR": "Honda", "VEZEL": "Honda",
+    "BLUEBIRD": "Nissan", "LIVINA": "Nissan", "MURANO": "Nissan", "QASHQAI": "Nissan",
+    "SUNNY": "Nissan", "SYLPHY": "Nissan", "TEANA": "Nissan", "TIIDA": "Nissan",
+    "ATENZA": "Mazda", "AXELA": "Mazda", "FAMILIA": "Mazda", "PREMACY": "Mazda",
+    "ASX": "Mitsubishi", "DELICA": "Mitsubishi", "LANCER": "Mitsubishi",
+    "LIONCEL": "Mitsubishi", "OUTLANDER": "Mitsubishi", "PAJERO": "Mitsubishi",
+    "FORESTER": "Subaru", "LEGACY": "Subaru", "OUTBACK": "Subaru",
+    "ALTO": "Suzuki", "LIANA": "Suzuki", "VITARA": "Suzuki",
+    # 韩系
+    "ACCENT": "Hyundai", "ELANTRA": "Hyundai", "SONATA": "Hyundai",
+    "TUCSON": "Hyundai", "VERNA": "Hyundai",
+    "CERATO": "Kia", "OPTIMA": "Kia", "RIO": "Kia", "SORENTO": "Kia", "SPORTAGE": "Kia",
+    # 美系
+    "AVEO": "Chevrolet", "CAPTIVA": "Chevrolet", "CAVALIER": "Chevrolet",
+    "CRUZE": "Chevrolet", "EPICA": "Chevrolet", "LOVA": "Chevrolet",
+    "MALIBU": "Chevrolet", "MONZA": "Chevrolet", "SAIL": "Chevrolet",
+    "SPARK": "Chevrolet", "TRAX": "Chevrolet",
+    "ENCLAVE": "Buick", "ENCORE": "Buick", "ENVISION": "Buick", "EXCELLE": "Buick",
+    "LACROSSE": "Buick", "REGAL": "Buick", "VERANO": "Buick",
+    "ECOSPORT": "Ford", "EDGE": "Ford", "FIESTA": "Ford", "FOCUS": "Ford",
+    "KUGA": "Ford", "MONDEO": "Ford", "TAURUS": "Ford", "TRANSIT": "Ford",
+    "SRX": "Cadillac", "XTS": "Cadillac",
+    "CHEROKEE": "Jeep", "COMPASS": "Jeep", "PATRIOT": "Jeep", "WRANGLER": "Jeep",
+    "JOURNEY": "Dodge", "VOYAGER": "Chrysler",
+    # 德系
+    "BEETLE": "Volkswagen", "BORA": "Volkswagen", "GOLF": "Volkswagen",
+    "JETTA": "Volkswagen", "LAVIDA": "Volkswagen", "MAGOTAN": "Volkswagen",
+    "PASSAT": "Volkswagen", "POLO": "Volkswagen", "SAGITAR": "Volkswagen",
+    "SANTANA": "Volkswagen", "TIGUAN": "Volkswagen", "TOUAREG": "Volkswagen",
+    "TOURAN": "Volkswagen",
+    "FABIA": "Skoda", "OCTAVIA": "Skoda", "SUPERB": "Skoda", "YETI": "Skoda",
+    "CLS": "Mercedes-Benz", "GLC": "Mercedes-Benz", "GLK": "Mercedes-Benz",
+    "VIANO": "Mercedes-Benz", "VITO": "Mercedes-Benz",
+    # 法系 / 欧系
+    "ELYSEE": "Citroen", "QUATRE": "Citroen", "TRIOMPHE": "Citroen",
+    "PANDA": "Fiat",
+    "DISCOVERY": "Land Rover", "EVOQUE": "Land Rover",
+    # 中国品牌
+    "ALSVIN": "Changan", "BENBEN": "Changan", "EADO": "Changan", "ONO": "Changan",
+    "RAETON": "Changan", "UNI": "Changan", "XINGKA": "Changan",
+    "ARRIZO": "Chery", "COWIN": "Chery", "FULWIN": "Chery",
+    "ORIENTAL": "Chery", "TIGGO": "Chery",
+    "BINYUE": "Geely", "BORUI": "Geely", "BOYUE": "Geely", "EMGRAND": "Geely",
+    "VISION": "Geely", "XINGYUE": "Geely",
+    "QIN": "BYD", "SONG": "BYD", "YUAN": "BYD",
+    "HONGGUANG": "Wuling", "HONGTU": "Wuling", "RONGGUANG": "Wuling", "ZHIGUANG": "Wuling",
+    "HEYUE": "JAC", "REFINE": "JAC", "SEHOL": "JAC",
+    "COOLBEAR": "Great Wall", "FLORID": "Great Wall", "VOLEEX": "Great Wall",
+    "WINGLE": "Great Wall",
+    "HEIJINGANG": "Leopaard", "LEOPAUL": "Leopaard",
+    "JUNJIE": "Brilliance",
+    "JINGYI": "Forthing", "LINGZHI": "Forthing",
+    "HUANSU": "BAIC", "ZHANQI": "BAIC",
+    "SENIA": "FAW", "WEIZHI": "FAW",
+    "FEITENG": "Besturn",
+    "HAISE": "Jinbei",
+    "BAODIAN": "JMC", "RUIMAI": "JMC", "VIGUS": "JMC", "YUHU": "JMC", "YUSHENG": "JMC",
+    "AEOLUS": "Dongfeng",
+}
+
+
+def model_owner(token):
+    """车系 -> 品牌规范名；没收录的返回 None（归属不明，不猜）。"""
+    return MODEL_OWNER.get((token or "").upper())
+
+
 ALIAS = {}
 for _canon, _names in BRANDS.items():
     for _n in _names:

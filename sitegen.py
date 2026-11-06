@@ -1384,6 +1384,18 @@ def page_brand(cfg, e):
             "Ask for a price and MOQ on WhatsApp." % (canon, n, cat_txt))
     trail = [("Home", ""), ("Brands", "brand/index.html"), (canon, None)]
     model_links = [("../vehicle/%s.html" % brandlib.token_slug(t), t) for t, _n in e["tokens"][:14]]
+    xfit_links = [("../vehicle/%s.html" % brandlib.token_slug(t), t) for t, _n in (e.get("xfit") or [])[:14]]
+    # 「本品牌车型」只列归属确凿的；一个都没有就整块不出现，不留空标题。
+    # 英文原文里直接写品牌名（en 走页面兜底），其它语种由 i18n.js 的 {b} 占位符填。
+    models_block = ""
+    if model_links:
+        models_block = ('<div class="modlist"><h2 data-i18n="brand_models_h2" data-v-b="%s">%s models</h2>%s</div>'
+                        % (esc(canon), esc(canon), _chips(model_links)))
+    # 跨品牌共通件单独一块，措辞诚实：这些车型也用这些件，但不是本品牌车型。
+    xfit_block = ""
+    if xfit_links:
+        xfit_block = ('<div class="modlist"><h2 data-i18n="brand_xfit_h2">Also fits these models</h2>%s</div>'
+                      % _chips(xfit_links))
     others = [("../brand/%s.html" % o["slug"], o["canon"]) for o in e["others"][:18]]
     body = """<body>
 %(head)s
@@ -1400,13 +1412,13 @@ def page_brand(cfg, e):
   <a href="../category/index.html" data-i18n="all_cat_h1">All categories</a></div>
 </div>
 %(cats)s
-<div class="modlist"><h2 data-i18n="brand_models_h2">Models and vehicles</h2>%(models)s</div>
+%(models_block)s%(xfit_block)s
 <div class="modlist"><h2 data-i18n="brand_others_h2">Other brands</h2>%(others)s</div>
 </main>
 %(foot)s
 </body></html>
 """ % dict(head=sitehead(cfg, base="../"), brand=esc(canon), n=n, cats=_cat_blocks(items),
-           models=_chips(model_links), others=_chips(others), foot=sitefoot(cfg))
+           models_block=models_block, xfit_block=xfit_block, others=_chips(others), foot=sitefoot(cfg))
     ld = [_crumbs_ld(cfg, trail), _itemlist_ld("%s parts" % canon, cfg, items, "c")]
     return head_block(cfg, title, desc, rel_url(cfg, "brand/%s.html" % slug), "", "website", ld) + "\n" + body
 
@@ -2239,13 +2251,18 @@ def build_static(items, cats, log=print):
             lst = bmap[canon]
             if len(lst) < 8:
                 continue
-            toks = {}
+            toks, xfit = {}, {}
             for it in lst:
                 for t in brandlib.vehicle_tokens(it.get("a")):
                     if t in live_tokens:
-                        toks[t] = toks.get(t, 0) + 1
+                        # 归属写死过（MODEL_OWNER）才算「本品牌车型」；
+                        # 其余是跨品牌共通件（丰田线圈也装长安逸动这种），
+                        # 单独列在「也适用这些车型」，绝不冒充本品牌车型。
+                        d = toks if brandlib.model_owner(t) == canon else xfit
+                        d[t] = d.get(t, 0) + 1
             bentries.append({"canon": canon, "slug": brandlib.brand_slug(canon), "items": lst, "n": len(lst),
-                             "tokens": sorted(toks.items(), key=lambda kv: (-kv[1], kv[0]))})
+                             "tokens": sorted(toks.items(), key=lambda kv: (-kv[1], kv[0])),
+                             "xfit": sorted(xfit.items(), key=lambda kv: (-kv[1], kv[0]))})
         for e in bentries:
             e["others"] = [x for x in bentries if x["slug"] != e["slug"]]
 
