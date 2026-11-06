@@ -11,7 +11,7 @@
 域名=https://yiran8392-crypto.github.io/yumengyang-parts
 WhatsApp=8615915859048
 
-# 公司地址：英文站（en / ar / ru）用「地址=」，中文站用「中文地址=」
+# 公司地址：英文站（en / fr / ar / ru）用「地址=」，中文站用「中文地址=」
 地址=E05, Yiyou (Guangyuan East) Auto Parts City, Baiyun District, Guangzhou, China
 中文地址=广州市白云区益友（广元东）汽配城 E05 档
 

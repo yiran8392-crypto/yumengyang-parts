@@ -71,6 +71,8 @@ TRUST = [
     ("≈95%", "trust_cover", "EFI parts covered"),
     ("Small batch", "trust_moq", "Orders accepted"),
 ]
+# 信任条里需要跟着语种变的“数值短语”（键 → i18n 键）
+TRUST_V = {"trust_warranty": "trust_v_warranty", "trust_moq": "trust_v_moq"}
 
 # 品牌显示（别在模板里散着写名字，改一处全站生效）
 # translate="no" + class="notranslate" 是给浏览器自动翻译看的：Edge / Chrome / iOS Safari
@@ -89,7 +91,8 @@ FAVICON = ('<link rel="icon" href="data:image/svg+xml,'
 
 # 界面多语言：文案字典在 assets/i18n.js（全站共用一个文件，页面里只放 data-i18n 标记）。
 # 这里只负责语言切换器的 HTML 和“首屏防闪”的小脚本。
-LANG_OPTIONS = [("en", "English"), ("zh", "简体中文"), ("ar", "العربية"), ("ru", "Русский")]
+LANG_OPTIONS = [("en", "English"), ("zh", "简体中文"), ("ar", "العربية"), ("ru", "Русский"),
+                ("fr", "Français")]
 
 
 def lang_sel_html():
@@ -100,7 +103,8 @@ def lang_sel_html():
 
 LANG_BOOT = ('<script>try{var l=(new URLSearchParams(location.search).get("lang")||'
              'localStorage.getItem("ymy_lang")||"en").toLowerCase();'
-             'l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":"en";'
+             'l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru"'
+             ':l.indexOf("fr")===0?"fr":"en";'
              'var d=document.documentElement;d.setAttribute("data-lang",l);'
              'if(l==="ar")d.setAttribute("dir","rtl")}catch(e){}</script>')
 
@@ -311,7 +315,7 @@ def org_ld(cfg):
             "telephone": "+" + cfg["whatsapp"],
             "email": cfg["email"],
             "areaServed": "Worldwide",
-            "availableLanguage": ["en", "zh", "ar", "ru"],
+            "availableLanguage": ["en", "zh", "ar", "ru", "fr"],
         }],
     }
     return ld
@@ -326,7 +330,7 @@ def website_ld(cfg, total):
         "name": "%s · OE / cross-reference lookup" % cfg["company_en"].split(" Co.")[0],
         "alternateName": BRAND_CN,
         "url": base,
-        "inLanguage": ["en", "zh", "ar", "ru"],
+        "inLanguage": ["en", "zh", "ar", "ru", "fr"],
         "potentialAction": {
             "@type": "SearchAction",
             "target": {"@type": "EntryPoint", "urlTemplate": base + "?q={search_term_string}"},
@@ -383,9 +387,11 @@ WHY = [
 
 
 def trust_html(cfg):
+    # 13–24 mo / Small batch 这类静态英文在非英语页很扎眼，能翻的值也挂上 data-i18n
     cells = "".join(
-        '<div class="tb-cell"><b>%s</b><span data-i18n="%s">%s</span></div>'
-        % (esc(v), k, esc(lbl)) for v, k, lbl in TRUST)
+        '<div class="tb-cell"><b%s>%s</b><span data-i18n="%s">%s</span></div>'
+        % (' data-i18n="%s"' % TRUST_V[k] if k in TRUST_V else "", esc(v), k, esc(lbl))
+        for v, k, lbl in TRUST)
     return ('<section class="trustbar" aria-label="Company facts"><div class="wrap tb-wrap">%s</div></section>'
             % cells)
 
@@ -1168,7 +1174,7 @@ def page_model(cfg, it, cat, related=None):
 </body></html>
 """ % (sitehead(cfg, cat), cat_slug(cat), cat, esc(CAT_META[cat][1]), esc(primary), pic,
        cat, esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
-       (" · brand " + esc(it["b"])) if it.get("b") else "",
+       (" · <span data-i18n=\"spec_brand\">Brand</span> " + esc(it["b"])) if it.get("b") else "",
        spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
        total_txt, total_txt, share_bar_html(cfg, it, cat),
        terms, app_html, rel_html,
@@ -2086,6 +2092,10 @@ def inject_home(cfg, cats, by_cat, brand_entries=None):
 
     h = h.replace("https://your-domain.com", cfg["site_url"])
     h = h.replace("8615915859048", cfg["whatsapp"])
+    # 语言选择器：首页手写部分里也有一份，选项列表跟着 LANG_OPTIONS 走，每次同步（幂等）
+    opts = "".join('<option value="%s">%s</option>' % (k, esc(v)) for k, v in LANG_OPTIONS)
+    h = re.sub(r'(<select id="langsel"[^>]*>).*?(</select>)',
+               lambda m: m.group(1) + opts + m.group(2), h, count=1, flags=re.S)
     if not has_site(cfg):
         # 没有真实域名：去掉会指错地方的 canonical / og:url / og:image
         h = re.sub(r'\n<link rel="canonical"[^>]*>', "", h)

@@ -2,7 +2,7 @@
    ---------------------------------------------------------------
    服务端先把英文版的 wa.me 链接写进 href（没 JS 也能分享）；
    这个脚本只做三件事：
-     1. 按当前界面语言重写分享文案（en / zh / ar / ru）
+     1. 按当前界面语言重写分享文案（en / zh / ar / ru / fr）
      2. 复制链接按钮（clipboard API，失败退回 execCommand）
      3. 跟着 <select class="langsel"> 的 i18n:change 事件重跑一遍
 
@@ -34,6 +34,11 @@
       share: "Поделиться в WhatsApp", copy: "Копировать ссылку", copied: "Скопировано!",
       a: "Проверьте эту деталь: ", b: ". ", fits: "Подходит на ",
       c: "Замена уровня OE - цена и минимальный заказ в WhatsApp: "
+    },
+    fr: {
+      share: "Partager sur WhatsApp", copy: "Copier le lien", copied: "Copié !",
+      a: "Voir cette pièce : ", b: ". ", fits: "Compatible avec ",
+      c: "Remplacement qualité OE — prix et MOQ sur WhatsApp : "
     }
   };
 
