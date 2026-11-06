@@ -104,6 +104,19 @@
       cta_btn: "WhatsApp 询价（{n}）",
       lk_oe_t: "同 OE / 同交叉号的其他型号", lk_veh_t: "同车型的热门件",
       lk_rel_t: "同品类的其他型号",
+      /* ---------- 品牌页 / 车型页 ---------- */
+      brands_crumb: "品牌", vehicles_crumb: "车型",
+      brand_idx_h1: "按车辆品牌浏览",
+      brand_idx_lead: "配件按适配的车辆品牌分组。共 {b} 个品牌、{n} 个型号 —— 每个型号都能看 OE 号、交叉号、实拍图和 WhatsApp 询价按钮。",
+      browse_vehicle: "按车型浏览", browse_brand: "按品牌浏览", search_oe_btn: "按 OE 号搜索",
+      brand_parts_h1: "{b} 配件", parts_n_paren: "（{n} 个型号）",
+      brand_lead: "点火线圈、传感器、燃油泵等 {b} 配件。每个型号都带 OE 号、交叉号、适配信息和实拍图；把 OE 号发到 WhatsApp，我们回价格、起订量与包装。",
+      brand_search_oe: "按 OE 号搜索 {b} 配件", brand_models_h2: "车型与车款", brand_others_h2: "其他品牌",
+      see_all_cat: "查看全部 {n} 个{cat}",
+      veh_idx_lead: "车型名取自我们的适配数据。共 {v} 个车型、{n} 个型号。选一个车型，看全部适配配件和它们的 OE 号。",
+      all_veh_h2: "全部车型（{n}）",
+      veh_lead: "适配 {v} 的配件。每个型号都带 OE 号、交叉号、适配信息和实拍图；把 OE 号发到 WhatsApp，我们回价格、起订量与包装。",
+      veh_brands_h2: "适配品牌", veh_others_h2: "其他车型",
     },
     ar: {
       nav_all: "كل الفئات ({n})", wa: "راسلنا على واتساب", home: "الرئيسية", sitemap: "خريطة الموقع",
@@ -196,6 +209,19 @@
       cta_btn: "واتساب: {n}",
       lk_oe_t: "قطع أخرى بنفس رقم OE / المراجع", lk_veh_t: "قطع شائعة لنفس المركبة",
       lk_rel_t: "قطع أخرى من نفس الفئة",
+      /* ---------- 品牌页 / 车型页 ---------- */
+      brands_crumb: "العلامات", vehicles_crumb: "الطرازات",
+      brand_idx_h1: "تصفح حسب ماركة المركبة",
+      brand_idx_lead: "القطع مجمّعة حسب ماركة المركبة التي تناسبها. {b} ماركة و {n} قطعة — كل قطعة تربطك برقم OE والمراجع والصور وزر طلب السعر على واتساب.",
+      browse_vehicle: "تصفح حسب الطراز", browse_brand: "تصفح حسب العلامة", search_oe_btn: "ابحث برقم OE",
+      brand_parts_h1: "قطع {b}", parts_n_paren: "({n} قطعة)",
+      brand_lead: "ملفات إشعال وحسّاسات ومضخات وقود وغيرها من قطع {b}. كل قطعة مربوطة برقم OE والمراجع والتوافق والصور. أرسل رقم OE على واتساب للسعر والحد الأدنى والتغليف.",
+      brand_search_oe: "ابحث عن قطع {b} برقم OE", brand_models_h2: "الطرازات والمركبات", brand_others_h2: "ماركات أخرى",
+      see_all_cat: "عرض كل {n} {cat}",
+      veh_idx_lead: "أسماء الطرازات مأخوذة من بيانات التوافق. {v} طرازاً و {n} قطعة. اختر طرازاً لعرض كل القطع المتوافقة بأرقام OE.",
+      all_veh_h2: "كل الطرازات ({n})",
+      veh_lead: "قطع تناسب {v}. كل قطعة تعرض رقم OE والمراجع والتوافق والصور. أرسل رقم OE على واتساب للسعر والحد الأدنى والتغليف.",
+      veh_brands_h2: "ماركات متوافقة", veh_others_h2: "طرازات أخرى",
     },
     ru: {
       nav_all: "Все категории ({n})", wa: "Написать в WhatsApp", home: "Главная",
@@ -289,6 +315,19 @@
       cta_btn: "WhatsApp: {n}",
       lk_oe_t: "Другие артикулы с тем же OE / кросс-номером", lk_veh_t: "Популярные детали для того же авто",
       lk_rel_t: "Другие артикулы этой категории",
+      /* ---------- 品牌页 / 车型页 ---------- */
+      brands_crumb: "Марки", vehicles_crumb: "Модели",
+      brand_idx_h1: "Подбор по марке автомобиля",
+      brand_idx_lead: "Детали сгруппированы по марке автомобиля. {b} марок, {n} артикулов — у каждой детали номер OE, кросс-номера, фото и кнопка запроса цены в WhatsApp.",
+      browse_vehicle: "Подбор по модели", browse_brand: "Подбор по марке", search_oe_btn: "Поиск по номеру OE",
+      brand_parts_h1: "Детали {b}", parts_n_paren: "({n} артикулов)",
+      brand_lead: "Катушки зажигания, датчики, топливные насосы и другие детали для {b}. У каждой детали — номер OE, кросс-номера, применимость и фото. Пришлите номер OE в WhatsApp: цена, MOQ и упаковка.",
+      brand_search_oe: "Искать детали {b} по номеру OE", brand_models_h2: "Модели и автомобили", brand_others_h2: "Другие марки",
+      see_all_cat: "Все {n} {cat}",
+      veh_idx_lead: "Названия моделей взяты из наших данных о применимости. {v} моделей, {n} артикулов. Выберите модель, чтобы увидеть все совместимые детали с номерами OE.",
+      all_veh_h2: "Все модели ({n})",
+      veh_lead: "Детали для {v}. У каждой — номер OE, кросс-номера, применимость и фото. Пришлите номер OE в WhatsApp: цена, MOQ и упаковка.",
+      veh_brands_h2: "Совместимые марки", veh_others_h2: "Другие модели",
     },
     fr: {
       nav_all: "Toutes les catégories ({n})", wa: "Devis WhatsApp", home: "Accueil", sitemap: "Plan du site",
@@ -380,6 +419,19 @@
       cta_btn: "WhatsApp : {n}",
       lk_oe_t: "Autres références avec le même OE / la même référence croisée", lk_veh_t: "Pièces courantes pour le même véhicule",
       lk_rel_t: "Autres références de la même catégorie",
+      /* ---------- 品牌页 / 车型页 ---------- */
+      brands_crumb: "Marques", vehicles_crumb: "Véhicules",
+      brand_idx_h1: "Parcourir par marque de véhicule",
+      brand_idx_lead: "Les pièces sont regroupées par marque de véhicule compatible. {b} marques, {n} références — chaque pièce donne son numéro OE, ses références croisées, ses photos et un bouton de devis WhatsApp.",
+      browse_vehicle: "Parcourir par véhicule", browse_brand: "Parcourir par marque", search_oe_btn: "Rechercher par référence OE",
+      brand_parts_h1: "Pièces {b}", parts_n_paren: "({n} références)",
+      brand_lead: "Bobines d'allumage, capteurs, pompes à carburant et autres pièces pour {b}. Chaque pièce donne son numéro OE, ses références croisées, sa compatibilité et ses photos. Envoyez le numéro OE sur WhatsApp pour le prix, le MOQ et l'emballage.",
+      brand_search_oe: "Chercher les pièces {b} par numéro OE", brand_models_h2: "Modèles et véhicules", brand_others_h2: "Autres marques",
+      see_all_cat: "Voir les {n} {cat}",
+      veh_idx_lead: "Noms de modèles issus de nos données de compatibilité. {v} véhicules, {n} références. Choisissez un véhicule pour voir toutes les pièces compatibles avec leur numéro OE.",
+      all_veh_h2: "Tous les véhicules ({n})",
+      veh_lead: "Pièces compatibles avec {v}. Chaque pièce indique son numéro OE, ses références croisées, sa compatibilité et ses photos. Envoyez le numéro OE sur WhatsApp pour le prix, le MOQ et l'emballage.",
+      veh_brands_h2: "Marques compatibles", veh_others_h2: "Autres véhicules",
     }
   };
 
@@ -441,6 +493,10 @@
     for (var i = 0; i < el.attributes.length; i++) {
       a = el.attributes[i];
       if (a.name.indexOf("data-v-") === 0) v[a.name.slice(7)] = a.value;
+    }
+    /* data-v-cat="coil" → {cat} 换成当前语种的品类名（英文页用 data-v-cat-en 里的英文名） */
+    if (el.hasAttribute("data-v-cat")) {
+      v.cat = catName(el.getAttribute("data-v-cat"), el.getAttribute("data-v-cat-en") || "");
     }
     return v;
   }

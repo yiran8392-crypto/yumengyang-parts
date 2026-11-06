@@ -605,8 +605,8 @@ def sitefoot(cfg, base="../"):
 <a href="%(base)sindex.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
 <a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a><br>
 <a href="%(base)sguides/index.html" data-i18n="guides_link">Buying guides</a> ·
-<a href="%(base)sbrand/index.html">Browse by brand</a> ·
-<a href="%(base)svehicle/index.html">Browse by vehicle</a> ·
+<a href="%(base)sbrand/index.html" data-i18n="browse_brand">Browse by brand</a> ·
+<a href="%(base)svehicle/index.html" data-i18n="browse_vehicle">Browse by vehicle</a> ·
 %(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
 </div></footer>""" % {"nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
                       "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
@@ -1263,7 +1263,7 @@ def page_cat_index(cfg, cats, by_cat):
 <div class="cat-head">
   <h1><span data-i18n="all_cat_h1">All product categories</span> <span class="h1sub zh-extra">全部品类</span></h1>
   <p data-i18n="all_cat_lead" data-v-c="%d" data-v-n="%d">%d categories, %d part numbers. Pick a category to see every model with its OE number, cross-reference and fitment.</p>
-  <div class="stat"><a href="../index.html" data-i18n="search_oe">Search by OE number</a></div>
+  <div class="stat"><a href="../index.html" data-i18n="search_oe_btn">Search by OE number</a></div>
 </div>
 <div class="catcards">%s</div>
 </main>
@@ -1298,10 +1298,13 @@ def _cat_blocks(items, per_cat=40):
         slug, en, _one, _cn = CAT_META.get(cat, (cat, cat, cat, cat))
         more = ""
         if len(lst) > per_cat:
-            more = ('<p class="stat"><a href="../category/%s.html">See all %d %s</a></p>'
-                    % (slug, len(lst), esc(en.lower())))
-        blocks.append('<div class="modlist"><h2><a href="../category/%s.html">%s</a> <em>(%d)</em></h2>%s%s</div>'
-                      % (slug, esc(en), len(lst), _model_grid(lst, per_cat), more))
+            more = ('<p class="stat"><a href="../category/%s.html">'
+                    '<span data-i18n="see_all_cat" data-v-n="%d" data-v-cat="%s" data-v-cat-en="%s">'
+                    'See all %d %s</span></a></p>'
+                    % (slug, len(lst), cat, esc(en.lower()), len(lst), esc(en.lower())))
+        blocks.append('<div class="modlist"><h2><a href="../category/%s.html" data-cat="%s">%s</a> '
+                      '<em>(%d)</em></h2>%s%s</div>'
+                      % (slug, cat, esc(en), len(lst), _model_grid(lst, per_cat), more))
     return "".join(blocks)
 
 
@@ -1344,25 +1347,29 @@ def page_brands_index(cfg, entries, cover):
     desc = ("Browse our part numbers by vehicle brand: Toyota, Hyundai, Kia, BMW, Ford, Volkswagen and %d more. "
             "OE numbers, cross-references and photos on every part." % max(0, len(entries) - 5))
     cards = "".join(
-        '<a class="catcard" href="%s.html"><b>%s</b><em>%d models →</em></a>' % (
-            esc(e["slug"]), esc(e["canon"]), e["n"])
+        '<a class="catcard" href="%s.html"><b>%s</b>'
+        '<em data-i18n="cat_arrow" data-v-n="%d">%d models →</em></a>' % (
+            esc(e["slug"]), esc(e["canon"]), e["n"], e["n"])
         for e in entries)
     body = """<body>
-%s
+%(head)s
 <main class="cat-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>Brands</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
+<span data-i18n="brands_crumb">Brands</span></nav>
 <div class="cat-head">
-  <h1>Browse by vehicle brand</h1>
-  <p>Parts are grouped by the brand they fit. %d brands, %d part numbers — each part links to its OE number,
+  <h1 data-i18n="brand_idx_h1">Browse by vehicle brand</h1>
+  <p data-i18n="brand_idx_lead" data-v-b="%(nb)d" data-v-n="%(n)d">Parts are grouped by the brand they fit.
+  %(nb)d brands, %(n)d part numbers — each part links to its OE number,
   cross-reference, photos and a WhatsApp quote button.</p>
-  <div class="stat"><a href="../index.html">Search by OE number</a> ·
-  <a href="../vehicle/index.html">Browse by vehicle</a> · <a href="../category/index.html">All categories</a></div>
+  <div class="stat"><a href="../index.html" data-i18n="search_oe_btn">Search by OE number</a> ·
+  <a href="../vehicle/index.html" data-i18n="browse_vehicle">Browse by vehicle</a> ·
+  <a href="../category/index.html" data-i18n="all_cat_h1">All categories</a></div>
 </div>
-<div class="catcards">%s</div>
+<div class="catcards">%(cards)s</div>
 </main>
-%s
+%(foot)s
 </body></html>
-""" % (sitehead(cfg, base="../"), len(entries), total, cards, sitefoot(cfg))
+""" % dict(head=sitehead(cfg, base="../"), nb=len(entries), n=total, cards=cards, foot=sitefoot(cfg))
     return head_block(cfg, title, desc, rel_url(cfg, "brand/index.html"), "", "website",
                       [_crumbs_ld(cfg, [("Home", ""), ("Brands", "brand/index.html")])]) + "\n" + body
 
@@ -1379,25 +1386,27 @@ def page_brand(cfg, e):
     model_links = [("../vehicle/%s.html" % brandlib.token_slug(t), t) for t, _n in e["tokens"][:14]]
     others = [("../brand/%s.html" % o["slug"], o["canon"]) for o in e["others"][:18]]
     body = """<body>
-%s
+%(head)s
 <main class="cat-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <a href="index.html">Brands</a> &rsaquo; <span>%s</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
+<a href="index.html" data-i18n="brands_crumb">Brands</a> &rsaquo; <span>%(brand)s</span></nav>
 <div class="cat-head">
-  <h1>%s parts <span class="stat">(%d part numbers)</span></h1>
-  <p>Ignition coils, sensors, fuel pumps and other parts for %s. Each part links to its OE number,
-  cross-reference, fitment and photos. Send us the OE number on WhatsApp for price, MOQ and packing.</p>
-  <div class="stat"><a href="../index.html?q=%s">Search %s parts by OE number</a> ·
-  <a href="../category/index.html">All categories</a></div>
+  <h1><span data-i18n="brand_parts_h1" data-v-b="%(brand)s">%(brand)s parts</span>
+  <span class="stat"><span data-i18n="parts_n_paren" data-v-n="%(n)d">(%(n)d part numbers)</span></span></h1>
+  <p data-i18n="brand_lead" data-v-b="%(brand)s">Ignition coils, sensors, fuel pumps and other parts for %(brand)s.
+  Each part links to its OE number, cross-reference, fitment and photos.
+  Send us the OE number on WhatsApp for price, MOQ and packing.</p>
+  <div class="stat"><a href="../index.html?q=%(brand)s" data-i18n="brand_search_oe" data-v-b="%(brand)s">Search %(brand)s parts by OE number</a> ·
+  <a href="../category/index.html" data-i18n="all_cat_h1">All categories</a></div>
 </div>
-%s
-<div class="modlist"><h2>Models and vehicles</h2>%s</div>
-<div class="modlist"><h2>Other brands</h2>%s</div>
+%(cats)s
+<div class="modlist"><h2 data-i18n="brand_models_h2">Models and vehicles</h2>%(models)s</div>
+<div class="modlist"><h2 data-i18n="brand_others_h2">Other brands</h2>%(others)s</div>
 </main>
-%s
+%(foot)s
 </body></html>
-""" % (sitehead(cfg, base="../"), esc(canon), esc(canon), n, esc(canon),
-       esc(canon), esc(canon), _cat_blocks(items),
-       _chips(model_links), _chips(others), sitefoot(cfg))
+""" % dict(head=sitehead(cfg, base="../"), brand=esc(canon), n=n, cats=_cat_blocks(items),
+           models=_chips(model_links), others=_chips(others), foot=sitefoot(cfg))
     ld = [_crumbs_ld(cfg, trail), _itemlist_ld("%s parts" % canon, cfg, items, "c")]
     return head_block(cfg, title, desc, rel_url(cfg, "brand/%s.html" % slug), "", "website", ld) + "\n" + body
 
@@ -1411,21 +1420,24 @@ def page_vehicles_index(cfg, entries, cover):
         '<a href="%s.html">%s <em>(%d)</em></a>' % (esc(e["slug"]), esc(e["token"]), e["n"])
         for e in entries)
     body = """<body>
-%s
+%(head)s
 <main class="cat-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <span>Vehicles</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
+<span data-i18n="vehicles_crumb">Vehicles</span></nav>
 <div class="cat-head">
-  <h1>Browse by vehicle</h1>
-  <p>Model names taken from our fitment data. %d vehicles, %d part numbers. Pick a vehicle to see every
-  compatible part with its OE number.</p>
-  <div class="stat"><a href="../index.html">Search by OE number</a> ·
-  <a href="../brand/index.html">Browse by brand</a> · <a href="../category/index.html">All categories</a></div>
+  <h1 data-i18n="browse_vehicle">Browse by vehicle</h1>
+  <p data-i18n="veh_idx_lead" data-v-v="%(nv)d" data-v-n="%(n)d">Model names taken from our fitment data.
+  %(nv)d vehicles, %(n)d part numbers. Pick a vehicle to see every compatible part with its OE number.</p>
+  <div class="stat"><a href="../index.html" data-i18n="search_oe_btn">Search by OE number</a> ·
+  <a href="../brand/index.html" data-i18n="browse_brand">Browse by brand</a> ·
+  <a href="../category/index.html" data-i18n="all_cat_h1">All categories</a></div>
 </div>
-<div class="modlist"><h2>All vehicles (%d)</h2><p class="vehiclechips">%s</p></div>
+<div class="modlist"><h2><span data-i18n="all_veh_h2" data-v-n="%(nv)d">All vehicles (%(nv)d)</span></h2>
+<p class="vehiclechips">%(chips)s</p></div>
 </main>
-%s
+%(foot)s
 </body></html>
-""" % (sitehead(cfg, base="../"), len(entries), total, len(entries), chips, sitefoot(cfg))
+""" % dict(head=sitehead(cfg, base="../"), nv=len(entries), n=total, chips=chips, foot=sitefoot(cfg))
     return head_block(cfg, title, desc, rel_url(cfg, "vehicle/index.html"), "", "website",
                       [_crumbs_ld(cfg, [("Home", ""), ("Vehicles", "vehicle/index.html")])]) + "\n" + body
 
@@ -1443,24 +1455,27 @@ def page_vehicle(cfg, e):
                    for b in e["brands"] if b["slug"] in LIVE_BRAND_SLUGS][:6]
     others = [("../vehicle/%s.html" % o["slug"], o["token"]) for o in e["others"][:16]]
     body = """<body>
-%s
+%(head)s
 <main class="cat-main">
-<nav class="crumbs"><a href="../index.html">Home</a> &rsaquo; <a href="index.html">Vehicles</a> &rsaquo; <span>%s</span></nav>
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
+<a href="index.html" data-i18n="vehicles_crumb">Vehicles</a> &rsaquo; <span>%(veh)s</span></nav>
 <div class="cat-head">
-  <h1>%s parts <span class="stat">(%d part numbers)</span></h1>
-  <p>Parts that fit the %s. Each part lists its OE number, cross-reference, fitment and photos.
-  Send us the OE number on WhatsApp for price, MOQ and packing.</p>
-  <div class="stat"><a href="../index.html?q=%s">Search by OE number</a> ·
-  <a href="../category/index.html">All categories</a></div>
+  <h1><span data-i18n="brand_parts_h1" data-v-b="%(veh)s">%(veh)s parts</span>
+  <span class="stat"><span data-i18n="parts_n_paren" data-v-n="%(n)d">(%(n)d part numbers)</span></span></h1>
+  <p data-i18n="veh_lead" data-v-v="%(veh)s">Parts that fit the %(veh)s. Each part lists its OE number,
+  cross-reference, fitment and photos. Send us the OE number on WhatsApp for price, MOQ and packing.</p>
+  <div class="stat"><a href="../index.html?q=%(tok)s" data-i18n="search_oe_btn">Search by OE number</a> ·
+  <a href="../category/index.html" data-i18n="all_cat_h1">All categories</a></div>
 </div>
-%s
-<div class="modlist"><h2>Fits vehicles from</h2>%s</div>
-<div class="modlist"><h2>Other vehicles</h2>%s</div>
+%(cats)s
+<div class="modlist"><h2 data-i18n="veh_brands_h2">Fits vehicles from</h2>%(brands)s</div>
+<div class="modlist"><h2 data-i18n="veh_others_h2">Other vehicles</h2>%(others)s</div>
 </main>
-%s
+%(foot)s
 </body></html>
-""" % (sitehead(cfg, base="../"), esc(token.title()), esc(token.title()), n, esc(token.title()),
-       esc(token), _cat_blocks(items), _chips(brand_chips), _chips(others), sitefoot(cfg))
+""" % dict(head=sitehead(cfg, base="../"), veh=esc(token.title()), tok=esc(token), n=n,
+           cats=_cat_blocks(items), brands=_chips(brand_chips), others=_chips(others),
+           foot=sitefoot(cfg))
     ld = [_crumbs_ld(cfg, trail), _itemlist_ld("%s parts" % token.title(), cfg, items, "c")]
     return head_block(cfg, title, desc, rel_url(cfg, "vehicle/%s.html" % slug), "", "website", ld) + "\n" + body
 
