@@ -377,6 +377,13 @@ html[dir="rtl"] .spec th{padding:11px 0 11px 14px}
 .homelinks .catbox>summary::before{content:"▸";display:inline-block;margin-inline-end:9px;color:#8b9dab;transition:transform .15s}
 .homelinks .catbox[open]>summary::before{transform:rotate(90deg)}
 .homelinks .catrow{padding:16px 0;border-top:1px solid #f0f4f7}
+/* 首页品类长列表：按品牌国籍分组（日系 → 德系 → 韩系 → 其余）。
+   排序结果得让买家一眼看见，所以每组前面放一个小字标签；
+   分组之后列表不再需要自己的内部滚动条。 */
+.ogr+.ogr{margin-top:12px}
+.og{display:block;font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#9bb0be;margin:0 0 6px 2px}
+/* 注意特异度：必须压过后面的 .homelinks .lst（同分看先后，它更靠后） */
+.homelinks .ogr .lst{max-height:none;overflow:visible}
 .homelinks .cath{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .homelinks .cath b{font-size:15px;color:var(--ink)}
 .homelinks .cath span{font-size:13px;color:var(--faint)}

@@ -310,3 +310,56 @@ def vehicle_tokens(text):
 
 def token_slug(t):
     return t.lower().replace(".", "-").replace(" ", "-")
+
+# ------------------------------------------------------------------ 品牌国籍
+# 首页「按品类浏览全部型号」那个列表的排序用：日系 -> 德系 -> 韩系 -> 其余。
+# 目标市场（中东 / 非洲 / 拉美 / 独联体）修的绝大多数是这几系；国产车系排后面，
+# 免得买家一滑下去满屏长安之星、五菱宏光，觉得「这网站不是给我的」。
+BRAND_ORIGIN = {
+    "JP": ["Toyota", "Lexus", "Honda", "Acura", "Nissan", "Infiniti", "Mazda",
+           "Mitsubishi", "Subaru", "Suzuki", "Isuzu", "Daihatsu"],
+    # Skoda / Seat 归在德系里，因为买家是按大众集团找件的
+    "DE": ["Volkswagen", "Audi", "BMW", "Mini", "Mercedes-Benz", "Smart", "Porsche",
+           "Opel", "Skoda", "Seat"],
+    "KR": ["Hyundai", "Kia", "Genesis", "Daewoo", "SsangYong"],
+    "US": ["Chevrolet", "Buick", "Cadillac", "GMC", "Ford", "Lincoln", "Chrysler",
+           "Dodge", "Jeep", "Ram", "Tesla"],
+    "FR": ["Peugeot", "Citroen", "Renault", "Dacia"],
+    "IT": ["Fiat", "Alfa Romeo", "Lancia", "Maserati", "Iveco"],
+    "SE": ["Volvo", "Saab"],
+    "UK": ["Land Rover", "Jaguar"],
+}
+
+# 中国自主品牌（列表里排最后）
+CHINA_BRANDS = {
+    "Chery", "Geely", "BYD", "Great Wall", "Haval", "Changan", "BAIC", "Dongfeng", "FAW",
+    "JAC", "Lifan", "MG", "Roewe", "Wuling", "Baojun", "Jinbei", "Forthing", "Foton",
+    "Soueast", "JMC", "Maxus", "Haima", "Zotye", "Brilliance", "Trumpchi", "Landwind",
+    "Sokon", "Oushan", "Venucia", "WEY", "Exeed", "DFSK", "Beijing", "Besturn", "Jetour",
+    "Hanteng", "Borgward", "SWM", "Lynk", "NETA", "Luxgen", "Hawtai", "Huanghai",
+    "Karry", "Senova", "Fengguang", "Leopaard", "Weiwang",
+}
+
+ORIGIN_ORDER = ["JP", "DE", "KR", "US", "FR", "IT", "SE", "UK", "CN", "OTHER"]
+ORIGIN_RANK = {o: i for i, o in enumerate(ORIGIN_ORDER)}
+ORIGIN_LABEL = {"JP": "Japan", "DE": "Germany", "KR": "Korea", "US": "USA", "FR": "France",
+                "IT": "Italy", "SE": "Sweden", "UK": "UK", "CN": "China", "OTHER": "Other"}
+
+_BRAND_ORIGIN = {b: o for o, bs in BRAND_ORIGIN.items() for b in bs}
+
+
+def brand_origin(brand):
+    """品牌规范名 -> 区域代码。"""
+    if brand in _BRAND_ORIGIN:
+        return _BRAND_ORIGIN[brand]
+    return "CN" if brand in CHINA_BRANDS else "OTHER"
+
+
+def origin_of_brands(brands):
+    """一组品牌 -> 最靠前的区域（一个件同时适配丰田和长安，就算日系）。"""
+    best = "OTHER"
+    for b in brands or ():
+        o = brand_origin(b)
+        if ORIGIN_RANK[o] < ORIGIN_RANK[best]:
+            best = o
+    return best

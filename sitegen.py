@@ -2175,6 +2175,17 @@ def top_cards(cfg, cats, by_cat):
     return "".join(cards)
 
 
+def _origin_key(it):
+    """型号 -> (区域名次, 区域代码)。一个件同时适配丰田和长安就算日系。"""
+    if brandlib is None:
+        return (99, "OTHER")
+    br = it.get("_brands")
+    if br is None:
+        br = brandlib.brand_hits(it.get("a"))
+    o = brandlib.origin_of_brands(br)
+    return (brandlib.ORIGIN_RANK.get(o, 99), o)
+
+
 def home_links(cfg, cats, by_cat, limit=100):
     rows = []
     total = 0
@@ -2185,21 +2196,44 @@ def home_links(cfg, cats, by_cat, limit=100):
             continue          # 0 型号的品类不摆入口（页面留着，但不从这里链出去）
         total += len(items)
         slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
-        links = "".join('<a href="c/%s.html" title="%s">%s</a>' % (
-            esc(it["s"]), esc(it.get("a", "")[:60]), esc(it.get("oe") or it["m"]))
-            for it in items[:limit])
+        # 按品牌国籍重排：日系 -> 德系 -> 韩系 -> 其余，同组内保持原顺序（稳定）
+        ranked = sorted(enumerate(items), key=lambda p: (_origin_key(p[1])[0], p[0]))
+        by_origin = {}
+        for _, it in ranked:
+            by_origin.setdefault(_origin_key(it)[1], []).append(it)
+        # 按配额取，而不是「先切前 100 再分组」：
+        # 那样日系会把 100 个名额吃光，德系韩系根本露不出来。
+        quota = {"JP": 45, "DE": 25, "KR": 15, "US": 8}
+        picked = []
+        for o in (brandlib.ORIGIN_ORDER if brandlib is not None else ["OTHER"]):
+            picked.extend(by_origin.get(o, [])[:quota.get(o, 7)])
+        picked = picked[:limit]
+        picked = [(it, _origin_key(it)[1]) for it in picked]
+        # 再按国籍分组 —— 排序结果要让买家一眼看出来，而不是藏在代码里
+        groups = []
+        for o in (brandlib.ORIGIN_ORDER if brandlib is not None else ["OTHER"]):
+            g = [it for it, oo in picked if oo == o]
+            if not g:
+                continue
+            links = "".join('<a href="c/%s.html" title="%s">%s</a>' % (
+                esc(it["s"]), esc(it.get("a", "")[:60]), esc(it.get("oe") or it["m"]))
+                for it in g)
+            label = brandlib.ORIGIN_LABEL.get(o, o) if brandlib is not None else o
+            groups.append('<div class="ogr" data-og="%s"><span class="og">%s</span>'
+                          '<div class="lst">%s</div></div>' % (o.lower(), esc(label), links))
         rows.append(
             '<div class="catrow"><div class="cath"><b data-cat="%s">%s</b>'
             '<span class="zh-extra">%s · </span>'
             '<span data-i18n="models_n" data-v-n="%d">%d models</span>'
             '<a class="all" href="category/%s.html"><span data-i18n="view_all">View all</span>'
             '<span class="zh-extra"> 查看全部</span> →</a></div>'
-            '<div class="lst">%s</div></div>'
-            % (key, esc(en), esc(cn), len(items), len(items), slug, links))
+            '<div class="ogroups">%s</div></div>'
+            % (key, esc(en), esc(cn), len(items), len(items), slug, "".join(groups)))
     return ('<h2><span data-i18n="cat_h2">Browse all models by category</span>'
             '<span class="zh-extra"> 按品类浏览全部型号</span></h2>'
-            '<p class="lead" data-i18n="cat_home_lead">Each category lists its first 100 models — click View all '
-            'for the whole list. The block collapses and scrolls on its own.</p>'
+            '<p class="lead" data-i18n="cat_home_lead">Each category lists its first 100 models, grouped by '
+            'where the car comes from: Japanese, German and Korean applications first — those are the cars your '
+            'counter actually services. Click View all for the whole list.</p>'
             '<details class="catbox"><summary><span data-i18n="catbox_open" data-v-c="%d" data-v-n="%d">'
             'Expand / collapse: %d categories · %d models</span></summary>%s</details>'
             % (len(cats), total, len(cats), total, "".join(rows)))
