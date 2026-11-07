@@ -1680,6 +1680,9 @@ try{if(document.documentElement.getAttribute('data-lang')==='zh')document.queryS
 # 留空就不显示这句 —— 宁可不写，也不在官网上写一个没核实过的事实。
 PRODUCTION_BASE = ""
 
+# About 页的「最后更新」：改内容时手动改这一行，别用生成时间，否则每次构建都自称刚更新过
+ABOUT_DATE_TXT = "7 November 2026"
+
 
 def page_about(cfg):
     """公司介绍页：说真话的那种。
@@ -1715,8 +1718,10 @@ def page_about(cfg):
          "specification, incoming inspection, packing and the warranty. We know which batch came from which "
          "line, and if you ask us which factory made a specific SKU, we will tell you." + base_sentence + "</p>"),
         ("Where we are",
-         "<p>Office and warehouse: %s. Stock ships from here within days, and export goes out through "
-         "Guangzhou port.</p>" % addr_span(cfg)),
+         "<p>Our office is in Baiyun District, Guangzhou, the trading district the whole Chinese aftermarket "
+         "buys from. Stock ships within days and export goes out through Guangzhou port — we will confirm the "
+         "exact port and terms in the quotation.</p>"
+         "<p>%s</p>" % addr_span(cfg)),
         ("What we can send you before you order",
          "<ul>"
          "<li>Our business licence, stamped</li>"
@@ -1794,7 +1799,7 @@ def page_about(cfg):
 document.addEventListener('DOMContentLoaded',f);document.addEventListener('i18n:change',f);
 try{if(document.documentElement.getAttribute('data-lang')==='zh')document.querySelector('.doczh').open=true;}catch(e){}})();</script>
 </body></html>
-""" % (sitehead(cfg, "", base=""), esc(h1), "Last updated " + POLICY_DATE_TXT, render(secs), zh_html,
+""" % (sitehead(cfg, "", base=""), esc(h1), "Last updated " + ABOUT_DATE_TXT, render(secs), zh_html,
        NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
        addr_span(cfg), esc(cfg["hours"]),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
