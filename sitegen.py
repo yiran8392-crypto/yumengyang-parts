@@ -371,7 +371,7 @@ FAQ_ITEMS = [
 
 WHY = [
     ("why_q_t", "OE-grade quality", "why_q_v",
-     "Built to OE specification for the electrics and sensors we make, under our own brand WEILI.",
+     "Built to OE specification for the electrics and sensors we supply, under our own brand WEILI.",
      '<path d="M12 3 5 6v5.4c0 4.4 3 8.2 7 9.6 4-1.4 7-5.2 7-9.6V6l-7-3z"/><path d="m9 12.2 2.1 2.1 4.2-4.2"/>'),
     ("why_p_t", "About 1/3 of OEM price", "why_p_v",
      "Factory-direct pricing, no importer and no distributor in between.",
@@ -404,8 +404,8 @@ def why_html(cfg):
     return ('<section class="whyus" id="why">'
             '<h2><span data-i18n="why_h">Why buyers overseas order from us</span>'
             '<span class="zh-extra"> 为什么选我们</span></h2>'
-            '<p class="lead" data-i18n="why_lead">We are the factory, not a trading layer: the same part '
-            'numbers, tested, at a fraction of the OEM price.</p>'
+            '<p class="lead" data-i18n="why_lead">Own brand WEILI at importer-free pricing: the same part '
+            'numbers, inspected batch by batch, at a fraction of the OEM price.</p>'
             '<div class="whgrid">%s</div></section>' % cards)
 
 
@@ -504,6 +504,7 @@ def homefoot_html(cfg, total):
   <b class="notranslate" %(nt)s>%(cn)s</b>
   <p class="notranslate" %(nt)s>%(en)s</p>
   <p>%(addr)s</p>
+  <p><a href="about.html" data-i18n="foot_about">About us</a></p>
 </section>
 <section class="fcol">
   <h3 data-i18n="foot_contact">Contact</h3>
@@ -602,6 +603,7 @@ def sitefoot(cfg, base="../"):
 <br>%(addr)s · <span data-i18n="foot_hours">Working hours</span>: %(hours)s</div>
 <div class="sf-b"><a href="%(wa)s" target="_blank" rel="noopener">WhatsApp %(wanum)s</a> ·
 <a href="mailto:%(mail)s">%(mail)s</a><br>
+<a href="%(base)sabout.html" data-i18n="foot_about">About us</a> ·
 <a href="%(base)sindex.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
 <a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a><br>
 <a href="%(base)sguides/index.html" data-i18n="guides_link">Buying guides</a> ·
@@ -1672,6 +1674,135 @@ try{if(document.documentElement.getAttribute('data-lang')==='zh')document.queryS
                       [ld], base="") + "\n" + body
 
 
+# ------------------------------------------------------------------ 公司介绍页
+# 生产地：核实清楚后再填，例如 "Changsha, Hunan"。
+# 填了之后 about.html 的「How the parts are made」一段就会多一句产地说明；
+# 留空就不显示这句 —— 宁可不写，也不在官网上写一个没核实过的事实。
+PRODUCTION_BASE = ""
+
+
+def page_about(cfg):
+    """公司介绍页：说真话的那种。
+    目标读者是中东 / 非洲 / 拉美的采购：他们被"我们是工厂"骗过太多次，
+    所以这一页明说"我们不是工厂"，然后把能证明的东西列出来。"""
+    title = "About us — who you are buying from | Guangzhou Yumengyang Auto Parts"
+    desc = ("Guangzhou Yumengyang Auto Parts Co., Ltd: trading auto electrical parts since 2002, own brand WEILI. "
+            "What we do, how the parts are made, where we are, and what we can prove before you order.")
+    h1 = "About us"
+    canon = rel_url(cfg, "about.html")
+    wa = wa_link(cfg, "Hi, I would like to know more about your company and your production.")
+    n_total = cfg.get("_total") or 6819
+    n_txt = "{:,}".format(n_total)
+
+    base_sentence = ""
+    if PRODUCTION_BASE:
+        base_sentence = (" Our production partners are based in %s; the Guangzhou end handles stock, "
+                         "packing and export." % esc(PRODUCTION_BASE))
+
+    secs = [
+        ("What we do",
+         "<p>Guangzhou Yumengyang Auto Parts Co., Ltd has been trading auto electrical parts since 2002. "
+         "We are headquartered in Baiyun District, Guangzhou, we own two brands — <b>WEILI</b> and "
+         "<b>STANDOUT</b> — and we supply 23 categories of parts: ignition coils, ABS sensors, fuel pumps, "
+         "oxygen sensors, throttle bodies, thermostats and more.</p>"
+         "<p>Every part we sell is listed on this site with its OE number, cross-references and fitment. "
+         "That list is the product: if we cannot name the OE number a part replaces, we do not list it.</p>"),
+        ("How the parts are made",
+         "<p>We are a trading company with our own brand, and we say so plainly. Parts sold under WEILI are "
+         "produced for us by long-term manufacturing partners — the same arrangement most aftermarket brands "
+         "you already buy work with.</p>"
+         "<p>What we control is everything around the part: the OE and cross-reference list, the "
+         "specification, incoming inspection, packing and the warranty. We know which batch came from which "
+         "line, and if you ask us which factory made a specific SKU, we will tell you." + base_sentence + "</p>"),
+        ("Where we are",
+         "<p>Office and warehouse: %s. Stock ships from here within days, and export goes out through "
+         "Guangzhou port.</p>" % addr_span(cfg)),
+        ("What we can send you before you order",
+         "<ul>"
+         "<li>Our business licence, stamped</li>"
+         "<li>The ISO 9001 and IATF 16949 certificates held by our production partners</li>"
+         "<li>Real photos of the part, the inner packing and the carton marking</li>"
+         "<li>The test report for the batch we are quoting</li>"
+         "<li>Buyers in your region who agreed to be a reference</li>"
+         "</ul>"
+         "<p>Ask on WhatsApp and we send what we have the same working day. If we do not have a document, "
+         "we say so rather than sending something that looks like it.</p>"),
+        ("What we are not",
+         "<p>We would rather lose an order than mislead a buyer:</p>"
+         "<ul>"
+         "<li>We do not run our own stamping or winding plant, and we will not claim to.</li>"
+         "<li>We are not the cheapest source for a single piece. Our pricing pays off on mixed orders.</li>"
+         "<li>We do not stock every body panel. Our catalogue is electrics and sensors — that is where "
+         "our knowledge is.</li>"
+         "</ul>"),
+        ("Why this lookup site exists",
+         "<p>The first question every buyer asks is <i>“do you have my number?”</i> — usually with a photo of "
+         "a sticker on a broken part. Instead of answering that one part at a time, we put %s part numbers "
+         "online with their OE numbers and cross-references, in five languages, so a mechanic in Lagos or a "
+         "counter in Dubai can check it themselves at 2 a.m.</p>" % n_txt),
+    ]
+
+    def render(pairs):
+        out = []
+        for t, body in pairs:
+            out.append('<section class="dsec"><h2>%s</h2>%s</section>' % (esc(t), body))
+        return "".join(out)
+
+    zh = [
+        "2002 年成立，总部在广州白云区，自有品牌 WEILI 与 STANDOUT，供 23 个品类、%s 个型号。" % n_txt,
+        "我们是工贸一体、自有品牌，不假装自己是工厂：WEILI 的货由长期合作工厂代工，我们负责 OE 清单、"
+        "规格、来料检验、包装和质保。哪批货出自哪条线，你问了我们说。",
+        "广州办公与仓库，现货几天内发出，出口走广州港。",
+        "下单前可以给我们索取：营业执照、合作工厂的 ISO 9001 / IATF 16949 证书、实物与包装实拍、批次检测报告、"
+        "同区域客户推荐。有就给，没有就说没有。",
+        "我们不做的：不假装有冲压绕线车间；单件不是最便宜；车身覆盖件不齐——我们的强项是电器件和传感器。",
+        "这个查询站的由来：每个买家第一句话都是「这个号你有没有」，我们干脆把 %s 个型号和 OE 号全部放上网。" % n_txt,
+    ]
+    zh_html = "".join("<li>%s</li>" % esc(x) for x in zh)
+
+    ld = {"@context": "https://schema.org", "@type": "AboutPage",
+          "name": "About %s" % cfg["company_en"], "description": clean_text(desc),
+          "inLanguage": "en", "isPartOf": {"@type": "WebSite", "url": cfg["site_url"] + "/"}}
+    if has_site(cfg):
+        ld["url"] = canon
+
+    body = """<body class="docpage">
+%s
+<main class="policy">
+<nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="foot_about">About us</span></nav>
+<article class="doc">
+  <h1>%s</h1>
+  <p class="docmeta">%s · <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead">We buy, brand and ship auto electrical parts for the aftermarket. We are not a factory,
+  and this page does not pretend that we are — it explains what we actually do, so you can judge whether
+  we are the right supplier for your market.</p>
+  %s
+  <details class="doczh"><summary>中文摘要 · Chinese summary</summary><ul>%s</ul></details>
+  <section class="doccontact">
+    <h2 data-i18n="foot_contact">Contact</h2>
+    <p class="docorg"><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></p>
+    <p class="docaddr">%s</p>
+    <p><span data-i18n="foot_hours">Working hours</span>: %s</p>
+    <p data-i18n="foot_contact_via">Questions about this page? WhatsApp or email us — we answer within one working day.</p>
+    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+       <a class="btn-ghost" href="index.html" data-i18n="nf_back">Back to the lookup home</a></p>
+  </section>
+</article>
+</main>
+%s
+<script>(function(){function f(){try{var d=document.querySelector('.doczh');if(d&&window.I18N&&window.I18N.lang==='zh')d.open=true;}catch(e){}}
+document.addEventListener('DOMContentLoaded',f);document.addEventListener('i18n:change',f);
+try{if(document.documentElement.getAttribute('data-lang')==='zh')document.querySelector('.doczh').open=true;}catch(e){}})();</script>
+</body></html>
+""" % (sitehead(cfg, "", base=""), esc(h1), "Last updated " + POLICY_DATE_TXT, render(secs), zh_html,
+       NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
+       addr_span(cfg), esc(cfg["hours"]),
+       esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
+       sitefoot(cfg, base=""))
+    return head_block(cfg, title, desc, canon, "assets/og/og-default.webp", "website",
+                      [ld], base="") + "\n" + body
+
+
 def make_og_default(cfg):
     """全站默认分享卡 assets/og/og-default.webp（1200×630）：首页 / 政策页 / 指南页都用它。
     型号页仍然用它自己的产品图（head_block 里按 it["p"] 传进去）。"""
@@ -2306,6 +2437,10 @@ def build_static(items, cats, log=print):
             f.write(page_policy(cfg, kind))
         policy_files.append(fname)
 
+    # 公司介绍页：about.html（说真话版本，含中文摘要）
+    with open(os.path.join(HERE, "about.html"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(page_about(cfg))
+
     # 采购指南（guides/）：正文在 guides_content.py，这里只负责套模板 + 解析内链
     guide_files = []
     if guides_content is not None and getattr(guides_content, "GUIDES", None):
@@ -2353,6 +2488,9 @@ def build_static(items, cats, log=print):
     for fname in policy_files:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>'
                     % (esc(rel_url(cfg, fname)), POLICY_DATE))
+    # 公司介绍页：优先级与品类页看齐 —— 它是买家判断「能不能汇款」的那一页
+    urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>'
+                % (esc(rel_url(cfg, "about.html")), today))
     sm = ('<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "\n".join(urls) + "\n</urlset>\n")
