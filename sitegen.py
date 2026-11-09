@@ -2495,7 +2495,7 @@ def pay_card_html():
     if not rows:
         return ""
     return ('<div class="tc"><b data-i18n="t_pay">Payment</b><span>%s'
-            '<a class="paymore" href="contact.html" data-i18n="pay_more">Payment &amp; shipping terms</a>'
+            '<a class="paymore" href="../contact.html" data-i18n="pay_more">Payment &amp; shipping terms</a>'
             '</span></div>' % rows)
 
 
