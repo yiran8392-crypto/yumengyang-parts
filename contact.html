@@ -38,6 +38,30 @@
   <h1 data-i18n="nav_contact">Contact</h1>
   <p class="doclead" data-i18n="contact_lead">Send the OE number, a photo or your list — we reply with
   price, MOQ and packing within one working day.</p>
+  <section class="rfq" id="quote">
+    <h2>Request a quotation</h2>
+    <p class="rfqlead">Fill the four fields and add your part list. Nothing is uploaded: the button opens your own
+    mail app or WhatsApp with the text already filled in. <span class="zh-extra">填好四栏、贴上型号和数量，点按钮用邮件或 WhatsApp 发给我们。</span></p>
+    <form id="rfq" novalidate>
+      <div class="rfqgrid">
+        <label for="rfq-name">Name / company
+          <input id="rfq-name" type="text" autocomplete="organization" placeholder="ACME Auto Parts"></label>
+        <label for="rfq-country">Country
+          <input id="rfq-country" type="text" autocomplete="country-name" placeholder="Iraq"></label>
+        <label for="rfq-contact">Email or WhatsApp
+          <input id="rfq-contact" type="text" autocomplete="email" placeholder="buyer@example.com"></label>
+        <label for="rfq-parts">Parts &amp; quantity
+          <textarea id="rfq-parts" rows="5" placeholder="WL03-0004 x 200&#10;90919-02248 x 100"></textarea></label>
+      </div>
+      <div class="rfqbtns">
+        <button type="submit" class="btn-wa">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 6l9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>Send by email</span></button>
+        <button type="button" class="btn-ghost" id="rfq-wa">Send on WhatsApp</button>
+      </div>
+      <p class="rfqnote">We answer within one working day, Mon–Sat 09:00–18:00 (GMT+8).</p>
+    </form>
+  </section>
   <section class="payblock">
 <h2 data-i18n="pay_h">Payment, shipping &amp; documents</h2>
 <div class="paygrid">
@@ -99,4 +123,29 @@ terms can be accommodated on repeat orders.</p>
   <a href="about.html" data-i18n="foot_about">About us</a>
   <a href="privacy.html" data-i18n="foot_privacy">Privacy Policy</a> · <a href="returns.html" data-i18n="foot_returns">Refund &amp; returns</a> · <a href="sitemap.xml" data-i18n="sitemap">Sitemap</a></div>
 </footer>
+<script>
+(function(){
+  var f = document.getElementById('rfq');
+  if(!f) return;
+  function v(id){ var e = document.getElementById(id); return e ? (e.value || '').trim() : ''; }
+  function body(){
+    return 'Name / company: ' + (v('rfq-name') || '-') + '\n' +
+           'Country: ' + (v('rfq-country') || '-') + '\n' +
+           'Email / WhatsApp: ' + (v('rfq-contact') || '-') + '\n' +
+           '\nParts & quantity:\n' + (v('rfq-parts') || '-');
+  }
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    var country = v('rfq-country');
+    var subject = 'Quotation request' + (country ? ' - ' + country : '');
+    location.href = 'mailto:yumengyangkefu@yumengyang.com?subject=' + encodeURIComponent(subject) +
+                    '&body=' + encodeURIComponent(body());
+  });
+  var w = document.getElementById('rfq-wa');
+  if(w) w.addEventListener('click', function(){
+    var text = 'Hi, I would like a quotation.\n\n' + body();
+    window.open('https://wa.me/8615915859048?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  });
+})();
+</script>
 </body></html>

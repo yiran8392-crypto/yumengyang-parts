@@ -974,3 +974,22 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 .tc .prow span{font-size:12.5px}
 .tc .paymore{display:inline-block;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--accent);text-decoration:none}
 @media (max-width:760px){.paygrid{grid-template-columns:1fr;gap:16px}}
+
+/* ---- 联系页询价表单（纯前端：拼 mailto / wa.me，不上传） ---- */
+.rfq{margin:6px 0 30px;padding:22px 22px 20px;border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:#fff;box-shadow:var(--shadow)}
+.rfq h2{margin:0 0 6px;font-size:20px}
+.rfqlead{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.65}
+.rfqgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.rfqgrid label{display:flex;flex-direction:column;gap:6px;font-size:11.5px;font-weight:700;
+  color:#4a5d6e;letter-spacing:.06em;text-transform:uppercase}
+.rfqgrid label:last-child{grid-column:1/-1}
+.rfqgrid input,.rfqgrid textarea{font:inherit;font-size:14.5px;font-weight:400;color:var(--ink);
+  padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:#fff;
+  text-transform:none;letter-spacing:0;width:100%}
+.rfqgrid input:focus,.rfqgrid textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.rfqgrid textarea{min-height:110px;resize:vertical;line-height:1.55}
+.rfqbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.rfqbtns button{border:0;cursor:pointer}
+.rfqnote{margin:12px 0 0;font-size:12.5px;color:var(--faint)}
+@media (max-width:600px){.rfqgrid{grid-template-columns:1fr}}
