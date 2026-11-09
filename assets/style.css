@@ -993,3 +993,27 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 .rfqbtns button{border:0;cursor:pointer}
 .rfqnote{margin:12px 0 0;font-size:12.5px;color:var(--faint)}
 @media (max-width:600px){.rfqgrid{grid-template-columns:1fr}}
+
+/* ---- 批量查价页 ---- */
+.bulk{margin:6px 0 24px}
+.bulklabel{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#4a5d6e;margin:0 0 6px}
+.bulk textarea{width:100%;font-size:14px;line-height:1.6;color:var(--ink);padding:12px 14px;
+  border:1px solid var(--line2);border-radius:10px;background:#fff;min-height:190px;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.bulk textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.bulkrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.bulkrow button{border:0;cursor:pointer}
+.bulkstatus{font-size:13px;color:var(--muted)}
+.bulkout{margin-top:18px}
+.bulkh2{font-size:16px;margin:18px 0 8px}
+.bulktable{width:100%;border-collapse:collapse;font-size:13.5px}
+.bulktable th,.bulktable td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.bulktable th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.bulktable a{color:var(--accent);font-weight:700;text-decoration:none}
+.bulkmiss{margin:0 0 10px;padding-inline-start:18px;font-size:13.5px;color:#7a2f18}
+.bulknote{font-size:13px;color:var(--muted);margin:12px 0 0}
+.bulkhint{margin:10px 0 0;font-size:13px;color:#8ba9bd}
+.bulkhint a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.45)}
+.bulkhint b{color:#ffd9c7}
+@media (max-width:600px){.bulktable th:nth-child(3),.bulktable td:nth-child(3){display:none}}
