@@ -954,3 +954,18 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
   padding:10px 13px;background:#fff8f4;border:1px solid #f3ddcf;border-radius:10px}
 .priceline b{font-size:13.5px;color:#b8481c}
 .priceline span{font-size:12px;color:#8a7a72}
+
+/* 付款与装运 */
+.payblock{max-width:900px;margin:26px 0 6px}
+.payblock h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
+.paygrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px}
+.paycol h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 8px}
+.prow{margin:0 0 12px}
+.prow b{display:block;font-size:13px;color:var(--ink)}
+.prow span{display:block;font-size:13.5px;color:#40566a;line-height:1.55}
+.prow em{display:block;font-style:normal;font-size:12px;color:var(--faint);margin-top:2px}
+.payfoot{font-size:13px;color:var(--muted);margin:16px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.tc .prow{margin:0 0 6px}
+.tc .prow span{font-size:12.5px}
+.tc .paymore{display:inline-block;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--accent);text-decoration:none}
+@media (max-width:760px){.paygrid{grid-template-columns:1fr;gap:16px}}

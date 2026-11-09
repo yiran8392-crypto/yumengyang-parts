@@ -366,8 +366,8 @@ FAQ_ITEMS = [
     ("faq_q5", "Can I get samples for testing?",
      "faq_a5", "Yes. Samples are available on request before a bulk order; the buyer covers the freight."),
     ("faq_q6", "How do I pay?",
-     "faq_a6", "Bank transfer (T/T) is our standard term. The payment terms are confirmed on the "
-               "invoice before you pay."),
+     "faq_a6", "Bank transfer (T/T) is standard: 30% deposit, balance before shipment. L/C at sight is "
+               "accepted on orders above USD 20,000. Terms are confirmed on the proforma invoice."),
 ]
 
 WHY = [
@@ -1178,6 +1178,8 @@ def page_model(cfg, it, cat, related=None):
     <span data-i18n="t_sample_v">Available on request before a bulk order for testing; the buyer covers the freight.</span></div>
 </div>
 </section>"""
+
+    terms = terms.replace('</div>\n</section>', pay_card_html() + '</div>\n</section>')
 
     cta_text = ("Hi, please quote %s%s. Quantity: ____. Vehicle / year: ____. Ship to: ____."
                 % (it.get("m"), (" (OE %s)" % it["oe"]) if it.get("oe") else ""))
@@ -2453,6 +2455,74 @@ def home_contact_html(cfg):
                       esc(cfg["email"]), esc(cfg["email"]), addr_span(cfg))
 
 
+def load_terms():
+    """读 付款与装运.txt：英文键 = 值"""
+    path = os.path.join(HERE, "付款与装运.txt")
+    out = {}
+    if not os.path.exists(path):
+        return out
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                k, v = line.split("=", 1)
+            elif ":" in line:
+                k, v = line.split(":", 1)
+            else:
+                continue
+            out[k.strip()] = v.strip()
+    return out
+
+
+TERMS = {}
+
+
+def _prow(label_key, label_en, main, note=""):
+    if not main:
+        return ""
+    note_html = ('<em>%s</em>' % esc(note)) if note else ""
+    return ('<div class="prow"><b data-i18n="%s">%s</b><span>%s%s</span></div>'
+            % (label_key, esc(label_en), esc(main), note_html))
+
+
+def pay_card_html():
+    """型号页那一张卡。"""
+    t = TERMS
+    rows = _prow("pay_t", "Bank transfer (T/T)", t.get("t_t", ""))
+    rows += _prow("pay_lc", "Letter of credit", t.get("l_c", ""))
+    if not rows:
+        return ""
+    return ('<div class="tc"><b data-i18n="t_pay">Payment</b><span>%s'
+            '<a class="paymore" href="contact.html" data-i18n="pay_more">Payment &amp; shipping terms</a>'
+            '</span></div>' % rows)
+
+
+def pay_block_html():
+    """联系页那一整块。"""
+    t = TERMS
+    pay = (_prow("pay_t", "Bank transfer (T/T)", t.get("t_t", ""), t.get("t_t_note", "")) +
+           _prow("pay_lc", "Letter of credit", t.get("l_c", ""), t.get("l_c_note", "")) +
+           _prow("pay_sample", "Samples / small orders", t.get("sample_pay", ""), t.get("sample_pay_note", "")) +
+           _prow("pay_cur", "Currency", t.get("currency", ""), t.get("currency_note", "")))
+    ship = (_prow("pay_terms", "Shipping terms", t.get("terms", ""), t.get("terms_note", "")) +
+            _prow("t_lead", "Lead time", t.get("lead_time", ""), t.get("lead_time_note", "")))
+    docs = _prow("pay_docs", "Documents", t.get("docs", ""), t.get("docs_note", ""))
+    if not (pay or ship or docs):
+        return ""
+    return ("""<section class="payblock">
+<h2 data-i18n="pay_h">Payment, shipping &amp; documents</h2>
+<div class="paygrid">
+  <div class="paycol"><h3 data-i18n="pay_payment">Payment</h3>%s</div>
+  <div class="paycol"><h3 data-i18n="pay_shipping">Shipping</h3>%s</div>
+  <div class="paycol"><h3 data-i18n="pay_docs_h">Documents</h3>%s</div>
+</div>
+<p class="payfoot" data-i18n="pay_foot">Nothing here matches your requirement? Send us your terms — most buyers'
+terms can be accommodated on repeat orders.</p>
+</section>""" % (pay, ship, docs))
+
+
 def page_contact(cfg):
     """独立的 Contact 页：导航里那个 Contact 要真的能跳。"""
     title = "Contact us — Guangzhou Yumengyang Auto Parts"
@@ -2495,6 +2565,7 @@ def page_contact(cfg):
                       esc(PHONE_SALES), esc(cfg["email"]), esc(cfg["email"]), addr_span(cfg),
                       esc(cfg["hours"]), esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
                       sitefoot(cfg, base=""))
+    body = body.replace('<section class="doccontact">', pay_block_html() + '<section class="doccontact">', 1)
     return head_block(cfg, title, desc, canon, "assets/og/og-default.webp", "website",
                       [{"@context": "https://schema.org", "@type": "ContactPage",
                         "name": "Contact — " + cfg["company_en"],
@@ -2507,8 +2578,9 @@ def page_contact(cfg):
 # ------------------------------------------------------------------ 主入口
 def build_static(items, cats, log=print):
     cfg = load_cfg()
-    global PRICING
+    global PRICING, TERMS
     PRICING = load_pricing()
+    TERMS = load_terms()
     log("  品类定价：%d 个品类有配置" % len(PRICING))
     cfg["_total"] = len(items)
     t0 = time.time()

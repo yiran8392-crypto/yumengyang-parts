@@ -1,0 +1,28 @@
+# 型号查询站 · 付款与装运条款
+#
+# 格式：英文键 = 值（值直接用英文写，页面上原样显示）
+# 改完保存，双击「更新数据.cmd」重新生成，十几秒生效。
+#
+# ⚠️ 下面这些是行业常见的默认写法，**发出去就是对客户的承诺**：
+#    和你实际走单的方式不一致的，务必改成真实条款。
+#    拿不准就留空（只写 key= ），页面上那一项自动不显示。
+
+# 付款方式
+t_t: 30% T/T deposit, balance before shipment
+t_t_note: Confirmed on the proforma invoice before you pay
+l_c: L/C at sight accepted on orders above USD 20,000
+l_c_note: Please open the L/C 15 days before the shipping date
+sample_pay: Western Union or PayPal for samples and small trial orders
+sample_pay_note: Bank charges are on the buyer side
+currency: USD, EUR or CNY
+currency_note: RMB payment available for border and CIS trade
+
+# 装运条款
+terms: EXW / FOB Guangzhou / CIF on request
+terms_note: We confirm the exact port and Incoterm in the quotation
+lead_time: Stock items 3–7 days; production orders 15–30 days
+lead_time_note: Confirmed per order, in writing
+
+# 单证
+docs: Commercial invoice, packing list, bill of lading, certificate of origin, batch test report
+docs_note: Other documents (COO legalisation, SASO, SONCAP) on request
