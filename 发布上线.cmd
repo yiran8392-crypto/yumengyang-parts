@@ -9,6 +9,7 @@ set "SITE=%HERE%"
 if exist "%HERE%型号查询站\data\data.js" set "SITE=%HERE%型号查询站"
 set "TOKFILE=D:\欧鲸鲸\tools\gh_token.txt"
 set "LIVE=https://yiran8392-crypto.github.io/yumengyang-parts/"
+set "PYC=D:\欧鲸鲸\dsh-home\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
 
 echo ==================================================
 echo   型号查询站 · 一键发布到线上
@@ -22,6 +23,16 @@ cd /d "%SITE%"
 if not exist "data\data.js" goto wrongdir
 git rev-parse --is-inside-work-tree >nul 2>&1
 if errorlevel 1 goto norepo
+
+echo [0/4] 数据体检……
+if not exist "%PYC%" (
+  echo     没找到 Python，跳过体检。
+) else (
+  "%PYC%" validate.py --quiet
+  if errorlevel 1 goto databad
+  echo     通过。
+)
+echo.
 
 echo [1/4] 正在检查改动……
 git add -A >nul 2>&1
@@ -153,6 +164,13 @@ echo ==================================================
 echo.
 pause
 exit /b 0
+
+:databad
+echo.
+echo [中止] 数据体检没过（上面列的是 FATAL），这次没有提交、也没有推送。
+echo        修好 data\data.js，或先双击“更新数据.cmd”，确认无误再发布。
+pause
+exit /b 1
 
 :fail
 echo.

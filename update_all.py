@@ -2,11 +2,13 @@
 """
 一键更新数据（双击 更新数据.cmd 走的就是这里）
 ==============================================
-做两件事，中间任何一步出错都会停下来，不会把站上的数据弄丢：
+做三件事，中间任何一步出错都会停下来，不会把站上的数据弄丢：
 
   1. import_more.py —— 读 D:\\111A剪辑\\111资料 里的目录表，把站上没有的型号补进去
      （已在的只补交叉号/车型/品牌；价格只进 内部价格-不发布\\价格表.csv）
   2. rerender.py   —— 重新生成 c\\*.html、category\\*.html、index.html 品类块、sitemap
+  3. validate.py   —— 数据体检：slug 重复 / 缺型号 / 缺 slug 这类明确坏数据直接报错，
+     无图、无 OE、中文适配这些历史欠账只提醒（报告写进 _selftest\\）
 
 先备份：data\\data.js.bak-YYYYMMDD-HHMM，出了问题可以还原。
 """
@@ -51,7 +53,7 @@ def main():
         shutil.copyfile(DATA_JS, bak)
         print(" 已备份：%s" % os.path.basename(bak))
 
-    print("\n[1/2] 读目录表，补新型号 …")
+    print("\n[1/3] 读目录表，补新型号 …")
     import import_more
     rc = import_more.main()
     if rc:
@@ -62,11 +64,19 @@ def main():
         print("!! 型号数从 %d 掉到 %d，停下来，请用 data.js.bak-* 还原。" % (before, after))
         return 1
 
-    print("\n[2/2] 重新生成页面 …")
+    print("\n[2/3] 重新生成页面 …")
     import rerender
     rc = rerender.main()
     if rc:
         print("!! 第 2 步失败。数据已经写进 data.js，页面没重生成。")
+        return 1
+
+    print("\n[3/3] 数据体检 …")
+    import validate
+    rc = validate.main([])
+    if rc:
+        print("!! 体检没过（上面列的是 FATAL），这次的数据不能发布。")
+        print("   报告在 _selftest\\校验报告-*.md；改好再双击一次。")
         return 1
 
     print("\n合计用时 %.1f 秒。双击 index.html 就能看到新数据。" % (time.time() - t0))
