@@ -1721,10 +1721,6 @@ try{if(document.documentElement.getAttribute('data-lang')==='zh')document.queryS
 
 
 # ------------------------------------------------------------------ 公司介绍页
-# 生产地：核实清楚后再填，例如 "Changsha, Hunan"。
-# 填了之后 about.html 的「How the parts are made」一段就会多一句产地说明；
-# 留空就不显示这句 —— 宁可不写，也不在官网上写一个没核实过的事实。
-PRODUCTION_BASE = ""
 
 # About 页的「最后更新」：改内容时手动改这一行，别用生成时间，否则每次构建都自称刚更新过
 ABOUT_DATE_TXT = "7 November 2026"
@@ -1743,10 +1739,6 @@ def page_about(cfg):
     n_total = cfg.get("_total") or 6819
     n_txt = "{:,}".format(n_total)
 
-    base_sentence = ""
-    if PRODUCTION_BASE:
-        base_sentence = (" Our production partners are based in %s; the Guangzhou end handles stock, "
-                         "packing and export." % esc(PRODUCTION_BASE))
 
     secs = [
         ("What we do",
@@ -1762,7 +1754,7 @@ def page_about(cfg):
          "you already buy work with.</p>"
          "<p>What we control is everything around the part: the OE and cross-reference list, the "
          "specification, incoming inspection, packing and the warranty. We know which batch came from which "
-         "line, and if you ask us which factory made a specific SKU, we will tell you." + base_sentence + "</p>"),
+         "line, and if you ask us which factory made a specific SKU, we will tell you.</p>"),
         ("Where we are",
          "<p>Our office is in Baiyun District, Guangzhou, the trading district the whole Chinese aftermarket "
          "buys from. Stock ships within days and export goes out through Guangzhou port — we will confirm the "
