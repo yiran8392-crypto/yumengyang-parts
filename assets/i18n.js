@@ -143,6 +143,10 @@
       foot_qr_wecom: "企业微信",
       foot_addr_h: "地址",
       contact_lead: "把 OE 号、零件照片或清单发给我们 —— 一个工作日内回价格、起订量与包装。",
+      price_range: "起订量 {moq} 片 · {cur} {lo}–{hi} / 片 · FOB 广州",
+      price_req: "起订量 {moq} 片 · 价格面议",
+      price_note: "最终价按数量和包装确认，写进报价单。",
+
     },
     ar: {
       nav_all: "كل الفئات ({n})", wa: "راسلنا على واتساب", home: "الرئيسية", sitemap: "خريطة الموقع",
@@ -274,6 +278,10 @@
       foot_qr_wecom: "WeCom",
       foot_addr_h: "العنوان",
       contact_lead: "أرسل رقم OE أو صورة للقطعة أو قائمتك — نرد بالسعر والحد الأدنى والتغليف خلال يوم عمل.",
+      price_range: "{cur} {lo}–{hi} / قطعة · الحد الأدنى {moq} · FOB قوانغتشو",
+      price_req: "الحد الأدنى {moq} · السعر عند الطلب",
+      price_note: "السعر النهائي حسب الكمية والتغليف ويُثبَّت في عرض السعر.",
+
     },
     ru: {
       nav_all: "Все категории ({n})", wa: "Написать в WhatsApp", home: "Главная",
@@ -406,6 +414,10 @@
       foot_qr_wecom: "WeCom",
       foot_addr_h: "Адрес",
       contact_lead: "Отправьте номер OE, фото детали или список — ответим ценой, MOQ и упаковкой в течение рабочего дня.",
+      price_range: "{cur} {lo}–{hi} / шт. · от {moq} шт. · FOB Гуанчжоу",
+      price_req: "от {moq} шт. · цена по запросу",
+      price_note: "Итоговая цена зависит от количества и упаковки — фиксируем в предложении.",
+
     },
     fr: {
       nav_all: "Toutes les catégories ({n})", wa: "Devis WhatsApp", home: "Accueil", sitemap: "Plan du site",
@@ -536,6 +548,10 @@
       foot_qr_wecom: "WeCom",
       foot_addr_h: "Adresse",
       contact_lead: "Envoyez le numéro OE, une photo ou votre liste — nous répondons prix, MOQ et emballage en un jour ouvré.",
+      price_range: "{cur} {lo}–{hi} / pièce · dès {moq} pcs · FOB Guangzhou",
+      price_req: "dès {moq} pcs · prix sur demande",
+      price_note: "Le prix final dépend de la quantité et de l'emballage — confirmé dans le devis.",
+
     },
     es: {
       nav_all: "Las {n} categorías",
@@ -774,6 +790,10 @@
       foot_qr_wecom: "WeCom",
       foot_addr_h: "Dirección",
       contact_lead: "Envíe el número OE, una foto o su lista: respondemos con precio, MOQ y embalaje en un día laborable.",
+      price_range: "{cur} {lo}–{hi} / pieza · desde {moq} pzs · FOB Guangzhou",
+      price_req: "desde {moq} pzs · precio a consultar",
+      price_note: "El precio final depende de la cantidad y el embalaje: se confirma en la cotización.",
+
     },
     pt: {
       nav_all: "As {n} categorias",
@@ -1012,6 +1032,10 @@
       foot_qr_wecom: "WeCom",
       foot_addr_h: "Endereço",
       contact_lead: "Envie o número OE, uma foto ou sua lista: respondemos com preço, MOQ e embalagem em um dia útil.",
+      price_range: "{cur} {lo}–{hi} / peça · a partir de {moq} pçs · FOB Guangzhou",
+      price_req: "a partir de {moq} pçs · preço sob consulta",
+      price_note: "O preço final depende da quantidade e da embalagem — confirmado na cotação.",
+
     },
     id: {
       nav_all: "{n} kategori",
@@ -1250,6 +1274,10 @@
       foot_qr_wecom: "WeCom",
       foot_addr_h: "Alamat",
       contact_lead: "Kirim nomor OE, foto part, atau daftar Anda — kami balas harga, MOQ, dan kemasan dalam satu hari kerja.",
+      price_range: "{cur} {lo}–{hi} / pcs · mulai {moq} pcs · FOB Guangzhou",
+      price_req: "mulai {moq} pcs · harga sesuai permintaan",
+      price_note: "Harga akhir tergantung jumlah dan kemasan — dikonfirmasi di penawaran.",
+
     }
   };
 

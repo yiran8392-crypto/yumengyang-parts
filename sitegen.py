@@ -1235,6 +1235,49 @@ def page_model(cfg, it, cat, related=None):
                       extra_scripts='\n<script defer src="../assets/share.js"></script>') + "\n" + body
 
 
+def load_pricing():
+    """读 品类定价.txt：key|moq|币种|最低价|最高价|备注"""
+    path = os.path.join(HERE, "品类定价.txt")
+    out = {}
+    if not os.path.exists(path):
+        return out
+    with open(path, encoding="utf-8") as fh:
+        lines = fh.readlines()
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "|" not in line:
+            continue
+        p = [x.strip() for x in line.split("|")]
+        if len(p) < 5:
+            continue
+        def num(x):
+            try:
+                return float(x)
+            except Exception:
+                return None
+        out[p[0]] = {"moq": p[1], "cur": p[2] or "USD", "lo": num(p[3]), "hi": num(p[4])}
+    return out
+
+
+PRICING = {}
+
+
+def price_html(key):
+    d = PRICING.get(key)
+    if not d or not d.get("moq"):
+        return ""
+    if d.get("lo") is not None and d.get("hi") is not None:
+        lo, hi = ("%g" % d["lo"]), ("%g" % d["hi"])
+        return ('<div class="priceline"><b data-i18n="price_range" data-v-moq="%s" data-v-cur="%s" '
+                'data-v-lo="%s" data-v-hi="%s">MOQ %s pcs · %s %s–%s / pc · FOB Guangzhou</b>'
+                '<span data-i18n="price_note">Final price depends on quantity and packing — '
+                'we confirm it in the quotation.</span></div>'
+                % (d["moq"], d["cur"], lo, hi, d["moq"], d["cur"], lo, hi))
+    return ('<div class="priceline"><b data-i18n="price_req" data-v-moq="%s">MOQ %s pcs · Price on quotation</b>'
+            '<span data-i18n="price_note">Final price depends on quantity and packing — '
+            'we confirm it in the quotation.</span></div>' % (d["moq"], d["moq"]))
+
+
 def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
     slug, en, one, cn = CAT_META[cat]
     fname = "%s.html" % slug if page_no == 1 else "%s-%d.html" % (slug, page_no)
@@ -1279,13 +1322,14 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
   <h1><span data-cat="%s">%s</span> <span class="h1sub zh-extra">%s</span></h1>
   <p data-i18n="cat_lead">Every %s we stock, with OE number and cross-reference. Click a part number to see fitment, photos and a WhatsApp quote button.</p>
   <div class="stat"><span data-i18n="models_n" data-v-n="%d">%d models</span> · <a href="../index.html" data-i18n="search_oe">search by OE number</a> · <a href="../index.html?cat=%s" data-i18n="filter_search">filter on the search page</a></div>
+  %s
 </div>
 <div class="modlist"><h2>%s</h2><ul class="modgrid">%s</ul>%s</div>
 </main>
 %s
 </body></html>
 """ % (sitehead(cfg, cat), cat, esc(en), cat, esc(en), esc(cn), esc(one),
-       len(all_items), len(all_items), cat, modh, lis, pager, sitefoot(cfg))
+       len(all_items), len(all_items), cat, price_html(cat), modh, lis, pager, sitefoot(cfg))
     return head_block(cfg, title, desc, canonical, "assets/og/%s.jpg" % slug, "website",
                       noindex=not all_items) + "\n" + body
 
@@ -2463,6 +2507,9 @@ def page_contact(cfg):
 # ------------------------------------------------------------------ 主入口
 def build_static(items, cats, log=print):
     cfg = load_cfg()
+    global PRICING
+    PRICING = load_pricing()
+    log("  品类定价：%d 个品类有配置" % len(PRICING))
     cfg["_total"] = len(items)
     t0 = time.time()
     clash = make_slugs(items, keep_existing=True)

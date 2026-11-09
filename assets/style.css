@@ -948,3 +948,9 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
   .hct .in{grid-template-columns:1fr}
   .sf2 .qr .box{width:116px;height:116px}
 }
+
+/* 品类价格与起订量 */
+.priceline{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin:10px 0 2px;
+  padding:10px 13px;background:#fff8f4;border:1px solid #f3ddcf;border-radius:10px}
+.priceline b{font-size:13.5px;color:#b8481c}
+.priceline span{font-size:12px;color:#8a7a72}
