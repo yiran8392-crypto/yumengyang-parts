@@ -61,6 +61,7 @@ def to_items(payload):
             "y": row.get("y") or [],
             "d": row.get("d") or [],
             "e": row.get("e") or [],
+            "si": row.get("si") or 0,      # 销量星级（备注清洗时抽出来的，首页 Best sellers 排序用）
         })
     return items
 

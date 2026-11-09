@@ -28,6 +28,38 @@ CLEAN_VER = 9               # 字典/规则版本，改了它才会重新清洗
 
 CJK = re.compile(r"[\u4e00-\u9fa5]")
 
+# 内部备注（只给内部看）：销量打分 / 质检修正 / OE 校验 / 同款互指 / 错字修正
+SALES_RE = re.compile(r"Sales index:\s*(\*+)")
+INTERNAL_NOTE = re.compile(
+    r"(sales\s*index|corrected\s+online|verified\s+online|oe\s+typo\s+fixed|also\s+listed\s+as)",
+    re.I,
+)
+
+
+def strip_internal_notes(payload):
+    """备注里只给内部看的段删掉，其余（Qty/vehicle、Packing、Material、Unit…）保留。
+
+    - 先把它藏起来的销量星级抽到 `si`（1–5），首页「Best sellers」还要用它排序，
+      删掉后 `_sales_rank()` 就取不到了，所以必须先存。
+    - 幂等：每次 prepare 都跑；已清洗过的记录不会再变。
+    返回改动的条数。
+    """
+    n = 0
+    for it in payload.get("items") or []:
+        r = it.get("r") or ""
+        if not r:
+            continue
+        m = SALES_RE.search(r)
+        if m:
+            it["si"] = len(m.group(1))
+        segs = [s.strip() for s in re.split(r"[|｜]", r) if s.strip()]
+        kept = [s for s in segs if not INTERNAL_NOTE.search(s)]
+        nr = " | ".join(kept)
+        if nr != r:
+            it["r"] = nr
+            n += 1
+    return n
+
 # ---------------------------------------------------------------- 词典
 # 品牌 / 车系 / 车型 / 位置 / 描述。按长度从长到短替换，避免「五菱宏光」被「五菱」先吃掉。
 BRAND = {
@@ -417,6 +449,9 @@ def fill_slugs(payload, log=None):
 def prepare(write=True, log=print):
     """读 data.js → 清洗去重 → 补 slug → 写回 + 拆包。返回 (payload, stats)。"""
     payload = load_payload()
+    n_notes = strip_internal_notes(payload)
+    if n_notes:
+        log("  备注清洗：%d 条去掉了内部质检/销量/同款备注" % n_notes)
     if payload.get("_clean") != CLEAN_VER:
         stats = clean_payload(payload, log=log)
         fill_slugs(payload, log=log)
@@ -428,7 +463,7 @@ def prepare(write=True, log=print):
         stats = {"mapping": {}, "unresolved": {}, "dedupe": [], "brand": 0, "fit": 0,
                  "unspecified": 0, "fit_empty": 0, "dup_removed": 0}
         n_fill = fill_slugs(payload, log=log)
-        if n_fill and write:            # 补了 slug 就顺手写回，data.js 和 chunk 保持一致
+        if (n_fill or n_notes) and write:   # 补了 slug / 洗了备注就顺手写回，data.js 和 chunk 保持一致
             write_data_js(payload)
         info = write_chunks(payload) if write else {}
         log("  数据已清洗过（v%d），直接拆包" % CLEAN_VER)

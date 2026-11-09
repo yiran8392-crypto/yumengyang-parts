@@ -412,17 +412,26 @@ def why_html(cfg):
 
 SALES_RE = re.compile(r"Sales index:\s*(\*+)")
 
+# 内部备注段：销量打分、质检修正、OE 校验、同款互指、错字修正 —— 一律不给买家看
+INTERNAL_NOTE_RE = re.compile(
+    r"(sales\s*index|corrected\s+online|verified\s+online|oe\s+typo\s+fixed|also\s+listed\s+as)",
+    re.I,
+)
+
 
 def _sales_rank(it):
+    si = it.get("si")
+    if si:
+        return int(si)
     m = SALES_RE.search(it.get("r") or "")
     return len(m.group(1)) if m else 0
 
 
 def public_notes(t):
-    """对外显示的备注：去掉内部「Sales index 销量指数」这一段（那是我们的热销打分，
-    不该给买家看），其余段（Qty/vehicle 每车用量等）照常保留。"""
+    """对外显示的备注：去掉内部段（销量指数 / 质检修正 / OE 校验 / 同款互指 / 错字修正），
+    其余段（Qty/vehicle 每车用量、Packing、Material…）照常保留。"""
     segs = [s.strip() for s in re.split(r"[|｜]", t or "") if s.strip()]
-    return " | ".join(s for s in segs if not SALES_RE.search(s))
+    return " | ".join(s for s in segs if not INTERNAL_NOTE_RE.search(s))
 
 
 def hot_html(cfg, cats, by_cat, per_cat=2, keys=None):
