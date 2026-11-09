@@ -9,6 +9,8 @@
   2. rerender.py   —— 重新生成 c\\*.html、category\\*.html、index.html 品类块、sitemap
   3. validate.py   —— 数据体检：slug 重复 / 缺型号 / 缺 slug 这类明确坏数据直接报错，
      无图、无 OE、中文适配这些历史欠账只提醒（报告写进 _selftest\\）
+  4. 内部版重建（可选）—— 找到 02-型号查询站\\内部版 就用刚生成的数据刷一遍，
+     找不到或失败只提示，不影响公开站
 
 先备份：data\\data.js.bak-YYYYMMDD-HHMM，出了问题可以还原。
 """
@@ -64,14 +66,14 @@ def main():
         print("!! 型号数从 %d 掉到 %d，停下来，请用 data.js.bak-* 还原。" % (before, after))
         return 1
 
-    print("\n[2/3] 重新生成页面 …")
+    print("\n[2/4] 重新生成页面 …")
     import rerender
     rc = rerender.main()
     if rc:
         print("!! 第 2 步失败。数据已经写进 data.js，页面没重生成。")
         return 1
 
-    print("\n[3/3] 数据体检 …")
+    print("\n[3/4] 数据体检 …")
     import validate
     rc = validate.main([])
     if rc:
@@ -79,8 +81,42 @@ def main():
         print("   报告在 _selftest\\校验报告-*.md；改好再双击一次。")
         return 1
 
+    print("\n[4/4] 顺带刷新内部报价查询站 …")
+    if not refresh_internal():
+        print("   [提示] 内部版没刷新成功（不影响公开站）。需要时到内部版双击一次“更新内部数据.cmd”。")
+
     print("\n合计用时 %.1f 秒。双击 index.html 就能看到新数据。" % (time.time() - t0))
     return 0
+
+
+# 内部报价查询站在哪儿：按顺序找，找到就用
+INTERNAL_CANDIDATES = [
+    os.path.join(os.path.dirname(HERE), "02-型号查询站", "内部版"),
+    os.path.join(os.path.dirname(HERE), "型号查询站-内部版"),
+    os.path.join(os.path.dirname(HERE), "内部版"),
+]
+
+
+def refresh_internal():
+    """用刚生成好的 data.js 重建内部版（价格仍在 内部价格-不发布\\价格表.csv）。
+    找不到内部版 / 跑失败都只提示，不影响公开站。"""
+    import subprocess
+    for d in INTERNAL_CANDIDATES:
+        script = os.path.join(d, "build_internal.py")
+        if not os.path.exists(script):
+            continue
+        print("   找到内部版：%s" % d)
+        try:
+            r = subprocess.run([sys.executable, script], cwd=d, timeout=600)
+        except Exception as e:
+            print("   内部版构建出错：%s" % e)
+            return False
+        if r.returncode != 0:
+            print("   内部版构建返回 %d，没刷新成功。" % r.returncode)
+            return False
+        return True
+    print("   没找到内部版目录（找过：%s）。" % "、".join(os.path.basename(x) for x in INTERNAL_CANDIDATES))
+    return False
 
 
 if __name__ == "__main__":
