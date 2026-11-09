@@ -132,7 +132,8 @@ terms can be accommodated on repeat orders.</p>
     return 'Name / company: ' + (v('rfq-name') || '-') + '\n' +
            'Country: ' + (v('rfq-country') || '-') + '\n' +
            'Email / WhatsApp: ' + (v('rfq-contact') || '-') + '\n' +
-           '\nParts & quantity:\n' + (v('rfq-parts') || '-');
+           '\nParts & quantity:\n' + (v('rfq-parts') || '-') + '\n' +
+           '\n-- sent from ' + location.href;
   }
   f.addEventListener('submit', function(e){
     e.preventDefault();
