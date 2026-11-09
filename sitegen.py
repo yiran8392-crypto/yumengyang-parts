@@ -634,8 +634,6 @@ def sitefoot(cfg, base="../"):
     return """<footer class="sf2">
 <div class="in">
   <div>
-    <div class="socials"><i style="background:#25d366">WA</i><i style="background:#2aabee">TG</i>
-      <i style="background:#1a7fc4">B</i><i style="background:#0a66c2">in</i></div>
     <div class="qrs">
       <div class="qr"><div class="box"><img src="%(base)sassets/hero/qr-wecom.webp" alt="WeCom QR" loading="lazy"></div>
         <span data-i18n="foot_qr_wecom">WeCom</span></div>
@@ -1209,7 +1207,7 @@ def page_model(cfg, it, cat, related=None):
   <figure class="pdp-pic">%s</figure>
   <div class="pdp-info">
     <div class="kicker" data-cat="%s">%s</div>
-    <h1>%s</h1>
+    <h1><span class="sr-only">%s </span>%s</h1>
     <p class="sub2"><span data-i18n="our_sku">Our SKU</span> <b>%s</b>%s</p>
     <p class="langnote" data-i18n="langnote">Product data is shown in English</p>
     <table class="spec">%s</table>
@@ -1232,7 +1230,7 @@ def page_model(cfg, it, cat, related=None):
 %s
 </body></html>
 """ % (sitehead(cfg, cat), cat_slug(cat), cat, esc(CAT_META[cat][1]), esc(primary), pic,
-       cat, esc(CAT_META[cat][1]), esc(primary), esc(it["m"]),
+       cat, esc(CAT_META[cat][1]), esc(one), esc(primary), esc(it["m"]),
        (" · <span data-i18n=\"spec_brand\">Brand</span> " + esc(it["b"])) if it.get("b") else "",
        spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
        total_txt, total_txt, share_bar_html(cfg, it, cat),
