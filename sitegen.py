@@ -92,7 +92,7 @@ FAVICON = ('<link rel="icon" href="data:image/svg+xml,'
 # 界面多语言：文案字典在 assets/i18n.js（全站共用一个文件，页面里只放 data-i18n 标记）。
 # 这里只负责语言切换器的 HTML 和“首屏防闪”的小脚本。
 LANG_OPTIONS = [("en", "English"), ("zh", "简体中文"), ("ar", "العربية"), ("ru", "Русский"),
-                ("fr", "Français")]
+                ("fr", "Français"), ("es", "Español"), ("pt", "Português"), ("id", "Bahasa Indonesia")]
 
 
 def lang_sel_html():
@@ -104,7 +104,8 @@ def lang_sel_html():
 LANG_BOOT = ('<script>try{var l=(new URLSearchParams(location.search).get("lang")||'
              'localStorage.getItem("ymy_lang")||"en").toLowerCase();'
              'l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru"'
-             ':l.indexOf("fr")===0?"fr":"en";'
+             ':l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt"'
+             ':l.indexOf("id")===0?"id":"en";'
              'var d=document.documentElement;d.setAttribute("data-lang",l);'
              'if(l==="ar")d.setAttribute("dir","rtl")}catch(e){}</script>')
 
@@ -315,7 +316,7 @@ def org_ld(cfg):
             "telephone": "+" + cfg["whatsapp"],
             "email": cfg["email"],
             "areaServed": "Worldwide",
-            "availableLanguage": ["en", "zh", "ar", "ru", "fr"],
+            "availableLanguage": ["en", "zh", "ar", "ru", "fr", "es", "pt", "id"],
         }],
     }
     return ld
@@ -330,7 +331,7 @@ def website_ld(cfg, total):
         "name": "%s · OE / cross-reference lookup" % cfg["company_en"].split(" Co.")[0],
         "alternateName": BRAND_CN,
         "url": base,
-        "inLanguage": ["en", "zh", "ar", "ru", "fr"],
+        "inLanguage": ["en", "zh", "ar", "ru", "fr", "es", "pt", "id"],
         "potentialAction": {
             "@type": "SearchAction",
             "target": {"@type": "EntryPoint", "urlTemplate": base + "?q={search_term_string}"},

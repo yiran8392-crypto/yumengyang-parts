@@ -39,6 +39,21 @@
       share: "Partager sur WhatsApp", copy: "Copier le lien", copied: "Copié !",
       a: "Voir cette pièce : ", b: ". ", fits: "Compatible avec ",
       c: "Remplacement qualité OE — prix et MOQ sur WhatsApp : "
+    },
+    es: {
+      share: "Compartir en WhatsApp", copy: "Copiar enlace", copied: "¡Copiado!",
+      a: "Mira esta pieza: ", b: ". ", fits: "Compatible con ",
+      c: "Recambio calidad OE — precio y MOQ por WhatsApp: "
+    },
+    pt: {
+      share: "Compartilhar no WhatsApp", copy: "Copiar link", copied: "Copiado!",
+      a: "Veja esta peça: ", b: ". ", fits: "Compatível com ",
+      c: "Peça de reposição nível OE — preço e MOQ pelo WhatsApp: "
+    },
+    id: {
+      share: "Bagikan ke WhatsApp", copy: "Salin tautan", copied: "Tersalin!",
+      a: "Lihat part ini: ", b: ". ", fits: "Cocok untuk ",
+      c: "Part pengganti setara OE — harga dan MOQ via WhatsApp: "
     }
   };
 

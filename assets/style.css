@@ -37,6 +37,9 @@ h1,h2,h3{color:var(--ink);font-weight:700;letter-spacing:-.01em}
 html[data-lang="zh"] .zh-extra,
 html[data-lang="ar"] .zh-extra,
 html[data-lang="ru"] .zh-extra,
+html[data-lang="es"] .zh-extra,
+html[data-lang="pt"] .zh-extra,
+html[data-lang="id"] .zh-extra,
 html[data-lang="fr"] .zh-extra{display:none!important}
 html[lang="ar"] body{line-height:1.8}
 html[lang="ar"]{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Arial",sans-serif}
@@ -471,6 +474,13 @@ html[dir="rtl"] .kv dd,
 html[dir="rtl"] .pdp-block p{direction:ltr;text-align:right}
 html[dir="rtl"] .crumbspan{direction:ltr;display:inline-block}
 .brandline .bl-cn{white-space:nowrap}
+/* 非中英界面别显示中文副名：阿拉伯/俄/法/西/葡/印尼读者用不上，纯噪声 */
+html[data-lang="ar"] .brandline .bl-cn,
+html[data-lang="ru"] .brandline .bl-cn,
+html[data-lang="fr"] .brandline .bl-cn,
+html[data-lang="es"] .brandline .bl-cn,
+html[data-lang="pt"] .brandline .bl-cn,
+html[data-lang="id"] .brandline .bl-cn{display:none}
 @media (max-width:470px){
   .brandline .bl-cn{display:none}
   .sitehead .brand em{display:none}
