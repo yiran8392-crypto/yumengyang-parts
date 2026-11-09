@@ -578,6 +578,11 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
                  extra=extra_scripts)
 
 
+
+# 联系信息（2026-11 奕然确认）：WhatsApp 走站点设置，销售电话单独一条
+PHONE_SALES = "+86 195 7786 3139"
+CONTACT_EMAIL = "yumengyangkefu@yumengyang.com"
+
 def sitehead(cfg, active="", base="../"):
     keys = NAV_KEYS or ["coil", "abs", "wire", "thermo", "plug"]
     nav = []
@@ -586,35 +591,75 @@ def sitehead(cfg, active="", base="../"):
         cls = ' class="on"' if active == key else ""
         nav.append('<a href="%scategory/%s.html"%s data-cat="%s">%s</a>'
                    % (base, slug, cls, key, esc(en)))
+    # 主导航：官网化以后产品排第二，About / Contact 都要真的能跳
+    main = ('<nav class="mainnav">'
+            '<a href="%sindex.html"%s data-i18n="nav_home">Home</a>'
+            '<a href="%scategory/index.html"%s data-i18n="nav_products">Products</a>'
+            '<a href="%sabout.html"%s data-i18n="nav_about">About us</a>'
+            '<a href="%scontact.html"%s data-i18n="nav_contact">Contact</a>'
+            '</nav>') % (base, ' class="on"' if active == "home" else "",
+                         base, ' class="on"' if active == "products" else "",
+                         base, ' class="on"' if active == "about" else "",
+                         base, ' class="on"' if active == "contact" else "")
     return """<header class="sitehead"><div class="wrap">
 <a class="brand notranslate" %s href="%sindex.html">%s<em %s>%s</em></a>
+%s
 <nav>%s<a href="%scategory/index.html" data-i18n="nav_all" data-v-n="%d">All %d categories</a></nav>
 <div class="tools">%s<a class="wapush" href="%s" target="_blank" rel="noopener" data-i18n="wa">WhatsApp Us</a></div>
 </div></header>""" % (NOTRANSLATE, base, BRAND_EN, NOTRANSLATE, BRAND_EN2,
-                       "".join(nav), base, LIVE_N or len(CAT_META), LIVE_N or len(CAT_META), lang_sel_html(),
+                       main,
+                       "".join(nav), base, LIVE_N or len(CAT_META), LIVE_N or len(CAT_META),
+                       lang_sel_html(),
                        esc(wa_link(cfg, "Hi, I have an inquiry about auto parts.")))
 
 
 def sitefoot(cfg, base="../"):
+    """深色页脚：二维码 + 双号码 + 邮箱 + 地址 + 产品列表（全站共用）。"""
     wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
     pol = " · ".join('<a href="%s%s" data-i18n="%s">%s</a>' % (base, href, k, esc(t))
                      for k, t, href in POLICY_LINKS_EN)
-    return """<footer class="sitefoot"><div class="wrap">
-<div class="sf-a"><b class="notranslate" %(nt)s>%(cn)s</b><br><span class="notranslate" %(nt)s>%(en)s</span>
-<br>%(addr)s · <span data-i18n="foot_hours">Working hours</span>: %(hours)s</div>
-<div class="sf-b"><a href="%(wa)s" target="_blank" rel="noopener">WhatsApp %(wanum)s</a> ·
-<a href="mailto:%(mail)s">%(mail)s</a><br>
-<a href="%(base)sabout.html" data-i18n="foot_about">About us</a> ·
-<a href="%(base)sindex.html" data-i18n="lookup">OE / cross-reference lookup</a> ·
-<a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a><br>
-<a href="%(base)sguides/index.html" data-i18n="guides_link">Buying guides</a> ·
-<a href="%(base)sbrand/index.html" data-i18n="browse_brand">Browse by brand</a> ·
-<a href="%(base)svehicle/index.html" data-i18n="browse_vehicle">Browse by vehicle</a> ·
-%(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
-</div></footer>""" % {"nt": NOTRANSLATE, "cn": esc(BRAND_CN), "en": esc(cfg["company_en"]),
-                      "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
-                      "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
-                      "mail": esc(cfg["email"]), "base": base}
+    prods = [("coil", "Ignition coils"), ("abs", "ABS sensors"), ("fuelpump", "Fuel pumps"),
+             ("o2", "Oxygen sensors"), ("throttle", "Throttle bodies")]
+    plist = "".join('<li><a href="%scategory/%s.html">%s</a></li>'
+                    % (base, CAT_META.get(k, (k,))[0], esc(t)) for k, t in prods)
+    return """<footer class="sf2">
+<div class="in">
+  <div>
+    <div class="socials"><i style="background:#25d366">WA</i><i style="background:#2aabee">TG</i>
+      <i style="background:#1a7fc4">B</i><i style="background:#0a66c2">in</i></div>
+    <div class="qrs">
+      <div class="qr"><div class="box"><img src="%(base)sassets/hero/qr-wecom.webp" alt="WeCom QR" loading="lazy"></div>
+        <span data-i18n="foot_qr_wecom">WeCom</span></div>
+      <div class="qr"><div class="box"><img src="%(base)sassets/hero/qr-whatsapp.webp" alt="WhatsApp QR" loading="lazy"></div>
+        <span>WHATSAPP</span></div>
+    </div>
+  </div>
+  <div>
+    <p class="fh" data-i18n="foot_hotline">Sales hotline</p>
+    <p class="hot">%(wanum)s</p>
+    <div class="line"><i>&#9742;</i><span><span data-i18n="foot_sales">Sales office</span>:
+      <a href="tel:+8619577863139">%(phone)s</a></span></div>
+    <div class="line"><i>&#9993;</i><span><span data-i18n="foot_email">Email</span>:
+      <a href="mailto:%(mail)s">%(mail)s</a></span></div>
+    <div class="line"><i>&#9873;</i><span>%(addr)s</span></div>
+    <div class="line"><i>&#8632;</i><span><span data-i18n="foot_hours">Working hours</span>: %(hours)s</span></div>
+  </div>
+  <div>
+    <p class="fh" data-i18n="foot_products">Our products</p>
+    <ul class="plist">%(plist)s
+      <li><a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a></li>
+    </ul>
+  </div>
+</div>
+<div class="copy">&copy; 2026 <span class="notranslate" %(nt)s>%(en)s</span>
+  <a href="%(base)sindex.html" data-i18n="lookup">OE lookup</a>
+  <a href="%(base)sabout.html" data-i18n="foot_about">About us</a>
+  %(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
+</footer>""" % {"nt": NOTRANSLATE, "en": esc(cfg["company_en"]),
+               "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
+               "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
+               "phone": esc(PHONE_SALES), "plist": plist,
+               "mail": esc(cfg["email"]), "base": base}
 
 
 SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
@@ -2278,11 +2323,14 @@ def inject_home(cfg, cats, by_cat, brand_entries=None):
         return new
 
     h = put(h, "TOP_CARDS", top_cards(cfg, cats, by_cat))
-    h = put(h, "HOME_TRUST", trust_html(cfg))
+    h = put(h, "HOME_TRUST", "")  # 数据已并入公司介绍块，避免位置错乱
+    h = put(h, "HOME_COMPANY", home_company_html(cfg, total, len(cats)))
+    h = put(h, "HOME_CORE", home_core_html(cfg, by_cat))
+    h = put(h, "HOME_CONTACT", home_contact_html(cfg))
     h = put(h, "HOME_WHY", why_html(cfg))
     h = put(h, "HOME_HOT", hot_html(cfg, cats, by_cat))
     h = put(h, "HOME_FAQ", faq_html(cfg))
-    h = put(h, "HOME_FOOT", homefoot_html(cfg, total))
+    h = put(h, "HOME_FOOT", sitefoot(cfg, base=""))  # 首页也用它，保持全站一致
     if brand_entries:
         h = put(h, "HOME_BRANDS", home_brands_html(cfg, brand_entries))
     h = put(h, "SITE_LD", _ld_block(site_ld(cfg) + [faq_ld(cfg)]))
@@ -2300,6 +2348,124 @@ def inject_home(cfg, cats, by_cat, brand_entries=None):
         h = re.sub(r'\n<meta property="og:url"[^>]*>', "", h)
         h = re.sub(r'\n<meta property="og:image"[^>]*>', "", h)
     open(path, "w", encoding="utf-8", newline="\n").write(h)
+
+
+
+def home_company_html(cfg, total, n_cats):
+    """首页「我们是谁」：公司介绍 + 市场标签 + 四个数字。"""
+    return """<section class="sect">
+<div class="hco">
+  <div>
+    <span class="kick" data-i18n="about_kick">Who you are buying from</span>
+    <h2 data-i18n="about_h2">A Guangzhou parts house with its own brands</h2>
+    <p data-i18n="about_p1">We are Guangzhou Yumengyang Auto Parts Co., Ltd — founded in 2002 in
+    Baiyun District, Guangzhou, with 4 subsidiaries and two own brands: WEILI
+    (ignition, sensors, fuel system) and STANDOUT.</p>
+    <p data-i18n="about_p2">Parts are stocked and shipped from a 10,000+ m² warehouse in Guangzhou.
+    WEILI parts are produced by long-term manufacturing partners certified to ISO 9001 and IATF 16949;
+    we control the OE list, incoming inspection, packing and the warranty.</p>
+    <p data-i18n="about_p3">We currently supply distributors and workshops in 25+ countries —
+    including Peru, Bolivia, South Africa, Iraq, Iran, Syria and Egypt.</p>
+    <div class="markets"><span>Peru</span><span>Bolivia</span><span>South Africa</span><span>Iraq</span>
+      <span>Iran</span><span>Syria</span><span>Egypt</span><span>+ 18 more</span></div>
+    <div class="stats">
+      <div class="st"><b>2002</b><em data-i18n="st_founded">Founded</em></div>
+      <div class="st"><b>%(nt)s</b><em data-i18n="st_parts">Part numbers online</em></div>
+      <div class="st"><b>%(nc)d</b><em data-i18n="st_cats">Product categories</em></div>
+      <div class="st"><b>10,000+ m²</b><em data-i18n="st_wh">Warehouse in Guangzhou</em></div>
+    </div>
+  </div>
+  <img src="assets/hero/about-warehouse.webp" alt="Guangzhou warehouse" loading="lazy">
+</div>
+</section>""" % {"nt": "{:,}".format(total), "nc": n_cats}
+
+
+CORE = [("coil", "prod-coil.webp", "Ignition coils", "Ignition Coils"),
+        ("abs", "prod-abs.webp", "ABS sensors", "ABS Sensors"),
+        ("fuelpump", "prod-fuelpump.webp", "Fuel pumps", "Fuel Pumps")]
+
+
+def home_core_html(cfg, by_cat):
+    """首页「三条主营线」：用目录里的真实产品图。"""
+    cards = []
+    for key, img, label, en in CORE:
+        slug = CAT_META.get(key, (key,))[0]
+        n = len(by_cat.get(key) or [])
+        cards.append(
+            '<a href="category/%s.html">'
+            '<img src="assets/hero/%s" alt="%s" loading="lazy">'
+            '<div class="tx"><b data-cat="%s">%s</b>'
+            '<span data-i18n="models_n" data-v-n="%d">%d models</span>'
+            '<em><span data-i18n="view_range">View range</span> &rarr;</em></div></a>'
+            % (slug, img, esc(en), key, esc(en), n, n))
+    return ('<section class="sect"><div class="head">'
+            '<h2 data-i18n="core_h2">Three lines we ship every week</h2>'
+            '<b data-i18n="core_sub">from 23 categories</b>'
+            '<a href="category/index.html" data-i18n="core_all">All products</a></div>'
+            '<div class="hcore">%s</div></section>' % "".join(cards))
+
+
+def home_contact_html(cfg):
+    """首页联系条：WhatsApp / 销售电话 / 邮箱 / 地址（手机端也要一眼看到）。"""
+    wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
+    return """<section class="hct"><div class="in">
+  <div class="ci"><i>&#9990;</i><div><b>WhatsApp</b><span>%s</span></div></div>
+  <div class="ci"><i>&#9742;</i><div><b data-i18n="foot_sales">Sales office</b><span>%s</span></div></div>
+  <div class="ci"><i>&#9993;</i><div><b data-i18n="foot_email">Email</b><span><a href="mailto:%s">%s</a></span></div></div>
+  <div class="ci"><i>&#9873;</i><div><b data-i18n="foot_addr_h">Address</b><span>%s</span></div></div>
+</div></section>""" % (esc(wa_display(cfg["whatsapp"])), esc(PHONE_SALES),
+                      esc(cfg["email"]), esc(cfg["email"]), addr_span(cfg))
+
+
+def page_contact(cfg):
+    """独立的 Contact 页：导航里那个 Contact 要真的能跳。"""
+    title = "Contact us — Guangzhou Yumengyang Auto Parts"
+    desc = ("Contact Guangzhou Yumengyang Auto Parts: WhatsApp, sales phone, email and warehouse address. "
+            "We answer within one working day.")
+    canon = rel_url(cfg, "contact.html")
+    wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
+    body = """<body class="docpage">
+%s
+<main class="policy">
+<nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo;
+  <span data-i18n="nav_contact">Contact</span></nav>
+<article class="doc">
+  <h1 data-i18n="nav_contact">Contact</h1>
+  <p class="doclead" data-i18n="contact_lead">Send the OE number, a photo or your list — we reply with
+  price, MOQ and packing within one working day.</p>
+  <section class="doccontact">
+    <p class="docorg"><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></p>
+    <p><b>WhatsApp</b>: <a href="%s" target="_blank" rel="noopener">%s</a></p>
+    <p><b data-i18n="foot_sales">Sales office</b>: <a href="tel:+8619577863139">%s</a></p>
+    <p><b data-i18n="foot_email">Email</b>: <a href="mailto:%s">%s</a></p>
+    <p class="docaddr">%s</p>
+    <p><span data-i18n="foot_hours">Working hours</span>: %s</p>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+      <div style="text-align:center"><img src="assets/hero/qr-wecom.webp" alt="WeCom QR"
+        style="width:132px;height:132px;background:#fff;border:1px solid #e6edf2;border-radius:10px;padding:5px">
+        <div style="font-size:12.5px;color:#5d7285;margin-top:6px" data-i18n="foot_qr_wecom">WeCom</div></div>
+      <div style="text-align:center"><img src="assets/hero/qr-whatsapp.webp" alt="WhatsApp QR"
+        style="width:132px;height:132px;background:#fff;border:1px solid #e6edf2;border-radius:10px;padding:5px">
+        <div style="font-size:12.5px;color:#5d7285;margin-top:6px">WHATSAPP</div></div>
+    </div>
+    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+       <a class="btn-ghost" href="index.html" data-i18n="nf_back">Back to the lookup home</a></p>
+  </section>
+</article>
+</main>
+%s
+</body></html>""" % (sitehead(cfg, "contact", base=""), NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE,
+                      esc(cfg["company_en"]), esc(wa), esc(wa_display(cfg["whatsapp"])),
+                      esc(PHONE_SALES), esc(cfg["email"]), esc(cfg["email"]), addr_span(cfg),
+                      esc(cfg["hours"]), esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
+                      sitefoot(cfg, base=""))
+    return head_block(cfg, title, desc, canon, "assets/og/og-default.webp", "website",
+                      [{"@context": "https://schema.org", "@type": "ContactPage",
+                        "name": "Contact — " + cfg["company_en"],
+                        "inLanguage": "en", "isPartOf": {"@type": "WebSite",
+                                                          "url": cfg["site_url"] + "/"}}],
+                      base="") + "\n" + body
+
 
 
 # ------------------------------------------------------------------ 主入口
@@ -2480,6 +2646,8 @@ def build_static(items, cats, log=print):
     # 公司介绍页：about.html（说真话版本，含中文摘要）
     with open(os.path.join(HERE, "about.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(page_about(cfg))
+    with open(os.path.join(HERE, "contact.html"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(page_contact(cfg))
 
     # 采购指南（guides/）：正文在 guides_content.py，这里只负责套模板 + 解析内链
     guide_files = []
@@ -2531,6 +2699,8 @@ def build_static(items, cats, log=print):
     # 公司介绍页：优先级与品类页看齐 —— 它是买家判断「能不能汇款」的那一页
     urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>'
                 % (esc(rel_url(cfg, "about.html")), today))
+    urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>'
+                % (esc(rel_url(cfg, "contact.html")), today))
     sm = ('<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "\n".join(urls) + "\n</urlset>\n")
