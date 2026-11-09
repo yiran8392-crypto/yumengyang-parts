@@ -610,7 +610,8 @@ def sitehead(cfg, active="", base="../"):
                          base, ' class="on"' if active == "products" else "",
                          base, ' class="on"' if active == "about" else "",
                          base, ' class="on"' if active == "contact" else "")
-    return """<header class="sitehead"><div class="wrap">
+    return """<a class="skip" href="#main">Skip to content</a>
+<header class="sitehead"><div class="wrap">
 <a class="brand notranslate" %s href="%sindex.html">%s<em %s>%s</em></a>
 %s
 <nav>%s<a href="%scategory/index.html" data-i18n="nav_all" data-v-n="%d">All %d categories</a></nav>
@@ -1201,7 +1202,7 @@ def page_model(cfg, it, cat, related=None):
     total_txt = "{:,}".format(cfg.get("_total", 0))
     body = """<body class="pdp">
 %s
-<main class="pdp-main">
+<main id="main" tabindex="-1" class="pdp-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <a href="../category/%s.html" data-cat="%s">%s</a> &rsaquo; <span>%s</span></nav>
 <div class="pdp-grid">
   <figure class="pdp-pic">%s</figure>
@@ -1325,7 +1326,7 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
 
     body = """<body>
 %s
-<main class="cat-main">
+<main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-cat="%s">%s</span></nav>
 <div class="cat-head">
   <h1><span data-cat="%s">%s</span> <span class="h1sub zh-extra">%s</span></h1>
@@ -1359,7 +1360,7 @@ def page_cat_index(cfg, cats, by_cat):
                      % (slug, key, esc(en), esc(cn), n, n))
     body = """<body>
 %s
-<main class="cat-main">
+<main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="all_cat_h1">All categories</span></nav>
 <div class="cat-head">
   <h1><span data-i18n="all_cat_h1">All product categories</span> <span class="h1sub zh-extra">全部品类</span></h1>
@@ -1454,7 +1455,7 @@ def page_brands_index(cfg, entries, cover):
         for e in entries)
     body = """<body>
 %(head)s
-<main class="cat-main">
+<main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <span data-i18n="brands_crumb">Brands</span></nav>
 <div class="cat-head">
@@ -1500,7 +1501,7 @@ def page_brand(cfg, e):
     others = [("../brand/%s.html" % o["slug"], o["canon"]) for o in e["others"][:18]]
     body = """<body>
 %(head)s
-<main class="cat-main">
+<main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <a href="index.html" data-i18n="brands_crumb">Brands</a> &rsaquo; <span>%(brand)s</span></nav>
 <div class="cat-head">
@@ -1534,7 +1535,7 @@ def page_vehicles_index(cfg, entries, cover):
         for e in entries)
     body = """<body>
 %(head)s
-<main class="cat-main">
+<main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <span data-i18n="vehicles_crumb">Vehicles</span></nav>
 <div class="cat-head">
@@ -1569,7 +1570,7 @@ def page_vehicle(cfg, e):
     others = [("../vehicle/%s.html" % o["slug"], o["token"]) for o in e["others"][:16]]
     body = """<body>
 %(head)s
-<main class="cat-main">
+<main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <a href="index.html" data-i18n="vehicles_crumb">Vehicles</a> &rsaquo; <span>%(veh)s</span></nav>
 <div class="cat-head">
@@ -1739,7 +1740,7 @@ def page_policy(cfg, kind):
     wa = wa_link(cfg, "Hi, I have a question about %s." % h1.lower())
     body = """<body class="docpage">
 %s
-<main class="policy">
+<main id="main" tabindex="-1" class="policy">
 <nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span>%s</span></nav>
 <article class="doc">
   <h1>%s</h1>
@@ -1864,7 +1865,7 @@ def page_about(cfg):
 
     body = """<body class="docpage">
 %s
-<main class="policy">
+<main id="main" tabindex="-1" class="policy">
 <nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="foot_about">About us</span></nav>
 <article class="doc">
   <h1>%s</h1>
@@ -2063,7 +2064,7 @@ def page_guide(cfg, g, resolve):
     wa = wa_link(cfg, "Hi, I read your guide. I have a question about a part number.")
     body = """<body class="docpage">
 %s
-<main class="policy">
+<main id="main" tabindex="-1" class="policy">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <a href="./index.html" data-i18n="guides_h">Buying guides</a> &rsaquo; <span>%s</span></nav>
 <article class="doc guide">
@@ -2105,7 +2106,7 @@ def page_guides_index(cfg):
             "read a VIN, and diagnose an ABS sensor before ordering.")
     body = """<body class="docpage">
 %s
-<main class="policy">
+<main id="main" tabindex="-1" class="policy">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="guides_h">Buying guides</span></nav>
 <article class="doc guide">
   <h1 data-i18n="guides_h">Buying guides</h1>
@@ -2539,7 +2540,7 @@ def page_contact(cfg):
     wa = wa_link(cfg, "Hi, I would like a quotation for auto parts.")
     body = """<body class="docpage">
 %s
-<main class="policy">
+<main id="main" tabindex="-1" class="policy">
 <nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo;
   <span data-i18n="nav_contact">Contact</span></nav>
 <article class="doc">

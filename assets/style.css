@@ -5,7 +5,7 @@
   --ink:#16232e;
   --body:#33475a;
   --muted:#5d7186;
-  --faint:#8698a9;
+  --faint:#607585;
   --line:#e2e8ee;
   --line2:#cfdae4;
   --bg:#f6f8fa;
@@ -34,6 +34,11 @@ button{font:inherit;color:inherit}
 a{color:inherit}
 h1,h2,h3{color:var(--ink);font-weight:700;letter-spacing:-.01em}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* 键盘用户按 Tab 第一下出现的跳转链接 */
+.skip{position:absolute;inset-inline-start:-9999px;top:0;z-index:9999;background:var(--navy);color:#fff;
+  padding:10px 18px;border-radius:0 0 10px 0;font-weight:600;font-size:14px;text-decoration:none}
+.skip:focus{inset-inline-start:0;outline:2px solid var(--accent);outline-offset:2px}
+#main:focus{outline:none}
 html[data-lang="zh"] .zh-extra,
 html[data-lang="ar"] .zh-extra,
 html[data-lang="ru"] .zh-extra,

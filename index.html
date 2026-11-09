@@ -28,6 +28,7 @@
 <script defer src="assets/i18n.js"></script>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 
 <header class="hero">
   <div class="wrap">
@@ -128,7 +129,7 @@
 <!-- HOME_CONTACT_END -->
 
 
-<main>
+<main id="main" tabindex="-1">
 <!-- HOME_TRUST_START -->
 
 <!-- HOME_TRUST_END -->
@@ -549,7 +550,7 @@ R350/GL450
 
     var line = T('found', 'Found {n} parts', { n: '<b>' + total.toLocaleString() + '</b>' });
     if(total !== TOTAL) line += ' ' + T('of_total', 'of {n}', { n: TOTAL.toLocaleString() });
-    $count.innerHTML = line + '　<span style="color:#8698a9">' +
+    $count.innerHTML = line + '　<span style="color:#607585">' +
       T('shown', 'shown {n}', { n: state.shown }) + '</span>';
     $hint.textContent = state.q
       ? T('hint_search', 'Search: {q}', { q: state.q })
@@ -657,7 +658,13 @@ R350/GL450
       $open = document.getElementById('d-open'),
       $dwa = document.getElementById('d-wa'),
       $dpage = document.getElementById('d-page'),
-      current = null;
+      current = null,
+      lastFocus = null;
+
+  /* 弹窗里可以 Tab 到的元素（焦点陷阱用） */
+  function modalFocusables(){
+    return $modal.querySelectorAll('a[href],button:not([disabled]),select,input,textarea,[tabindex]:not([tabindex="-1"])');
+  }
 
   $grid.addEventListener('click', function(e){
     var c = e.target.closest('.card'); if(!c) return;
@@ -696,19 +703,35 @@ R350/GL450
     var msg = 'Hi, I am interested in ' + it.m + (it.oe ? ' (OE ' + it.oe + ')' : '') + '. Please send me the price and MOQ.';
     $dwa.href = 'https://wa.me/8615915859048?text=' + encodeURIComponent(msg);
 
+    lastFocus = document.activeElement;
     $modal.classList.add('on');
     $modal.setAttribute('aria-hidden','false');
     document.body.style.overflow = 'hidden';
+    setTimeout(function(){
+      var f = $modal.querySelector('.close');
+      if(f) try{ f.focus(); }catch(e){}
+    }, 30);
   }
 
   function close(){
+    if(!$modal.classList.contains('on')) return;
     $modal.classList.remove('on');
     $modal.setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
+    if(lastFocus && lastFocus.focus){ try{ lastFocus.focus(); }catch(e){} }
   }
   document.getElementById('close').addEventListener('click', close);
   $modal.addEventListener('click', function(e){ if(e.target === $modal) close(); });
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+  document.addEventListener('keydown', function(e){
+    if(!$modal.classList.contains('on')) return;
+    if(e.key === 'Escape'){ close(); return; }
+    if(e.key === 'Tab'){
+      var f = modalFocusables(); if(!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  });
 
   $copy.addEventListener('click', function(){
     if(!current) return;
