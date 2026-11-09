@@ -40,8 +40,9 @@
   price, MOQ and packing within one working day.</p>
   <section class="rfq" id="quote">
     <h2>Request a quotation</h2>
-    <p class="rfqlead">Fill the four fields and add your part list. Nothing is uploaded: the button opens your own
-    mail app or WhatsApp with the text already filled in. <span class="zh-extra">填好四栏、贴上型号和数量，点按钮用邮件或 WhatsApp 发给我们。</span></p>
+    <p class="rfqlead">Fill the four fields and add your part list, then send it on WhatsApp — or by email if you prefer.
+    Nothing is uploaded: the button opens WhatsApp (or your mail app) with the text already filled in.
+    <span class="zh-extra">填好四栏、贴上型号和数量，点 WhatsApp 直接发给我们（也可以发邮件）。</span></p>
     <form id="rfq" novalidate>
       <div class="rfqgrid">
         <label for="rfq-name">Name / company
@@ -54,10 +55,12 @@
           <textarea id="rfq-parts" rows="5" placeholder="WL03-0004 x 200&#10;90919-02248 x 100"></textarea></label>
       </div>
       <div class="rfqbtns">
-        <button type="submit" class="btn-wa">
+        <button type="button" class="btn-wa" id="rfq-wa">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
+          <span>Send on WhatsApp</span></button>
+        <button type="submit" class="btn-ghost">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 6l9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
           <span>Send by email</span></button>
-        <button type="button" class="btn-ghost" id="rfq-wa">Send on WhatsApp</button>
       </div>
       <p class="rfqnote">We answer within one working day, Mon–Sat 09:00–18:00 (GMT+8).</p>
     </form>

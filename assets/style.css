@@ -990,7 +990,8 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 .rfqgrid input:focus,.rfqgrid textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
 .rfqgrid textarea{min-height:110px;resize:vertical;line-height:1.55}
 .rfqbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-.rfqbtns button{border:0;cursor:pointer}
+.rfqbtns button{border:0;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.rfqbtns .btn-ghost svg{width:18px;height:18px}
 .rfqnote{margin:12px 0 0;font-size:12.5px;color:var(--faint)}
 @media (max-width:600px){.rfqgrid{grid-template-columns:1fr}}
 
