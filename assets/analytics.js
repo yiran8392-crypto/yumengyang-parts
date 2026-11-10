@@ -234,6 +234,9 @@
     if (!pending.length) return;
     var left = [];
     pending.forEach(function (d) { if (backend.send(d) === false) left.push(d); });
+    if (debug && left.length !== pending.length) {
+      try { console.info("[ymy-analytics] 补发成功 " + (pending.length - left.length) + " 条，剩 " + left.length); } catch (e) { }
+    }
     pending = left;
   }
 
@@ -362,6 +365,18 @@
     if (isLocal && !LOCAL && !forced) return;      // 本机预览不污染线上数据
     try { if (backend.init) backend.init(conf.arg); } catch (e) { }
     autoTrack();
+    // ?ymy_analytics=debug 时，控制台会自己报接线状态——统计不进数先看这里
+    if (debug) {
+      try {
+        console.info("[ymy-analytics] provider=" + conf.provider + " endpoint=" + (conf.arg || "-") +
+                     " local=" + isLocal + " dnt=" + dnt + " q=" + Q_ON);
+        setTimeout(function () {
+          var gc = window.goatcounter || {};
+          console.info("[ymy-analytics] 脚本已加载=" + (typeof gc.count === "function") +
+                       " 队列未发=" + pending.length);
+        }, 2500);
+      } catch (e) { }
+    }
   }
 
   ready(start);

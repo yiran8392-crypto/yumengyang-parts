@@ -142,7 +142,7 @@ POS_WORDS = {
 }
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
-ANALYTICS_V = "20261110a"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
+ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
 CSS_V = "20261110"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 
 
