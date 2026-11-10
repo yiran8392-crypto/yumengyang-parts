@@ -117,7 +117,8 @@
     function addSku(v, it){
       add(v, it);
       var s = String(v || '');
-      if(/^WL/i.test(s)) add(s.slice(2), it);   // 18-0023 和 WL18-0023 是同一个东西
+      if(/^WL/i.test(s)) add(s.slice(2), it);          // 18-0023 和 WL18-0023 是同一个东西
+      else if(/^\d{2}-/.test(s)) add('WL' + s, it);    // 氧传感器等没带前缀的，客户也可能带 WL 报
     }
     for(var i = 0; i < items.length; i++){
       var it = items[i];

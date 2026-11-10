@@ -294,6 +294,7 @@ R350/GL450
     var extra = [];
     var mm0 = String(it.m || "");
     if(/^WL/i.test(mm0)) extra.push(mm0.slice(2));
+    else if(/^\d{2}-/.test(mm0)) extra.push("WL" + mm0);  /* 氧传感器这类没加品牌前缀，客户可能带 WL 报 */
     var re = /(?:packed|listed)\s+as\s+([A-Za-z0-9][A-Za-z0-9.\-\/]*)/gi, mm;
     while((mm = re.exec(String(it.r || "")))){
       extra.push(mm[1]);
