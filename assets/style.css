@@ -1029,3 +1029,7 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 .bulkhint a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.45)}
 .bulkhint b{color:#ffd9c7}
 @media (max-width:600px){.bulktable th:nth-child(3),.bulktable td:nth-child(3){display:none}}
+
+/* 首页搜索按钮（2026-11-10 拆页后新增） */
+.searchbar .go{border:0;background:#eaf1f6;color:#16232e;font:inherit;font-weight:700;font-size:13.5px;padding:9px 16px;border-radius:10px;margin-inline-end:8px;cursor:pointer}
+.searchbar .go:hover{background:#dde8f0}

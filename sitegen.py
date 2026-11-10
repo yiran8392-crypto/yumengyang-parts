@@ -2914,6 +2914,9 @@ def build_static(items, cats, log=print):
                 % (esc(rel_url(cfg, "about.html")), today))
     urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>'
                 % (esc(rel_url(cfg, "contact.html")), today))
+    # 产品目录页（2026-11-10 从首页拆出来）：全站型号的总入口，优先级高于品类索引
+    urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
+                % (esc(rel_url(cfg, "products.html")), today))
     sm = ('<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "\n".join(urls) + "\n</urlset>\n")
