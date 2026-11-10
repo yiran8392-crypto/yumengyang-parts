@@ -114,11 +114,19 @@
     IDX = Object.create(null);
     var items = CATALOG.items();
     function add(v, it){ var k = norm(v); if(k && !IDX[k]) IDX[k] = it; }
+    function addSku(v, it){
+      add(v, it);
+      var s = String(v || '');
+      if(/^WL/i.test(s)) add(s.slice(2), it);   // 18-0023 和 WL18-0023 是同一个东西
+    }
     for(var i = 0; i < items.length; i++){
       var it = items[i];
-      add(it.m, it);
+      addSku(it.m, it);
       String(it.oe || '').split(/[\s,;\/]+/).forEach(function(o){ add(o, it); });
       (it.x || []).forEach(function(o){ add(o, it); });
+      // 同款合并的旧料号写在备注里（"Also packed as WL04-0031"），也当成可查的号
+      var re = /(?:packed|listed)\s+as\s+([A-Za-z0-9][A-Za-z0-9.\-\/]*)/gi, mm;
+      while((mm = re.exec(String(it.r || '')))) addSku(mm[1], it);
     }
     return items.length;
   }
