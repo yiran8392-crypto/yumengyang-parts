@@ -151,6 +151,11 @@
       var toks = p.raw.split(/[,\s;]+/);
       for(var i = 0; i < toks.length && !hit; i++) hit = IDX[norm(toks[i])];
     }
+    // 改良版后缀（A/B/H，不含 C）：精确找不到就退回基础号
+    if(!hit){
+      var k = norm(p.raw);
+      if(/[ABH]$/.test(k) && k.length > 5) hit = IDX[k.slice(0, -1)];
+    }
     return hit || null;
   }
 
