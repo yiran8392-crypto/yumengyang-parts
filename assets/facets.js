@@ -1,155 +1,183 @@
-/* 级联筛选（品牌 → 车型 → 年款 → 排量）：全部从 data.js 的适配车型字段现解析，
-   解析不出来的字段就不出选项，不硬凑。挂到 window.FACETS。 */
+/* 级联筛选（品牌 → 车型 → 年款 → 排量）
+   数据来源：data/facets.js（facets_build.py 生成，含品牌/车系词典与统计）
+   逻辑：车型/品牌在浏览器里按同一套词典解析并缓存到 item._fb / item._fm，
+        选项列表直接用 facets 里的统计（首屏就有全量，不用等 29 个分片）。
+   挂到 window.FACETS。 */
 (function () {
   "use strict";
   if (typeof window === "undefined") return;
 
-  var B = ("Toyota,Honda,Nissan,Mazda,Suzuki,Subaru,Mitsubishi,Isuzu,Lexus,Daihatsu,Hyundai,Kia,Daewoo,SsangYong," +
-    "Ford,Chevrolet,Buick,Cadillac,Chrysler,Dodge,Jeep,Volkswagen,Audi,Skoda,SEAT,Opel,Vauxhall,BMW,Mercedes-Benz," +
-    "Renault,Peugeot,Citroen,Fiat,Lancia,Alfa Romeo,Volvo,Saab,Rover,Land Rover,Jaguar,Mini,Porsche," +
-    "Changan,Chery,Geely,BYD,JAC,Dongfeng,FAW,Wuling,Baojun,Great Wall,Haval,Jinbei,Brilliance,Foton,MG,Roewe," +
-    "Maxus,Venucia,Lifan,Soueast,Haima,Zotye,Landwind,Changhe,Hafei,Xiali,Cowin,Riich,Karry,Bisu,Exeed,Lynk,Wey," +
-    "Huanghai,Borgward,Luxgen,Neta,Seres,Leapmotor,Zhonghua").split(",");
+  var CAT = window.YMY_FACETS || null;
+  var ALIAS = (CAT && CAT.aliases) || {};
+  var MODELS = (CAT && CAT.models) || {};
+  var STOP = {};
+  if (CAT && CAT.stop) for (var s = 0; s < CAT.stop.length; s++) STOP[CAT.stop[s]] = 1;
 
-  var STOP = /^(single|multi|point|pickup|van|truck|bus|sedan|wagon|hatchback|suv|mpv|diesel|petrol|gas|series|new|old|with|and|for|all|type|model|version|front|rear|left|right|4wd|2wd)$/i;
-  var YEARP = /\b((?:19|20)\d{2})\s*[-–~至]\s*((?:19|20)\d{2}|现在|今|present|\+)?|\b(\d{2})\s*-\s*(\d{2})\b|\b((?:19|20)\d{2})\b/g;
-  var DISP = /\b(\d\.\d)\s*(?:L|T|升)?/gi;
-  var NOW_YEAR = new Date().getFullYear();
-  var brandRe = new Map();
-  for (var i = 0; i < B.length; i++) {
-    brandRe.set(B[i], new RegExp("\\b" + B[i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"));
+  var ALIAS_KEYS = Object.keys(ALIAS).sort(function (a, b) { return b.length - a.length; });
+  var ALIAS_NORM = {};
+  for (var ak in ALIAS) ALIAS_NORM[ak.replace(/[^A-Z0-9]/g, "")] = ALIAS[ak];
+
+  var TOK = /[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*/g;
+  var CODEY = /^(?:[A-Za-z]{1,3}\d|\d)/;
+  var NOW = new Date().getFullYear();
+
+  function norm(v) { return String(v || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase(); }
+  function tidy(a) {
+    return " " + String(a || "").toUpperCase().replace(/[^A-Z ]+/g, " ").replace(/\s+/g, " ").trim() + " ";
+  }
+
+  function brandsOf(a) {
+    var t = tidy(a), out = [];
+    for (var i = 0; i < ALIAS_KEYS.length; i++) {
+      var k = ALIAS_KEYS[i];
+      if (t.indexOf(" " + k + " ") < 0) continue;
+      var canon = ALIAS[k];
+      if (out.indexOf(canon) < 0) out.push(canon);
+    }
+    return out;
+  }
+
+  function okModel(key, brand, seen) {
+    if (key.length < 3 || key.length > 14 || seen[key]) return false;
+    if (STOP[key] || ALIAS_NORM[key]) return false;
+    if (CODEY.test(key)) return false;
+    var owner = MODELS[key];
+    if (owner && owner !== brand) return false;
+    return true;
+  }
+
+  function modelsOf(a, bs) {
+    var toks = String(a || "").match(TOK) || [], keys = [], out = [], seen = {}, i, j;
+    for (i = 0; i < toks.length; i++) keys.push(norm(toks[i]));
+    // 1) 词典登记过的车系
+    for (i = 0; i < keys.length; i++) {
+      var k = keys[i], owner = MODELS[k];
+      if (owner && bs.indexOf(owner) >= 0 && !seen[k]) { seen[k] = 1; out.push(k); }
+    }
+    // 2) 品牌名后面 1–2 个词
+    for (i = 0; i < keys.length; i++) {
+      var brand = ALIAS_NORM[keys[i]];
+      if (!brand || bs.indexOf(brand) < 0) continue;
+      for (j = i + 1; j <= i + 2 && j < keys.length; j++) {
+        var m = keys[j];
+        if (!okModel(m, brand, seen)) continue;
+        seen[m] = 1; out.push(m);
+      }
+    }
+    return out;
   }
 
   function parseItem(it) {
+    if (it._fb) return;
     var a = it.a || "";
-    var brands = [], models = [], disps = [], ymin = 0, ymax = 0, m, y1, y2;
-
-    // ---- 年份：优先用 data.js 里的结构化 y 字段（fitment_parse.py 解析好的）
+    var bs = brandsOf(a);
+    var ms = bs.length ? modelsOf(a, bs) : [];
+    it._fb = bs;
+    it._fm = ms;
+    // 年款区间（文本兜底只在没有 y 时才用）
+    var ymin = 0, ymax = 0;
     if (it.y && it.y.length) {
       for (var q = 0; q < it.y.length; q++) {
         var ys = String(it.y[q] || "").trim();
         var my = /^((?:19|20)\d{2})(?:\s*[-–]\s*((?:19|20)\d{2})?)?$/.exec(ys);
         if (!my) continue;
-        y1 = +my[1];
-        y2 = my[2] ? +my[2] : y1;
-        if (ys.charAt(ys.length - 1) === "-") y2 = NOW_YEAR;    // "2019-" = 至今
-        if (y2 > NOW_YEAR) y2 = NOW_YEAR;
-        if (y1 < 1970 || y1 > NOW_YEAR) continue;
+        var y1 = +my[1], y2 = my[2] ? +my[2] : y1;
+        if (ys.charAt(ys.length - 1) === "-") y2 = NOW;
+        y2 = Math.min(y2, NOW);
+        if (y1 < 1970 || y1 > NOW) continue;
         ymin = ymin ? Math.min(ymin, y1) : y1;
         ymax = ymax ? Math.max(ymax, y2) : y2;
       }
     }
-    // ---- 排量：优先结构化 d（"2.0T" / "1.6L" / "1.5"）
+    it._fy = ymin ? [ymin, ymax] : null;
+    var ds = [];
     if (it.d && it.d.length) {
-      for (var w2 = 0; w2 < it.d.length; w2++) {
-        var dv = parseFloat(String(it.d[w2] || ""));
-        if (dv >= 0.5 && dv <= 8.0 && disps.indexOf(dv) < 0) disps.push(dv);
+      for (var w = 0; w < it.d.length; w++) {
+        var dv = parseFloat(String(it.d[w] || ""));
+        if (dv >= 0.5 && dv <= 8.0 && ds.indexOf(dv) < 0) ds.push(dv);
       }
     }
-    // ---- 品牌 / 车型：只能从文本解析
-    brandRe.forEach(function (re, name) {
-      var mm = re.exec(a);
-      if (!mm) return;
-      brands.push(name);
-      // 品牌后面 1-3 个词当车型候选
-      var tail = a.slice(mm.index + mm[0].length, mm.index + mm[0].length + 40);
-      var words = tail.split(/[\s,;、]+/).filter(Boolean);
-      var got = 0;
-      for (var k = 0; k < words.length && got < 2; k++) {
-        var w = words[k].replace(/[^A-Za-z0-9\-]/g, "");
-        if (!w || STOP.test(w) || /^\d/.test(w) || w.length < 2) break;
-        if (models.indexOf(w) < 0) models.push(w);
-        got++;
-      }
-    });
-    // ---- 结构化字段缺失时，退回文本解析兜底
-    if (!ymin) {
-      YEARP.lastIndex = 0;
-      while ((m = YEARP.exec(a))) {
-        // "2019- / 2019-present" 这类没写结束年的，算到今年，绝不写成 2030
-        if (m[1]) { y1 = +m[1]; y2 = m[2] && /^\d{4}$/.test(m[2]) ? +m[2] : (m[2] ? NOW_YEAR : y1); }
-        else if (m[3]) { y1 = 2000 + +m[3]; y2 = 2000 + +m[4]; if (y1 > y2) { var t = y1; y1 = y2; y2 = t; } }
-        else if (m[5]) { y1 = +m[5]; y2 = y1; }
-        if (y2 > NOW_YEAR) y2 = NOW_YEAR;
-        if (y1 < 1970 || y1 > NOW_YEAR) continue;
-        ymin = ymin ? Math.min(ymin, y1) : y1;
-        ymax = ymax ? Math.max(ymax, y2) : y2;
-      }
-    }
-    if (!disps.length) {
-      DISP.lastIndex = 0;
-      while ((m = DISP.exec(a))) {
-        var d = parseFloat(m[1]);
-        if (d >= 0.5 && d <= 8.0 && disps.indexOf(d) < 0) disps.push(d);
-      }
-    }
-    it._fb = brands; it._fm = models;
-    it._fy = ymin ? [ymin, ymax] : null; it._fd = disps;
+    it._fd = ds;
   }
 
   function build(items) {
-    /* 可以分批喂（首页是按分片加载的）：已经解析过的跳过 */
-    for (var i = 0; i < items.length; i++) {
-      if (items[i]._fb) continue;
-      parseItem(items[i]);
-    }
+    for (var i = 0; i < items.length; i++) parseItem(items[i]);
   }
 
-  function uniqSorted(arr) {
-    var seen = {}, out = [];
-    for (var i = 0; i < arr.length; i++) if (!seen[arr[i]]) { seen[arr[i]] = 1; out.push(arr[i]); }
-    return out;
+  function catalogBrand(name) {
+    if (!CAT) return null;
+    for (var i = 0; i < CAT.brands.length; i++) if (CAT.brands[i][0] === name) return CAT.brands[i];
+    return null;
   }
 
-  function pool(items, sel) {
-    var out = [];
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
+  function catalogModel(brand, key) {
+    var b = catalogBrand(brand);
+    if (!b) return null;
+    for (var i = 0; i < b[2].length; i++) if (b[2][i][0] === key) return b[2][i];
+    return null;
+  }
+
+  function counts(items, sel, cat) {
+    var bc = {}, mc = {}, yc = {}, dc = {}, i, it;
+    for (i = 0; i < items.length; i++) {
+      it = items[i];
+      if (cat !== "all" && it.c !== cat) continue;
+      parseItem(it);
+      for (var b = 0; b < it._fb.length; b++) if (!sel.b || it._fb[b] === sel.b) bc[it._fb[b]] = (bc[it._fb[b]] || 0) + 1;
       if (sel.b && it._fb.indexOf(sel.b) < 0) continue;
+      for (var m = 0; m < it._fm.length; m++) mc[it._fm[m]] = (mc[it._fm[m]] || 0) + 1;
       if (sel.m && it._fm.indexOf(sel.m) < 0) continue;
-      out.push(it);
+      if (it._fy) for (var y = it._fy[0]; y <= it._fy[1]; y++) yc[y] = (yc[y] || 0) + 1;
+      for (var d = 0; d < it._fd.length; d++) dc[it._fd[d]] = (dc[it._fd[d]] || 0) + 1;
     }
-    return out;
+    return { bc: bc, mc: mc, yc: yc, dc: dc };
   }
 
   function opts(items, sel, cat) {
-    var base = [];
-    for (var i = 0; i < items.length; i++) if (cat === "all" || items[i].c === cat) base.push(items[i]);
-    var forBrand = pool(base, {});
-    var bc = {}, mc = {}, yc = {}, dc = {};
-    for (var j = 0; j < forBrand.length; j++) {
-      var it = forBrand[j];
-      it._fb.forEach(function (b) { bc[b] = (bc[b] || 0) + 1; });
+    var c = counts(items, sel, cat), i;
+    var brands = [], models = [], years = [], disps = [];
+
+    if (CAT && cat === "all") {
+      for (i = 0; i < CAT.brands.length; i++) brands.push({ v: CAT.brands[i][0], n: CAT.brands[i][1] });
+    } else {
+      for (var b in c.bc) brands.push({ v: b, n: c.bc[b] });
+      brands.sort(function (x, y) { return y.n - x.n; });
     }
-    var pb = pool(base, { b: sel.b });
-    for (j = 0; j < pb.length; j++) {
-      var it2 = pb[j];
-      it2._fm.forEach(function (m) { mc[m] = (mc[m] || 0) + 1; });
-      if (it2._fy) for (var y = it2._fy[0]; y <= it2._fy[1]; y += 1) yc[y] = (yc[y] || 0) + 1;
-      it2._fd.forEach(function (d) { dc[d] = (dc[d] || 0) + 1; });
+
+    if (sel.b) {
+      var cb = CAT && cat === "all" ? catalogBrand(sel.b) : null;
+      if (cb) {
+        for (i = 0; i < cb[2].length; i++) models.push({ v: cb[2][i][0], label: cb[2][i][1], n: cb[2][i][2] });
+      } else {
+        for (var mk in c.mc) models.push({ v: mk, label: mk, n: c.mc[mk] });
+        models.sort(function (x, y) { return y.n - x.n; });
+      }
     }
-    function top(obj, n, numeric) {
-      var arr = Object.keys(obj).map(function (k) { return [k, obj[k]]; });
-      arr.sort(function (a, b) { return numeric ? (+a[0] - +b[0]) : (b[1] - a[1]); });
-      return arr.slice(0, n).map(function (x) { return numeric ? +x[0] : x[0]; });
+
+    if (sel.m) {
+      var cm = CAT && cat === "all" ? catalogModel(sel.b, sel.m) : null;
+      var y0 = cm ? cm[3] : 0, y1 = cm ? cm[4] : 0;
+      if (!y0) for (var k in c.yc) { if (!y0 || +k < y0) y0 = +k; if (+k > y1) y1 = +k; }
+      for (var y = y1; y >= y0; y--) years.push({ v: y, label: y, n: c.yc[y] || 0 });
+      var dm = cm ? cm[5] : null;
+      if (dm && dm.length) for (i = 0; i < dm.length; i++) disps.push({ v: dm[i], label: dm[i] + " L", n: c.dc[dm[i]] || 0 });
+      else {
+        var dk = Object.keys(c.dc).map(Number).sort(function (a, b) { return a - b; });
+        for (i = 0; i < dk.length; i++) disps.push({ v: dk[i], label: dk[i] + " L", n: c.dc[dk[i]] });
+      }
     }
-    // 年款：最新在前，全部列出（区间内每年都算适配，最多 60 个）
-    var ykeys = Object.keys(yc).map(Number).sort(function (a, b) { return b - a; }).slice(0, 60);
-    return {
-      brands: top(bc, 300, false),
-      models: top(mc, 300, false),
-      years: ykeys,
-      disps: top(dc, 60, true)
-    };
+
+    return { brands: brands, models: models, years: years, disps: disps };
   }
 
   function match(it, sel) {
-    if (sel.b && (it._fb || []).indexOf(sel.b) < 0) return false;
-    if (sel.m && (it._fm || []).indexOf(sel.m) < 0) return false;
-    if (sel.y) { if (!it._fy || it._fy[0] > sel.y || it._fy[1] < sel.y) return false; }
+    parseItem(it);
+    if (sel.b && it._fb.indexOf(sel.b) < 0) return false;
+    if (sel.m && it._fm.indexOf(sel.m) < 0) return false;
+    if (sel.y && (!it._fy || it._fy[0] > sel.y || it._fy[1] < sel.y)) return false;
     if (sel.d && (it._fd || []).indexOf(sel.d) < 0) return false;
     return true;
   }
 
-  window.FACETS = { build: build, opts: opts, match: match, brands: B };
+  window.FACETS = { build: build, opts: opts, match: match, modelOf: function (k) { return MODELS[k] || ""; }, catalog: CAT };
 })();

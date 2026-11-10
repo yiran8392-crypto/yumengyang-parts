@@ -99,6 +99,12 @@ def main():
         payload, _st = data_prep.prepare(log=lambda m: print(m, flush=True))
     except Exception as e:
         print("  数据清洗/拆包跳过：%s" % e, flush=True)
+    # 级联筛选数据（品牌→车型→年款→排量），每次重渲染都跟着数据刷新
+    try:
+        import facets_build
+        facets_build.build(payload, log=lambda m: print(m, flush=True))
+    except Exception as e:
+        print("  [warn] 级联数据没生成：%s" % e, flush=True)
     items = to_items(payload)
     cnt = {}
     for it in items:

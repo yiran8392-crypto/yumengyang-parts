@@ -248,6 +248,7 @@ R350/GL450
 
 <script src="data/meta.js"></script>
 <script src="data/chunk-00.js"></script>
+<script src="data/facets.js"></script>
 <script src="assets/catalog.js"></script>
 <script src="assets/facets.js"></script>
 <script src="assets/vin.js"></script>
@@ -372,8 +373,12 @@ R350/GL450
   function fFill(sel, list, anyLabel, suffix, cur){
     var h = '<option value="">' + esc(anyLabel) + '</option>';
     for(var i = 0; i < list.length; i++){
-      var v = list[i];
-      h += '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(v) + (suffix || '') + '</option>';
+      var o = list[i];
+      var v = (o && typeof o === 'object') ? o.v : o;
+      var lab = (o && typeof o === 'object') ? (o.label || o.v) : o;
+      var n = (o && typeof o === 'object' && o.n != null) ? o.n : null;
+      h += '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>'
+         + esc(lab) + (n != null ? ' (' + n + ')' : '') + (suffix || '') + '</option>';
     }
     sel.innerHTML = h;
   }
@@ -383,7 +388,7 @@ R350/GL450
     fFill($fb, o.brands, T('f_brand_any', 'Any brand'), '', SEL.b);
     fFill($fm, o.models, T('f_model_any', 'Any model'), '', SEL.m);
     fFill($fy, o.years, T('f_year_any', 'Any year'), '', SEL.y || '');
-    fFill($fd, o.disps, T('f_disp_any', 'Any engine'), ' L', SEL.d || '');
+    fFill($fd, o.disps, T('f_disp_any', 'Any engine'), '', SEL.d || '');
     var bits = [];
     if(SEL.b) bits.push(SEL.b);
     if(SEL.m) bits.push(SEL.m);
@@ -783,14 +788,19 @@ R350/GL450
     [].forEach.call($chips.children, function(c){ c.classList.toggle('on', c.dataset.cat === dl.cat); });
   }
   if(dl.id){ setTimeout(function(){ open(parseInt(dl.id, 10)); }, 60); }
+  /* 分享链接：?brand=Nissan&model=SUNNY 直接落到某个车系 */
+  if(dl.brand){ SEL.b = dl.brand; }
+  if(dl.model){ SEL.m = String(dl.model).toUpperCase(); }
+  if(dl.brand || dl.model){ fRebuild(); maybeLoadAll(); }
 
   if(/[?&]cats=open/.test(location.search + location.hash)){ var cb=document.querySelector('.catbox'); if(cb) cb.open=true; }
 
   function refreshStatic(){
-    document.getElementById('gen').textContent =
-      T('updated', 'Updated {d}', { d: M.generated || '—' }) + ' · ' +
-      T('parts_n', '{n} parts', { n: TOTAL.toLocaleString() });
-    document.getElementById('herostat').innerHTML = T('herostat', '{n} part numbers · {m} real photos', {
+    var g = document.getElementById('gen'), hs = document.getElementById('herostat');
+    var line = T('updated', 'Updated {d}', { d: M.generated || '—' }) + ' · ' +
+               T('parts_n', '{n} parts', { n: TOTAL.toLocaleString() });
+    if(g) g.textContent = line;
+    if(hs) hs.innerHTML = T('herostat', '{n} part numbers · {m} real photos', {
       n: '<b>' + TOTAL.toLocaleString() + '</b>',
       m: '<b>' + (PHOTOS || 0).toLocaleString() + '</b>'
     });
