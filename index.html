@@ -29,6 +29,38 @@
 <meta name="ymy-analytics" content="goatcounter:yumengyang">
 <meta name="ymy-analytics-q" content="1">
 <script defer src="assets/analytics.js?v=20261110a"></script>
+
+<style>
+/* ---- What we do 轮播（2026-11-10） ---- */
+.what-carousel{position:relative;border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
+.wc-track{display:flex;transition:transform .55s cubic-bezier(.4,.1,.2,1)}
+.wc-slide{flex:0 0 100%;display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center;padding:26px 30px 34px}
+.wc-slide .kick{display:inline-block;background:#fff2ec;color:#c2491f;font-weight:800;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:8px}
+.wc-slide h3{font-size:clamp(19px,2.1vw,26px);line-height:1.25;margin:14px 0 10px}
+.wc-slide p{color:#5d7186;font-size:14px;line-height:1.65;margin:0 0 16px;max-width:48ch}
+.wc-slide .go{color:#c2491f;font-weight:800;font-size:13.5px;text-decoration:none}
+.wc-vis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wc-vis img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#f6f8fa;border-radius:12px;padding:10px}
+.wc-photo img{width:100%;height:260px;object-fit:cover;border-radius:12px}
+.wc-brands{background:#0d2233;border-radius:14px;padding:26px;color:#fff;display:flex;flex-direction:column;justify-content:center;gap:16px;min-height:260px}
+.wc-brand b{display:block;font-size:24px;letter-spacing:.07em}
+.wc-brand span{color:#9dbdd1;font-size:13px}
+.wc-brandnote{margin:0;color:#7f9db2;font-size:12.5px;border-top:1px solid rgba(255,255,255,.12);padding-top:12px}
+.wc-dots{position:absolute;left:30px;bottom:16px;display:flex;gap:8px}
+.wc-dots button{width:9px;height:9px;border-radius:99px;border:0;background:#c9d7e2;cursor:pointer;padding:0}
+.wc-dots button.on{width:24px;background:#e8622a}
+.wc-nav{position:absolute;right:16px;bottom:12px;display:flex;gap:6px}
+.wc-nav button{width:34px;height:34px;border-radius:99px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:17px;line-height:1;color:#16232e}
+@media (max-width:860px){
+  .wc-slide{grid-template-columns:1fr;padding:20px 18px 46px;gap:18px}
+  .wc-photo img{height:190px}
+  .wc-brands{min-height:0}
+  .wc-dots{left:18px}
+}
+/* ---- 集团实力三条 ---- */
+#group .whgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){#group .whgrid{grid-template-columns:1fr}}
+</style>
 </head>
 <body class="home">
 <a class="skip" href="#main">Skip to content</a>
@@ -41,6 +73,7 @@
     <nav class="mainnav" style="margin:0 0 12px">
       <a class="on" href="index.html" data-i18n="nav_home">Home</a>
       <a href="products.html" data-i18n="nav_products">Products</a>
+      <a href="codes/index.html" data-i18n="nav_codes">Fault codes</a>
       <a href="about.html" data-i18n="nav_about">About us</a>
       <a href="contact.html" data-i18n="nav_contact">Contact</a>
     </nav>
@@ -77,15 +110,70 @@
 <section class="sect" id="what">
   <div class="head"><h2>What we do</h2><b>Electronic fuel-injection and electrical parts for the aftermarket</b>
     <a href="products.html">See all 6,819 part numbers</a></div>
-  <div class="whgrid">
-    <div class="wh"><b>What we supply</b><p>Ignition coils, fuel pumps, oxygen sensors, ABS sensors, throttle bodies,
-      spark plugs and 17 more categories — 23 product lines, 6,819 part numbers, cross-referenced by OE number.</p></div>
-    <div class="wh"><b>Our own brands</b><p>WEILI and STANDOUT. Produced with ISO 9001 / IATF 16949 manufacturing partners;
-      we control the OE list, incoming inspection, packing and the warranty.</p></div>
-    <div class="wh"><b>Small batches</b><p>MOQ from 50 pcs, mixed orders welcome. Samples for testing before a bulk order,
-      priced offer back within one working day.</p></div>
-    <div class="wh"><b>Export since 2002</b><p>Shipping from Guangzhou to distributors and workshops in 25+ countries —
-      Middle East, Africa, Latin America and the CIS. T/T or L/C, EXW / FOB / CIF.</p></div>
+
+  <div class="what-carousel" id="whatslider" aria-roledescription="carousel" aria-label="What we do">
+    <div class="wc-track" id="slides">
+
+      <article class="wc-slide">
+        <div class="wc-tx">
+          <span class="kick">What we supply</span>
+          <h3>23 product lines, 6,819 part numbers</h3>
+          <p>Ignition coils, fuel pumps, oxygen sensors, ABS sensors, throttle bodies and spark plugs —
+             every part cross-referenced by its OE number, ready to quote in one working day.</p>
+          <a class="go" href="products.html">Browse the catalogue →</a>
+        </div>
+        <div class="wc-vis">
+          <img src="images/coil/WL03-0052.webp" alt="Ignition coil" loading="lazy" decoding="async">
+          <img src="images/abs/WL18-GC193.webp" alt="ABS sensor" loading="lazy" decoding="async">
+          <img src="images/fuelpump/WL02-0878.webp" alt="Fuel pump" loading="lazy" decoding="async">
+          <img src="images/o2/10-GC008.webp" alt="Oxygen sensor" loading="lazy" decoding="async">
+        </div>
+      </article>
+
+      <article class="wc-slide">
+        <div class="wc-tx">
+          <span class="kick">Our own brands</span>
+          <h3>WEILI and STANDOUT</h3>
+          <p>Produced with ISO 9001 / IATF 16949 manufacturing partners. We control the OE list,
+             incoming inspection, packing and the warranty — that is why the part numbers match.</p>
+          <a class="go" href="category/index.html">See the categories →</a>
+        </div>
+        <div class="wc-brands">
+          <div class="wc-brand"><b>WEILI</b><span>Ignition · sensors · fuel system</span></div>
+          <div class="wc-brand"><b>STANDOUT</b><span>Second own brand</span></div>
+          <p class="wc-brandnote">Two brands, one QC standard. OEM / ODM available.</p>
+        </div>
+      </article>
+
+      <article class="wc-slide">
+        <div class="wc-tx">
+          <span class="kick">Factories &amp; stock</span>
+          <h3>7 holding factories, 10,000 m² warehouse</h3>
+          <p>We hold stakes in 7 factories and run 4 subsidiaries across China, with sales branches
+             in several provinces — stock, quality and lead time stay in our hands.</p>
+          <a class="go" href="about.html">About us →</a>
+        </div>
+        <div class="wc-photo"><img src="assets/hero/about-warehouse.webp" alt="Guangzhou warehouse" loading="lazy" decoding="async"></div>
+      </article>
+
+      <article class="wc-slide">
+        <div class="wc-tx">
+          <span class="kick">Export since 2002</span>
+          <h3>25+ countries, with a warehouse in Egypt</h3>
+          <p>Distributors and workshops across the Middle East, Africa, Latin America and the CIS.
+             Our foreign-trade team also runs an overseas warehouse in Egypt, so regional buyers get
+             faster restocking.</p>
+          <a class="go" href="contact.html">Contact us →</a>
+        </div>
+        <div class="wc-photo"><img src="assets/hero/hero-warehouse.webp" alt="Shipping from Guangzhou" loading="lazy" decoding="async"></div>
+      </article>
+
+    </div>
+    <div class="wc-dots" id="dots"></div>
+    <div class="wc-nav">
+      <button type="button" class="prev" aria-label="Previous slide">&#8249;</button>
+      <button type="button" class="next" aria-label="Next slide">&#8250;</button>
+    </div>
   </div>
 </section>
 <!-- HOME_COMPANY_START -->
@@ -115,6 +203,21 @@
 </div>
 </section>
 <!-- HOME_COMPANY_END -->
+
+<!-- 集团实力（信任背书）：不参与 sitegen 注入，重渲染不会被覆盖 -->
+<section class="sect" id="group">
+  <div class="head"><h2>Beyond one warehouse</h2><b>Factories, subsidiaries and an overseas warehouse</b>
+    <a href="about.html">About us</a></div>
+  <div class="whgrid">
+    <div class="wh"><b>7 holding factories</b><p>We hold stakes in seven factories in China —
+      electronic fuel-injection parts, sensors and fuel pumps made under our own OE list.</p></div>
+    <div class="wh"><b>4 subsidiaries, branches in several provinces</b><p>Four subsidiaries and sales
+      branches in several provinces of China keep sourcing, QC and shipping under one management.</p></div>
+    <div class="wh"><b>Overseas warehouse in Egypt</b><p>Our foreign-trade team runs a warehouse in Egypt,
+      so buyers in the Middle East and North Africa get faster restocking and smaller repeat orders.</p></div>
+  </div>
+</section>
+
 <!-- HOME_CORE_START -->
 <section class="sect"><div class="head"><h2 data-i18n="core_h2">Three lines we ship every week</h2><b data-i18n="core_sub">from 23 categories</b><a href="category/index.html" data-i18n="core_all">All products</a></div><div class="hcore"><a href="category/ignition-coils.html"><img src="assets/hero/prod-coil.webp" alt="Ignition Coils" loading="lazy"><div class="tx"><b data-cat="coil">Ignition Coils</b><span data-i18n="models_n" data-v-n="544">544 models</span><em><span data-i18n="view_range">View range</span> &rarr;</em></div></a><a href="category/abs-sensors.html"><img src="assets/hero/prod-abs.webp" alt="ABS Sensors" loading="lazy"><div class="tx"><b data-cat="abs">ABS Sensors</b><span data-i18n="models_n" data-v-n="2066">2066 models</span><em><span data-i18n="view_range">View range</span> &rarr;</em></div></a><a href="category/fuel-pumps.html"><img src="assets/hero/prod-fuelpump.webp" alt="Fuel Pumps" loading="lazy"><div class="tx"><b data-cat="fuelpump">Fuel Pumps</b><span data-i18n="models_n" data-v-n="780">780 models</span><em><span data-i18n="view_range">View range</span> &rarr;</em></div></a></div></section>
 <!-- HOME_CORE_END -->
@@ -142,6 +245,18 @@
     <a href="guides/vin-to-parts-guide.html">VIN to parts</a>
     <a href="guides/abs-sensor-symptoms-and-replacement.html">ABS sensor symptoms</a>
     <a href="guides/index.html"><span data-i18n="guides_more">More guides</span> →</a>
+  </div>
+</section>
+<section class="guidesstrip" id="codes">
+  <div>
+    <b data-i18n="codes_h">Fault codes</b>
+    <p>Your scanner shows a code and you need the part, not a lecture. These pages say what the code actually means, the order we check parts in, the mistake that costs the most, and the part numbers we hold for each one.</p>
+  </div>
+  <div class="gsl">
+    <a href="codes/p0301.html">P0301 cylinder 1 misfire</a>
+    <a href="codes/p0171.html">P0171 system too lean</a>
+    <a href="codes/c0035.html">C0035 ABS wheel speed</a>
+    <a href="codes/index.html"><span data-i18n="codes_all">All codes we cover</span> →</a>
   </div>
 </section>
 </main>
@@ -258,4 +373,46 @@
 })();
 </script>
 
+
+<script>
+(function(){
+  "use strict";
+  var root = document.getElementById('whatslider');
+  if(!root) return;
+  var track = document.getElementById('slides');
+  var dots  = document.getElementById('dots');
+  var n = track.children.length, i = 0, timer = null;
+  if(!n) return;
+  for(var k = 0; k < n; k++){
+    var b = document.createElement('button');
+    b.type = 'button'; b.dataset.i = k; b.setAttribute('aria-label', 'Slide ' + (k + 1));
+    if(k === 0) b.className = 'on';
+    b.addEventListener('click', function(){ go(parseInt(this.dataset.i, 10), true); });
+    dots.appendChild(b);
+  }
+  function go(to, user){
+    i = (to + n) % n;
+    track.style.transform = 'translateX(' + (-i * 100) + '%)';
+    [].forEach.call(dots.children, function(d, idx){ d.className = idx === i ? 'on' : ''; });
+    if(user) restart();
+  }
+  function start(){ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; timer = setInterval(function(){ go(i + 1); }, 7000); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+  function restart(){ stop(); start(); }
+  root.querySelector('.prev').addEventListener('click', function(){ go(i - 1, true); });
+  root.querySelector('.next').addEventListener('click', function(){ go(i + 1, true); });
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', start);
+  root.addEventListener('focusin', stop);
+  var sx = null;
+  root.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive: true});
+  root.addEventListener('touchend', function(e){
+    if(sx === null) return;
+    var dx = e.changedTouches[0].clientX - sx;
+    if(Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1), true);
+    sx = null;
+  });
+  start();
+})();
+</script>
 </body></html>
