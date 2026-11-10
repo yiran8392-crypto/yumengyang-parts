@@ -60,6 +60,10 @@ DEFAULT_CFG = {
     "region": "Guangdong",
     "country": "CN",
     "hours": "Mon–Sat 09:00–18:00 (GMT+8)",
+    # 访问统计：空 = 关闭；写法见 assets/analytics.js 顶部注释和《站点设置.txt》
+    "analytics": "",
+    # 是否把买家搜的词（型号/OE 号）一起记下来：1 = 记，空 = 不记
+    "analytics_q": "",
 }
 
 # 首页信任条 / 产品页条款块用的口径。
@@ -138,6 +142,8 @@ POS_WORDS = {
 }
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
+ANALYTICS_V = "20261110a"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
+CSS_V = "20261110"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 
 
 # ------------------------------------------------------------------ 配置
@@ -159,6 +165,9 @@ def load_cfg():
             "省份": "region", "region": "region",
             "国家": "country", "country": "country",
             "工作时间": "hours", "hours": "hours",
+            "统计": "analytics", "分析": "analytics", "统计代码": "analytics",
+            "analytics": "analytics",
+            "统计查询词": "analytics_q", "analytics_q": "analytics_q",
         }
         for line in raw.splitlines():
             line = line.strip()
@@ -565,6 +574,13 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
         ogurl = '\n<meta property="og:url" content="%s">' % esc(canonical)
     ld = "".join('\n<script type="application/ld+json">%s</script>' % json.dumps(x, ensure_ascii=False)
                  for x in (site_ld(cfg) + (ld_list or [])))
+    an_cfg = (cfg.get("analytics") or "").strip()
+    an = ""
+    if an_cfg:
+        an = '\n<meta name="ymy-analytics" content="%s">' % esc(an_cfg)
+        if (cfg.get("analytics_q") or "").strip() in ("1", "yes", "true", "on"):
+            an += '\n<meta name="ymy-analytics-q" content="1">'
+    an += '\n<script defer src="%sassets/analytics.js?v=%s"></script>' % (base, ANALYTICS_V)
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -579,12 +595,12 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <meta property="og:description" content="{desc}">{ogurl}{img}
 <meta name="twitter:card" content="summary_large_image">
 {favicon}
-<link rel="stylesheet" href="{base}assets/style.css">
+<link rel="stylesheet" href="{base}assets/style.css?v={cssv}">
 {langboot}
-<script defer src="{base}assets/i18n.js"></script>{extra}{ld}
+<script defer src="{base}assets/i18n.js"></script>{an}{extra}{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
                  ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON, base=base,
-                 extra=extra_scripts)
+                 an=an, extra=extra_scripts, cssv=CSS_V)
 
 
 
@@ -1595,8 +1611,8 @@ def page_vehicle(cfg, e):
 
 
 # ------------------------------------------------------------------ 政策页（英文为主 + 底部中文摘要）
-POLICY_DATE = "2026-10-30"
-POLICY_DATE_TXT = "30 October 2026"
+POLICY_DATE = "2026-11-10"
+POLICY_DATE_TXT = "10 November 2026"
 
 PRIVACY_SECTIONS = [
     ("What this policy covers",
@@ -1610,9 +1626,14 @@ PRIVACY_SECTIONS = [
      "Our hosting provider keeps standard web-server logs (IP address, browser, page requested, time) to "
      "run the site and block abuse. The site also remembers your language choice in your own browser "
      "(local storage key <code>ymy_lang</code>); that value stays on your device and is not sent to us."),
-    ("Cookies",
-     "We do not set advertising or analytics cookies. The language preference is stored in your browser as "
-     "local storage, not as a cookie, and clearing your browser data removes it."),
+    ("Cookies & statistics",
+     "We set no cookies at all — not for advertising, not for statistics. The language preference is stored "
+     "in your browser as local storage, not as a cookie, and clearing your browser data removes it.<br><br>"
+     "Page views are counted in aggregate with a cookieless counter (GoatCounter): it receives the page path, "
+     "the referring page and your browser language. It sets no cookie and keeps no identifier that would let "
+     "us recognise you, so what we see is \"this page was opened N times from this country\", not who opened "
+     "it. Search terms typed into the part-number lookup may be recorded as part numbers only. If your "
+     "browser sends the Do Not Track signal, the counter stays off."),
     ("How we use your information",
      "To answer your inquiry, prepare a quotation, arrange production and shipping, keep the records our "
      "accounting and export paperwork require, and to find and fix faults on the site. We do not use your "
@@ -1646,7 +1667,9 @@ PRIVACY_ZH = [
     "你主动提供的：姓名、公司、国家、询价型号与数量、车型信息、订单信息，以及你附上的照片或文件。",
     "自动记录的：托管方的服务器日志（IP、浏览器、访问页面、时间）；语言偏好存在你自己浏览器的 "
     "localStorage（键名 ymy_lang），不上传给我们。",
-    "Cookie：本站不投放广告或统计 Cookie，语言偏好用 localStorage 保存，清浏览器数据即可清除。",
+    "Cookie：本站不设置任何 Cookie；语言偏好用 localStorage 保存，清浏览器数据即可清除。页面浏览用无 Cookie 的 "
+    "GoatCounter 做汇总计数，只记页面路径、来源页和浏览器语言，不存标识、认不出是谁；首页搜索框里输入的型号/OE 号"
+    "可能被记下来（只记号码）。浏览器发 Do Not Track 时不统计。",
     "用途：回复询盘、报价、安排生产与发货、保存报关与财务所需的记录、修复站点故障。",
     "共享范围：托管方（GitHub Pages）处理访问日志；你主动使用的 WhatsApp 由 Meta 处理；货代、快递与海关"
     "只拿到发货必需的信息。我们不出售、不出租你的数据，也不会把你的客户名单给别的买家。",
@@ -2132,6 +2155,13 @@ def page_404(cfg):
     home = rel_url(cfg, "") if has_site(cfg) else "index.html"
     js = rel_url(cfg, "assets/i18n.js") if has_site(cfg) else "assets/i18n.js"
     sel = lang_sel_html().replace('class="langsel"', 'class="langsel dark"')
+    an = ""
+    if (cfg.get("analytics") or "").strip():
+        an = '\n<meta name="ymy-analytics" content="%s">' % esc(cfg["analytics"].strip())
+        if (cfg.get("analytics_q") or "").strip() in ("1", "yes", "true", "on"):
+            an += '\n<meta name="ymy-analytics-q" content="1">'
+        an += '\n<script defer src="%sassets/analytics.js?v=%s"></script>' % (
+            (rel_url(cfg, "").rstrip("/") + "/") if has_site(cfg) else "", ANALYTICS_V)
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2141,7 +2171,7 @@ def page_404(cfg):
 <meta name="robots" content="noindex,follow">
 {FAVICON}
 {LANG_BOOT}
-<script defer src="{js}"></script>
+<script defer src="{js}"></script>{an}
 <style>
 *{{box-sizing:border-box}}
 body{{margin:0;font-family:Inter,"Segoe UI",system-ui,Arial,"Microsoft YaHei",sans-serif;background:#f6f8fa;color:#16232e;
@@ -2174,7 +2204,7 @@ html[dir="rtl"] .langsel{{padding:0 14px 0 34px;background-position:left 12px ce
 </html>
 """.format(LANG_BOOT=LANG_BOOT, js=esc(js), sel=sel, home=esc(home),
            wa=esc(wa_link(cfg, "Hi, I could not find a part on your website.")),
-           cn=esc(BRAND_CN), en=esc(cfg["company_en"]), FAVICON=FAVICON)
+           cn=esc(BRAND_CN), en=esc(cfg["company_en"]), FAVICON=FAVICON, an=an)
 
 
 def make_og_images(cfg, cats):
@@ -2531,6 +2561,66 @@ terms can be accommodated on repeat orders.</p>
 </section>""" % (pay, ship, docs))
 
 
+# Contact 页的询价表单：纯前端拼消息，不上传任何东西。
+# 这一段必须留在模板里 —— 只改 contact.html 的话，下一次 rerender 会被覆盖掉。
+RFQ_HTML = """  <section class="rfq" id="quote">
+    <h2>Request a quotation</h2>
+    <p class="rfqlead">Fill the four fields and add your part list, then send it on WhatsApp — or by email if you prefer.
+    Nothing is uploaded: the button opens WhatsApp (or your mail app) with the text already filled in.
+    <span class="zh-extra">填好四栏、贴上型号和数量，点 WhatsApp 直接发给我们（也可以发邮件）。</span></p>
+    <form id="rfq" novalidate>
+      <div class="rfqgrid">
+        <label for="rfq-name">Name / company
+          <input id="rfq-name" type="text" autocomplete="organization" placeholder="ACME Auto Parts"></label>
+        <label for="rfq-country">Country
+          <input id="rfq-country" type="text" autocomplete="country-name" placeholder="Iraq"></label>
+        <label for="rfq-contact">Email or WhatsApp
+          <input id="rfq-contact" type="text" autocomplete="email" placeholder="buyer@example.com"></label>
+        <label for="rfq-parts">Parts &amp; quantity
+          <textarea id="rfq-parts" rows="5" placeholder="WL03-0004 x 200&#10;90919-02248 x 100"></textarea></label>
+      </div>
+      <div class="rfqbtns">
+        <button type="button" class="btn-wa" id="rfq-wa">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
+          <span>Send on WhatsApp</span></button>
+        <button type="submit" class="btn-ghost">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 6l9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>Send by email</span></button>
+      </div>
+      <p class="rfqnote">We answer within one working day, Mon–Sat 09:00–18:00 (GMT+8).</p>
+    </form>
+  </section>
+"""
+
+RFQ_SCRIPT = """<script>
+(function(){
+  var f = document.getElementById('rfq');
+  if(!f) return;
+  function v(id){ var e = document.getElementById(id); return e ? (e.value || '').trim() : ''; }
+  function body(){
+    return 'Name / company: ' + (v('rfq-name') || '-') + '\\n' +
+           'Country: ' + (v('rfq-country') || '-') + '\\n' +
+           'Email / WhatsApp: ' + (v('rfq-contact') || '-') + '\\n' +
+           '\\nParts & quantity:\\n' + (v('rfq-parts') || '-') + '\\n' +
+           '\\n-- sent from ' + location.href;
+  }
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    var country = v('rfq-country');
+    var subject = 'Quotation request' + (country ? ' - ' + country : '');
+    location.href = 'mailto:%s?subject=' + encodeURIComponent(subject) +
+                    '&body=' + encodeURIComponent(body());
+  });
+  var w = document.getElementById('rfq-wa');
+  if(w) w.addEventListener('click', function(){
+    var text = 'Hi, I would like a quotation.\\n\\n' + body();
+    window.open('https://wa.me/%s?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  });
+})();
+</script>
+"""
+
+
 def page_contact(cfg):
     """独立的 Contact 页：导航里那个 Contact 要真的能跳。"""
     title = "Contact us — Guangzhou Yumengyang Auto Parts"
@@ -2573,7 +2663,11 @@ def page_contact(cfg):
                       esc(PHONE_SALES), esc(cfg["email"]), esc(cfg["email"]), addr_span(cfg),
                       esc(cfg["hours"]), esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
                       sitefoot(cfg, base=""))
+    body = body.replace('<section class="doccontact">',
+                        RFQ_HTML + '<section class="doccontact">', 1)
     body = body.replace('<section class="doccontact">', pay_block_html() + '<section class="doccontact">', 1)
+    body = body.replace('</body></html>',
+                        RFQ_SCRIPT % (esc(cfg["email"]), esc(cfg["whatsapp"])) + '</body></html>', 1)
     return head_block(cfg, title, desc, canon, "assets/og/og-default.webp", "website",
                       [{"@context": "https://schema.org", "@type": "ContactPage",
                         "name": "Contact — " + cfg["company_en"],
