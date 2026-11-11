@@ -159,8 +159,8 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261111f"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261111i18n4"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+CSS_V = "20261111g"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+I18N_V = "20261111i18n6"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -1654,56 +1654,67 @@ def page_vehicle(cfg, e):
 
 # ------------------------------------------------------------------ 政策页（英文为主 + 底部中文摘要）
 POLICY_DATE = "2026-11-10"
-POLICY_DATE_TXT = "10 November 2026"
+POLICY_DATE_TXT = "10 November 2026"   # 改这里要同步 i18n.js 的 policy_date（各语种当地写法）
 
 PRIVACY_SECTIONS = [
-    ("What this policy covers",
-     "This policy explains what data we handle when you use our part-number lookup site and when you "
-     "contact us about a part. It does not cover other companies' sites that we link to."),
-    ("Information you give us",
-     "We only receive what you send us: your name, company and country, the part numbers and quantities "
-     "you ask about, vehicle details, order information and any photos or documents you attach. You can "
-     "send this by WhatsApp, email or any other channel you choose."),
-    ("Information collected automatically",
-     "Our hosting provider keeps standard web-server logs (IP address, browser, page requested, time) to "
-     "run the site and block abuse. The site also remembers your language choice in your own browser "
-     "(local storage key <code>ymy_lang</code>); that value stays on your device and is not sent to us."),
-    ("Cookies & statistics",
-     "We set no cookies at all — not for advertising, not for statistics. The language preference is stored "
-     "in your browser as local storage, not as a cookie, and clearing your browser data removes it.<br><br>"
-     "Page views are counted in aggregate with a cookieless counter (GoatCounter): it receives the page path, "
-     "the referring page and your browser language. It sets no cookie and keeps no identifier that would let "
-     "us recognise you, so what we see is \"this page was opened N times from this country\", not who opened "
-     "it. Search terms typed into the part-number lookup may be recorded as part numbers only. If your "
-     "browser sends the Do Not Track signal, the counter stays off."),
-    ("How we use your information",
-     "To answer your inquiry, prepare a quotation, arrange production and shipping, keep the records our "
-     "accounting and export paperwork require, and to find and fix faults on the site. We do not use your "
-     "inquiry to build advertising profiles."),
-    ("Who we share it with",
-     "We share data only where it is needed to serve you: our hosting provider (GitHub Pages) processes "
-     "access logs; WhatsApp (Meta) handles messages you choose to send us there; freight forwarders, "
-     "couriers and customs authorities receive the shipping details required for delivery. "
-     "We do not sell or rent your data, and we do not pass your customer list to other buyers."),
-    ("How long we keep it",
-     "Inquiry and order records are kept for as long as we need them to serve you and to meet legal, tax "
-     "and export requirements. Marketing messages stop as soon as you ask us to stop."),
-    ("Your choices",
-     "You can ask us for a copy of the information you sent, ask us to correct it, or ask us to delete it. "
-     "Write to the email address below and we will act on the request. Deleting an inquiry record may end "
-     "our ability to quote or support that order."),
-    ("Security",
-     "We keep inquiry data on access-controlled systems and limit it to the staff who deal with your order. "
-     "No system is perfectly secure, and messages sent over WhatsApp or ordinary email are not end-to-end "
-     "encrypted by us."),
-    ("Children",
-     "This site is a business-to-business parts catalogue. It is not directed at children and we do not "
-     "knowingly collect their data."),
-    ("Changes to this policy",
-     "If we change how we handle data, we update this page and the date above. The version published here "
-     "is the one that applies."),
+    ("priv_s1_h", "What this policy covers",
+     ("priv_s1_p",
+      "This policy explains what data we handle when you use our part-number lookup site and when you "
+      "contact us about a part. It does not cover other companies' sites that we link to.")),
+    ("priv_s2_h", "Information you give us",
+     ("priv_s2_p",
+      "We only receive what you send us: your name, company and country, the part numbers and quantities "
+      "you ask about, vehicle details, order information and any photos or documents you attach. You can "
+      "send this by WhatsApp, email or any other channel you choose.")),
+    ("priv_s3_h", "Information collected automatically",
+     ("priv_s3_p",
+      "Our hosting provider keeps standard web-server logs (IP address, browser, page requested, time) to "
+      "run the site and block abuse. The site also remembers your language choice in your own browser "
+      "(local storage key <code>ymy_lang</code>); that value stays on your device and is not sent to us.")),
+    ("priv_s4_h", "Cookies & statistics",
+     ("priv_s4_p1",
+      "We set no cookies at all — not for advertising, not for statistics. The language preference is stored "
+      "in your browser as local storage, not as a cookie, and clearing your browser data removes it."),
+     ("priv_s4_p2",
+      "Page views are counted in aggregate with a cookieless counter (GoatCounter): it receives the page path, "
+      "the referring page and your browser language. It sets no cookie and keeps no identifier that would let "
+      "us recognise you, so what we see is &quot;this page was opened N times from this country&quot;, not who "
+      "opened it. Search terms typed into the part-number lookup may be recorded as part numbers only. If your "
+      "browser sends the Do Not Track signal, the counter stays off.")),
+    ("priv_s5_h", "How we use your information",
+     ("priv_s5_p",
+      "To answer your inquiry, prepare a quotation, arrange production and shipping, keep the records our "
+      "accounting and export paperwork require, and to find and fix faults on the site. We do not use your "
+      "inquiry to build advertising profiles.")),
+    ("priv_s6_h", "Who we share it with",
+     ("priv_s6_p",
+      "We share data only where it is needed to serve you: our hosting provider (GitHub Pages) processes "
+      "access logs; WhatsApp (Meta) handles messages you choose to send us there; freight forwarders, "
+      "couriers and customs authorities receive the shipping details required for delivery. "
+      "We do not sell or rent your data, and we do not pass your customer list to other buyers.")),
+    ("priv_s7_h", "How long we keep it",
+     ("priv_s7_p",
+      "Inquiry and order records are kept for as long as we need them to serve you and to meet legal, tax "
+      "and export requirements. Marketing messages stop as soon as you ask us to stop.")),
+    ("priv_s8_h", "Your choices",
+     ("priv_s8_p",
+      "You can ask us for a copy of the information you sent, ask us to correct it, or ask us to delete it. "
+      "Write to the email address below and we will act on the request. Deleting an inquiry record may end "
+      "our ability to quote or support that order.")),
+    ("priv_s9_h", "Security",
+     ("priv_s9_p",
+      "We keep inquiry data on access-controlled systems and limit it to the staff who deal with your order. "
+      "No system is perfectly secure, and messages sent over WhatsApp or ordinary email are not end-to-end "
+      "encrypted by us.")),
+    ("priv_s10_h", "Children",
+     ("priv_s10_p",
+      "This site is a business-to-business parts catalogue. It is not directed at children and we do not "
+      "knowingly collect their data.")),
+    ("priv_s11_h", "Changes to this policy",
+     ("priv_s11_p",
+      "If we change how we handle data, we update this page and the date above. The version published here "
+      "is the one that applies.")),
 ]
-
 PRIVACY_ZH = [
     "本政策说明：使用本站型号查询、或通过 WhatsApp / 邮件联系我们时，我们处理哪些数据。",
     "你主动提供的：姓名、公司、国家、询价型号与数量、车型信息、订单信息，以及你附上的照片或文件。",
@@ -1721,41 +1732,47 @@ PRIVACY_ZH = [
 ]
 
 RETURNS_SECTIONS = [
-    ("Overview",
-     "We want the part to fit and to work. If something is wrong, contact us first — before you send "
-     "anything back — so we can confirm the case and give you a return authorization (RMA) number. "
-     "Parts sent back without an RMA number may be refused or delayed at customs."),
-    ("What the warranty covers",
-     "Our parts carry a warranty of 12 to 24 months depending on the part type. The exact term for your "
-     "order is written on the quotation and on the invoice, so the same number applies to both sides. "
-     "The warranty covers manufacturing defects that appear under normal use on the vehicle the part is "
-     "listed for."),
-    ("What is not covered",
-     "The warranty does not cover: damage from an accident, collision or fire; wrong installation or "
-     "installation with damaged wiring, connectors or voltage problems; misuse, neglect, water ingress or "
-     "unauthorized repair and modification; normal wear; a part ordered for the wrong vehicle because the "
-     "OE number or cross-reference was not checked; and transit damage that is not reported to us with the "
-     "carrier's record."),
-    ("How to make a claim",
-     "1) Send us the invoice or order number and the part number. 2) Send photos or a short video of the "
-     "part and, where possible, of the vehicle and the fault code. 3) Tell us the vehicle model, year and "
-     "engine, and what the part is doing wrong. 4) We review the case — each case is judged on its own "
-     "evidence, and we may ask for the part to be tested. 5) If the claim is accepted we issue an RMA "
-     "number and agree with you whether the part is replaced, credited or refunded."),
-    ("Shipping and timing",
-     "Return freight is paid by the buyer unless the fault is ours (wrong part sent, part not as "
-     "described, or a defect confirmed by us). We confirm who pays in writing before the return ships. "
-     "Inspection and the replacement or credit are handled case by case; we give you the expected timing "
-     "in writing with the RMA number rather than promising a fixed number of days here."),
-    ("Replacements and refunds",
-     "Where a claim is accepted we replace the part, issue a credit note against your next order, or refund "
-     "the invoice value — whichever we agree in writing. Refunds go back through the original payment "
-     "channel where that is possible."),
-    ("Contact",
-     "Send claims and questions to the WhatsApp number or email address below. Please include the order "
-     "number so we can find your file quickly."),
+    ("ret_s1_h", "Overview",
+     ("ret_s1_p",
+      "We want the part to fit and to work. If something is wrong, contact us first — before you send "
+      "anything back — so we can confirm the case and give you a return authorization (RMA) number. "
+      "Parts sent back without an RMA number may be refused or delayed at customs.")),
+    ("ret_s2_h", "What the warranty covers",
+     ("ret_s2_p",
+      "Our parts carry a warranty of 12 to 24 months depending on the part type. The exact term for your "
+      "order is written on the quotation and on the invoice, so the same number applies to both sides. "
+      "The warranty covers manufacturing defects that appear under normal use on the vehicle the part is "
+      "listed for.")),
+    ("ret_s3_h", "What is not covered",
+     ("ret_s3_p",
+      "The warranty does not cover: damage from an accident, collision or fire; wrong installation or "
+      "installation with damaged wiring, connectors or voltage problems; misuse, neglect, water ingress or "
+      "unauthorized repair and modification; normal wear; a part ordered for the wrong vehicle because the "
+      "OE number or cross-reference was not checked; and transit damage that is not reported to us with the "
+      "carrier's record.")),
+    ("ret_s4_h", "How to make a claim",
+     ("ret_s4_p",
+      "1) Send us the invoice or order number and the part number. 2) Send photos or a short video of the "
+      "part and, where possible, of the vehicle and the fault code. 3) Tell us the vehicle model, year and "
+      "engine, and what the part is doing wrong. 4) We review the case — each case is judged on its own "
+      "evidence, and we may ask for the part to be tested. 5) If the claim is accepted we issue an RMA "
+      "number and agree with you whether the part is replaced, credited or refunded.")),
+    ("ret_s5_h", "Shipping and timing",
+     ("ret_s5_p",
+      "Return freight is paid by the buyer unless the fault is ours (wrong part sent, part not as "
+      "described, or a defect confirmed by us). We confirm who pays in writing before the return ships. "
+      "Inspection and the replacement or credit are handled case by case; we give you the expected timing "
+      "in writing with the RMA number rather than promising a fixed number of days here.")),
+    ("ret_s6_h", "Replacements and refunds",
+     ("ret_s6_p",
+      "Where a claim is accepted we replace the part, issue a credit note against your next order, or refund "
+      "the invoice value — whichever we agree in writing. Refunds go back through the original payment "
+      "channel where that is possible.")),
+    ("ret_s7_h", "Contact",
+     ("ret_s7_p",
+      "Send claims and questions to the WhatsApp number or email address below. Please include the order "
+      "number so we can find your file quickly.")),
 ]
-
 RETURNS_ZH = [
     "先把问题告诉我们，再寄回：没有 RMA 号的退货可能被拒收或在海关卡住。",
     "质保范围：按品类 12–24 个月，具体年限写在报价单和发票上；保的是正常使用下出现的制造缺陷。",
@@ -1771,8 +1788,13 @@ RETURNS_ZH = [
 
 
 def _sections_html(secs):
-    return "".join('<section class="dsec"><h2>%s</h2><p>%s</p></section>' % (esc(t), body)
-                   for t, body in secs)
+    """政策页正文：每节 = (标题 key, 英文标题, [(段落 key, 英文段落 html), ...])。"""
+    out = []
+    for hk, hen, *paras in secs:
+        body = "".join('<p data-i18n-html="%s">%s</p>' % (pk, ph) for pk, ph in paras)
+        out.append('<section class="dsec"><h2 data-i18n="%s">%s</h2>%s</section>'
+                   % (hk, esc(hen), body))
+    return "".join(out)
 
 
 def page_policy(cfg, kind):
@@ -1783,6 +1805,7 @@ def page_policy(cfg, kind):
                 "send an inquiry, why we keep it, and who we share it with.")
         h1 = "Privacy Policy"
         secs, zh, fname = PRIVACY_SECTIONS, PRIVACY_ZH, "privacy.html"
+        hkey, lkey = "priv_h1", "priv_lead"
         lead = ("We keep this short and specific: what we receive, why we keep it, and how to have it "
                 "removed.")
     else:
@@ -1791,6 +1814,7 @@ def page_policy(cfg, kind):
                 "is not, how to get an RMA number, and who pays the freight.")
         h1 = "Refund & Returns"
         secs, zh, fname = RETURNS_SECTIONS, RETURNS_ZH, "returns.html"
+        hkey, lkey = "ret_h1", "ret_lead"
         lead = ("Contact us before you ship anything back. Below is what the warranty covers, what it does "
                 "not, and how a claim is handled.")
 
@@ -1804,37 +1828,36 @@ def page_policy(cfg, kind):
 
     wa = wa_link(cfg, "Hi, I have a question about %s." % h1.lower())
     body = """<body class="docpage">
-%s
+%(head)s
 <main id="main" tabindex="-1" class="policy">
-<nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span>%s</span></nav>
+<nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="%(hkey)s">%(h1)s</span></nav>
 <article class="doc">
-  <h1>%s</h1>
-  <p class="docmeta">%s · <span data-i18n="doc_ref">English version is the reference</span></p>
-  <p class="doclead">%s</p>
-  %s
-  <details class="doczh"><summary>中文摘要 · Chinese summary</summary><ul>%s</ul></details>
+  <h1 data-i18n="%(hkey)s">%(h1)s</h1>
+  <p class="docmeta"><span data-i18n="policy_upd">Last updated</span> <span data-i18n="policy_date">%(d)s</span> · <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead" data-i18n="%(lkey)s">%(lead)s</p>
+  %(secs)s
+  <details class="doczh"><summary>中文摘要 · Chinese summary</summary><ul>%(zh)s</ul></details>
   <section class="doccontact">
     <h2 data-i18n="foot_contact">Contact</h2>
-    <p class="docorg"><b class="notranslate" %s>%s</b> · <span class="notranslate" %s>%s</span></p>
-    <p class="docaddr">%s</p>
-    <p><span data-i18n="foot_hours">Working hours</span>: %s</p>
+    <p class="docorg"><b class="notranslate" %(nt)s>%(brandcn)s</b> · <span class="notranslate" %(nt)s>%(company)s</span></p>
+    <p class="docaddr">%(addr)s</p>
+    <p><span data-i18n="foot_hours">Working hours</span>: %(hours)s</p>
     <p data-i18n="foot_contact_via">Questions about this page? WhatsApp or email us — we answer within one working day.</p>
-    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+    <p><a class="btn-wa" href="%(wa)s" target="_blank" rel="noopener">%(walabel)s</a>
        <a class="btn-ghost" href="index.html" data-i18n="nf_back">Back to the lookup home</a></p>
   </section>
 </article>
 </main>
-%s
+%(foot)s
 <script>(function(){function f(){try{var d=document.querySelector('.doczh');if(d&&window.I18N&&window.I18N.lang==='zh')d.open=true;}catch(e){}}
 document.addEventListener('DOMContentLoaded',f);document.addEventListener('i18n:change',f);
 try{if(document.documentElement.getAttribute('data-lang')==='zh')document.querySelector('.doczh').open=true;}catch(e){}})();</script>
 </body></html>
-""" % (sitehead(cfg, "", base=""), h1, esc(h1),
-       "Last updated " + POLICY_DATE_TXT, esc(lead), _sections_html(secs), zh_html,
-       NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
-       addr_span(cfg), esc(cfg["hours"]),
-       esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
-       sitefoot(cfg, base=""))
+""" % dict(head=sitehead(cfg, "", base=""), hkey=hkey, h1=esc(h1), lkey=lkey,
+           d=POLICY_DATE_TXT, lead=esc(lead), secs=_sections_html(secs), zh=zh_html,
+           nt=NOTRANSLATE, brandcn=esc(BRAND_CN), company=esc(cfg["company_en"]),
+           addr=addr_span(cfg), hours=esc(cfg["hours"]), wa=esc(wa),
+           walabel=esc("WhatsApp " + wa_display(cfg["whatsapp"])), foot=sitefoot(cfg, base=""))
     return head_block(cfg, title, desc, canon, "assets/og/og-default.webp", "website",
                       [ld], base="") + "\n" + body
 
@@ -1842,7 +1865,7 @@ try{if(document.documentElement.getAttribute('data-lang')==='zh')document.queryS
 # ------------------------------------------------------------------ 公司介绍页
 
 # About 页的「最后更新」：改内容时手动改这一行，别用生成时间，否则每次构建都自称刚更新过
-ABOUT_DATE_TXT = "7 November 2026"
+ABOUT_DATE_TXT = "7 November 2026"   # 改这里要同步 i18n.js 的 about_date
 
 
 
@@ -1953,7 +1976,7 @@ def page_about(cfg):
 <nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="foot_about">About us</span></nav>
 <article class="doc">
   <h1 data-i18n="about_h1">%s</h1>
-  <p class="docmeta"><span data-i18n="about_upd" data-v-d="%s">Last updated %s</span> · <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="docmeta"><span data-i18n="about_upd">Last updated</span> <span data-i18n="about_date">%s</span> · <span data-i18n="doc_ref">English version is the reference</span></p>
   <p class="doclead" data-i18n="about_lead">We buy, brand and ship auto electrical parts for the aftermarket. We are not a factory,
   and this page does not pretend that we are — it explains what we actually do, so you can judge whether
   we are the right supplier for your market.</p>
@@ -1975,7 +1998,7 @@ def page_about(cfg):
 document.addEventListener('DOMContentLoaded',f);document.addEventListener('i18n:change',f);
 try{if(document.documentElement.getAttribute('data-lang')==='zh')document.querySelector('.doczh').open=true;}catch(e){}})();</script>
 </body></html>
-""" % (sitehead(cfg, "", base=""), esc(h1), ABOUT_DATE_TXT, "Last updated " + ABOUT_DATE_TXT,
+""" % (sitehead(cfg, "", base=""), esc(h1), ABOUT_DATE_TXT,
        render(secs), zh_html,
        NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
        addr_span(cfg), esc(cfg["hours"]),
