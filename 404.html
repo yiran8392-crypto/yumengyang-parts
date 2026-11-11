@@ -6,11 +6,11 @@
 <title>Page not found | Guangzhou Yumengyang Auto Parts</title>
 <meta name="robots" content="noindex,follow">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d2233'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23e8622a'/%3E%3C/svg%3E">
-<script>try{var l=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("ymy_lang")||"en").toLowerCase();l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt":l.indexOf("id")===0?"id":l.indexOf("fa")===0?"fa":"en";var d=document.documentElement;d.setAttribute("data-lang",l);if(l==="ar"||l==="fa")d.setAttribute("dir","rtl")}catch(e){}</script>
-<script defer src="https://yiran8392-crypto.github.io/yumengyang-parts/assets/i18n.js?v=20261111fa"></script>
+<script>try{var l=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("ymy_lang")||"en").toLowerCase();l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt":l.indexOf("id")===0?"id":l.indexOf("fa")===0?"fa":"en";var d=document.documentElement;d.setAttribute("data-lang",l);if(l==="ar"||l==="fa")d.setAttribute("dir","rtl");if(l!=="en")d.setAttribute("translate","no")}catch(e){}</script>
+<script defer src="assets/i18n.js?v=20261111i18n4"></script>
 <meta name="ymy-analytics" content="goatcounter:yumengyang">
 <meta name="ymy-analytics-q" content="1">
-<script defer src="https://yiran8392-crypto.github.io/yumengyang-parts/assets/analytics.js?v=20261110b"></script>
+<script defer src="assets/analytics.js?v=20261110b"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,"Segoe UI",system-ui,Arial,"Microsoft YaHei",sans-serif;background:#f6f8fa;color:#16232e;
@@ -22,6 +22,12 @@ h1{font-size:24px;margin:12px 0 10px;font-weight:700}
 p{color:#5d7186;font-size:15px;line-height:1.7;margin:0 0 24px}
 a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#0d2233;color:#fff;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:600;font-size:15px}
 a.wa{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#25d366;color:#062b16;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:700;font-size:15px;margin-inline-start:10px}
+form.nf{display:flex;gap:8px;max-width:540px;margin:0 auto 16px}
+form.nf input{flex:1;min-width:0;height:48px;border:1px solid #cfdae4;border-radius:12px;padding:0 14px;font:inherit;font-size:15px;background:#fff}
+form.nf button{height:48px;border:0;border-radius:12px;background:#e8622a;color:#fff;font:inherit;font-weight:700;padding:0 18px;cursor:pointer;white-space:nowrap}
+.nfquick{font-size:14px;margin:0 0 22px}
+.nfquick a{color:#c2491f;text-decoration:none;font-weight:600}
+html[dir="rtl"] form.nf{flex-direction:row-reverse}
 small{display:block;margin-top:28px;color:#8698a9;font-size:12.5px}
 .langsel{-webkit-appearance:none;appearance:none;height:42px;min-width:130px;padding:0 34px 0 14px;border-radius:10px;
 font:inherit;font-size:14px;font-weight:600;color:#16232e;background:#fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%235d7186' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center/12px 8px;
@@ -34,8 +40,16 @@ html[dir="rtl"] .langsel{padding:0 14px 0 34px;background-position:left 12px cen
   <div class="top"><label class="sr-only" for="langsel">Language</label><select id="langsel" class="langsel dark" aria-label="Language" translate="no"><option value="en">English</option><option value="zh">简体中文</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="fr">Français</option><option value="es">Español</option><option value="pt">Português</option><option value="id">Bahasa Indonesia</option><option value="fa">فارسی</option></select></div>
   <div class="code">404</div>
   <h1 data-i18n="nf_h1">Page not found</h1>
-  <p data-i18n="nf_p">The part may have moved. Search by OE number on the home page, or message us on WhatsApp.</p>
-  <a class="btn" href="https://yiran8392-crypto.github.io/yumengyang-parts/" data-i18n="nf_back">Back to the lookup home</a>
+  <p data-i18n="nf_p">The part may have moved. Search by OE number below, or message us on WhatsApp.</p>
+  <form class="nf" action="products.html" method="get" role="search">
+    <input type="search" name="q" data-i18n-ph="home_ph" placeholder="OE number / cross-reference / SKU / model" aria-label="Search parts">
+    <button type="submit" data-i18n="search_oe_btn">Search by OE number</button>
+  </form>
+  <p class="nfquick"><a href="category/index.html" data-i18n="all_cat_h1">All product categories</a>
+    · <a href="products.html" data-i18n="nav_products">Products</a>
+    · <a href="list.html" data-i18n="bulk_check">Bulk check</a>
+    · <a href="about.html" data-i18n="nav_about">About us</a></p>
+  <a class="btn" href="index.html" data-i18n="nf_back">Back to the lookup home</a>
   <a class="wa" href="https://wa.me/8615915859048?text=Hi%2C%20I%20could%20not%20find%20a%20part%20on%20your%20website." target="_blank" rel="noopener">WhatsApp</a>
   <small><span class="notranslate" translate="no">广州驭盟扬汽配</span> · <span class="notranslate" translate="no">Guangzhou Yumengyang Auto Parts Co., Ltd.</span></small>
 </div>

@@ -124,7 +124,10 @@ LANG_BOOT = ('<script>try{var l=(new URLSearchParams(location.search).get("lang"
              ':l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt"'
              ':l.indexOf("id")===0?"id":l.indexOf("fa")===0?"fa":"en";'
              'var d=document.documentElement;d.setAttribute("data-lang",l);'
-             'if(l==="ar"||l==="fa")d.setAttribute("dir","rtl")}catch(e){}</script>')
+             'if(l==="ar"||l==="fa")d.setAttribute("dir","rtl");'
+             # 非英语界面锁住浏览器的「自动翻译」：否则 Chrome/Edge 会把我们的
+             # 印尼语/波斯语页面当成外语再翻成访客的母语，翻出一堆乱码。
+             'if(l!=="en")d.setAttribute("translate","no")}catch(e){}</script>')
 
 # 热销品类排最前，其余按型号数从多到少（首页按钮 / 导航 / 品类总览 / 首页目录块共用）
 HOT_ORDER = ["coil", "fuelpump", "o2", "plug"]
@@ -156,8 +159,8 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261111c"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261111fa"        # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+CSS_V = "20261111f"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+I18N_V = "20261111i18n4"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -574,6 +577,14 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
     """canonical / og:url / og:image 只在填了真实域名时才输出；
     域名还是占位符时，页面照样能双击打开、能部署，只是没有这些标签（不会指错地方）。
     base 是到站点根目录的相对前缀：c/ 和 category/ 里的页面是 "../"，根目录页面（政策页）是 ""。"""
+    # 搜索结果摘要一般显示 155–160 字符，更长的会被截掉；统一压到 158 以内，优先在句号处收尾。
+    if len(desc) > 158:
+        cut = desc[:158]
+        if ". " in cut:
+            cut = cut[:cut.rfind(". ") + 1]
+        else:
+            cut = cut.rsplit(" ", 1)[0]
+        desc = cut.rstrip(" ,;")
     site = has_site(cfg)
     robots = "noindex,follow" if noindex else "index,follow"
     img = ""
@@ -662,8 +673,8 @@ def sitefoot(cfg, base="../"):
                      for k, t, href in POLICY_LINKS_EN)
     prods = [("coil", "Ignition coils"), ("abs", "ABS sensors"), ("fuelpump", "Fuel pumps"),
              ("o2", "Oxygen sensors"), ("throttle", "Throttle bodies")]
-    plist = "".join('<li><a href="%scategory/%s.html">%s</a></li>'
-                    % (base, CAT_META.get(k, (k,))[0], esc(t)) for k, t in prods)
+    plist = "".join('<li><a href="%scategory/%s.html" data-cat="%s">%s</a></li>'
+                    % (base, CAT_META.get(k, (k,))[0], k, esc(t)) for k, t in prods)
     return """<footer class="sf2">
 <div class="in">
   <div>
@@ -1134,6 +1145,9 @@ def page_model(cfg, it, cat, related=None):
         title = head
 
     apps = clean_text(it.get("a"))
+    # 适配文本里的中文（如「长城H6」）不进英文站的 meta description，否则会在搜索结果摘要里露出中文
+    apps = re.sub(r"[\u4e00-\u9fa5]+", " ", apps)
+    apps = re.sub(r"\s{2,}", " ", apps).strip(" ,;")
     fits = apps[:120].rstrip(" ,;") if apps else ""
     tail = ". Factory-direct, ask price and MOQ on WhatsApp."
     desc = "%s %s" % (one, ("OE " + it["oe"]) if it.get("oe") else ("part " + it["m"]))
@@ -1147,8 +1161,11 @@ def page_model(cfg, it, cat, related=None):
         if piece:
             desc += ". Fits " + piece
     desc += tail
-    if len(desc) > 160:
-        desc = desc[:155].rsplit(" ", 1)[0].rstrip(" ,.;") + tail
+    # 总长压到 158 以内（之前截断后又把 47 字符的 tail 接回去，最长到 202，Google 摘要会截掉后半句）
+    if len(desc) > 158:
+        keep = 158 - len(tail)
+        cut = desc[:keep]
+        desc = (cut.rsplit(" ", 1)[0] if " " in cut else cut).rstrip(" ,.;") + tail
 
     slug = it["s"]
     page_path = "c/%s.html" % slug
@@ -1828,6 +1845,21 @@ try{if(document.documentElement.getAttribute('data-lang')==='zh')document.queryS
 ABOUT_DATE_TXT = "7 November 2026"
 
 
+
+def _about_body(parts):
+    """About 页正文：("key", "英文原文") = 一段；列表 = <ul>；("raw", html) = 原样插入。"""
+    out = []
+    for p in parts:
+        if isinstance(p, list):
+            out.append("<ul>%s</ul>" % "".join(
+                '<li data-i18n="%s">%s</li>' % (k, esc(v)) for k, v in p))
+        elif p[0] == "raw":
+            out.append(p[1])
+        else:
+            out.append('<p data-i18n="%s">%s</p>' % (p[0], esc(p[1])))
+    return "".join(out)
+
+
 def page_about(cfg):
     """公司介绍页：说真话的那种。
     目标读者是中东 / 非洲 / 拉美的采购：他们被"我们是工厂"骗过太多次，
@@ -1843,54 +1875,58 @@ def page_about(cfg):
 
 
     secs = [
-        ("What we do",
-         "<p>Guangzhou Yumengyang Auto Parts Co., Ltd has been trading auto electrical parts since 2002. "
-         "We are headquartered in Baiyun District, Guangzhou, we own two brands — <b>WEILI</b> and "
-         "<b>STANDOUT</b> — and we supply 23 categories of parts: ignition coils, ABS sensors, fuel pumps, "
-         "oxygen sensors, throttle bodies, thermostats and more.</p>"
-         "<p>Every part we sell is listed on this site with its OE number, cross-references and fitment. "
-         "That list is the product: if we cannot name the OE number a part replaces, we do not list it.</p>"),
-        ("How the parts are made",
-         "<p>We are a trading company with our own brand, and we say so plainly. Parts sold under WEILI are "
-         "produced for us by long-term manufacturing partners — the same arrangement most aftermarket brands "
-         "you already buy work with.</p>"
-         "<p>What we control is everything around the part: the OE and cross-reference list, the "
-         "specification, incoming inspection, packing and the warranty. We know which batch came from which "
-         "line, and if you ask us which factory made a specific SKU, we will tell you.</p>"),
-        ("Where we are",
-         "<p>Our office is in Baiyun District, Guangzhou, the trading district the whole Chinese aftermarket "
-         "buys from. Stock ships within days and export goes out through Guangzhou port — we will confirm the "
-         "exact port and terms in the quotation.</p>"
-         "<p>%s</p>" % addr_span(cfg)),
-        ("What we can send you before you order",
-         "<ul>"
-         "<li>Our business licence, stamped</li>"
-         "<li>The ISO 9001 and IATF 16949 certificates held by our production partners</li>"
-         "<li>Real photos of the part, the inner packing and the carton marking</li>"
-         "<li>The test report for the batch we are quoting</li>"
-         "<li>Buyers in your region who agreed to be a reference</li>"
-         "</ul>"
-         "<p>Ask on WhatsApp and we send what we have the same working day. If we do not have a document, "
-         "we say so rather than sending something that looks like it.</p>"),
-        ("What we are not",
-         "<p>We would rather lose an order than mislead a buyer:</p>"
-         "<ul>"
-         "<li>We do not run our own stamping or winding plant, and we will not claim to.</li>"
-         "<li>We are not the cheapest source for a single piece. Our pricing pays off on mixed orders.</li>"
-         "<li>We do not stock every body panel. Our catalogue is electrics and sensors — that is where "
-         "our knowledge is.</li>"
-         "</ul>"),
-        ("Why this lookup site exists",
-         "<p>The first question every buyer asks is <i>“do you have my number?”</i> — usually with a photo of "
-         "a sticker on a broken part. Instead of answering that one part at a time, we put %s part numbers "
-         "online with their OE numbers and cross-references, in five languages, so a mechanic in Lagos or a "
-         "counter in Dubai can check it themselves at 2 a.m.</p>" % n_txt),
+        ("about_s1_h", "What we do",
+         ("about_s1_p1",
+          "Guangzhou Yumengyang Auto Parts Co., Ltd has been trading auto electrical parts since 2002. "
+          "We are headquartered in Baiyun District, Guangzhou, we own two brands — WEILI and STANDOUT — "
+          "and we supply 23 categories of parts: ignition coils, ABS sensors, fuel pumps, oxygen sensors, "
+          "throttle bodies, thermostats and more."),
+         ("about_s1_p2",
+          "Every part we sell is listed on this site with its OE number, cross-references and fitment. "
+          "That list is the product: if we cannot name the OE number a part replaces, we do not list it.")),
+        ("about_s2_h", "How the parts are made",
+         ("about_s2_p1",
+          "We are a trading company with our own brand, and we say so plainly. Parts sold under WEILI are "
+          "produced for us by long-term manufacturing partners — the same arrangement most aftermarket brands "
+          "you already buy work with."),
+         ("about_s2_p2",
+          "What we control is everything around the part: the OE and cross-reference list, the specification, "
+          "incoming inspection, packing and the warranty. We know which batch came from which line, and if you "
+          "ask us which factory made a specific SKU, we will tell you.")),
+        ("about_s3_h", "Where we are",
+         ("about_s3_p1",
+          "Our office is in Baiyun District, Guangzhou, the trading district the whole Chinese aftermarket "
+          "buys from. Stock ships within days and export goes out through Guangzhou port — we will confirm the "
+          "exact port and terms in the quotation."),
+         ("raw", addr_span(cfg))),
+        ("about_s4_h", "What we can send you before you order",
+         [("about_s4_li1", "Our business licence, stamped"),
+          ("about_s4_li2", "The ISO 9001 and IATF 16949 certificates held by our production partners"),
+          ("about_s4_li3", "Real photos of the part, the inner packing and the carton marking"),
+          ("about_s4_li4", "The test report for the batch we are quoting"),
+          ("about_s4_li5", "Buyers in your region who agreed to be a reference")],
+         ("about_s4_p",
+          "Ask on WhatsApp and we send what we have the same working day. If we do not have a document, "
+          "we say so rather than sending something that looks like it.")),
+        ("about_s5_h", "What we are not",
+         ("about_s5_p", "We would rather lose an order than mislead a buyer:"),
+         [("about_s5_li1", "We do not run our own stamping or winding plant, and we will not claim to."),
+          ("about_s5_li2", "We are not the cheapest source for a single piece. Our pricing pays off on mixed orders."),
+          ("about_s5_li3", "We do not stock every body panel. Our catalogue is electrics and sensors — that is where "
+                           "our knowledge is.")]),
+        ("about_s6_h", "Why this lookup site exists",
+         ("about_s6_p",
+          "The first question every buyer asks is “do you have my number?” — usually with a photo of a sticker "
+          "on a broken part. Instead of answering that one part at a time, we put %s part numbers online with "
+          "their OE numbers and cross-references, in nine languages, so a mechanic in Lagos or a counter in "
+          "Dubai can check it themselves at 2 a.m." % n_txt)),
     ]
 
     def render(pairs):
         out = []
-        for t, body in pairs:
-            out.append('<section class="dsec"><h2>%s</h2>%s</section>' % (esc(t), body))
+        for sec in pairs:
+            out.append('<section class="dsec"><h2 data-i18n="%s">%s</h2>%s</section>'
+                       % (sec[0], esc(sec[1]), _about_body(sec[2:])))
         return "".join(out)
 
     zh = [
@@ -1916,9 +1952,9 @@ def page_about(cfg):
 <main id="main" tabindex="-1" class="policy">
 <nav class="crumbs"><a href="index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="foot_about">About us</span></nav>
 <article class="doc">
-  <h1>%s</h1>
-  <p class="docmeta">%s · <span data-i18n="doc_ref">English version is the reference</span></p>
-  <p class="doclead">We buy, brand and ship auto electrical parts for the aftermarket. We are not a factory,
+  <h1 data-i18n="about_h1">%s</h1>
+  <p class="docmeta"><span data-i18n="about_upd" data-v-d="%s">Last updated %s</span> · <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead" data-i18n="about_lead">We buy, brand and ship auto electrical parts for the aftermarket. We are not a factory,
   and this page does not pretend that we are — it explains what we actually do, so you can judge whether
   we are the right supplier for your market.</p>
   %s
@@ -1939,7 +1975,8 @@ def page_about(cfg):
 document.addEventListener('DOMContentLoaded',f);document.addEventListener('i18n:change',f);
 try{if(document.documentElement.getAttribute('data-lang')==='zh')document.querySelector('.doczh').open=true;}catch(e){}})();</script>
 </body></html>
-""" % (sitehead(cfg, "", base=""), esc(h1), "Last updated " + ABOUT_DATE_TXT, render(secs), zh_html,
+""" % (sitehead(cfg, "", base=""), esc(h1), ABOUT_DATE_TXT, "Last updated " + ABOUT_DATE_TXT,
+       render(secs), zh_html,
        NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]),
        addr_span(cfg), esc(cfg["hours"]),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
@@ -2285,7 +2322,14 @@ def page_code(cfg, c, resolve, cat_counts):
         if key == c["system"]:
             sys_name = en
             break
-    title = "%s %s — causes, tests and parts we stock | Yumengyang" % (code, c["name"])
+    # 标题压到 70 字符内（之前最长 114 字符，Google 摘要里会被截掉一半）
+    _suffix = " | Yumengyang"
+    _mid = " — causes, tests & parts"
+    _room = 70 - len(_suffix) - len(_mid) - len(code) - 1
+    _name = c["name"]
+    if len(_name) > _room:
+        _name = _name[:max(_room - 1, 12)].rsplit(" ", 1)[0] + "…"
+    title = "%s %s%s%s" % (code, _name, _mid, _suffix)
     ld = {
         "@context": "https://schema.org",
         "@type": "Article",
@@ -2377,8 +2421,10 @@ def page_code(cfg, c, resolve, cat_counts):
 
 
 def page_404(cfg):
-    home = rel_url(cfg, "") if has_site(cfg) else "index.html"
-    js = rel_url(cfg, "assets/i18n.js") if has_site(cfg) else "assets/i18n.js"
+    # 404 页总在站点根目录：用相对路径，本地双击预览时也能加载到本机 assets/i18n.js
+    # （以前用绝对域名，本地预览会去拉线上旧字典，改文案后测不出效果）
+    home = "index.html"
+    js = "assets/i18n.js"
     js += "?v=" + I18N_V
     sel = lang_sel_html().replace('class="langsel"', 'class="langsel dark"')
     an = ""
@@ -2386,8 +2432,7 @@ def page_404(cfg):
         an = '\n<meta name="ymy-analytics" content="%s">' % esc(cfg["analytics"].strip())
         if (cfg.get("analytics_q") or "").strip() in ("1", "yes", "true", "on"):
             an += '\n<meta name="ymy-analytics-q" content="1">'
-        an += '\n<script defer src="%sassets/analytics.js?v=%s"></script>' % (
-            (rel_url(cfg, "").rstrip("/") + "/") if has_site(cfg) else "", ANALYTICS_V)
+        an += '\n<script defer src="assets/analytics.js?v=%s"></script>' % ANALYTICS_V
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2409,6 +2454,12 @@ h1{{font-size:24px;margin:12px 0 10px;font-weight:700}}
 p{{color:#5d7186;font-size:15px;line-height:1.7;margin:0 0 24px}}
 a.btn{{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#0d2233;color:#fff;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:600;font-size:15px}}
 a.wa{{display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:#25d366;color:#062b16;text-decoration:none;padding:0 24px;border-radius:12px;font-weight:700;font-size:15px;margin-inline-start:10px}}
+form.nf{{display:flex;gap:8px;max-width:540px;margin:0 auto 16px}}
+form.nf input{{flex:1;min-width:0;height:48px;border:1px solid #cfdae4;border-radius:12px;padding:0 14px;font:inherit;font-size:15px;background:#fff}}
+form.nf button{{height:48px;border:0;border-radius:12px;background:#e8622a;color:#fff;font:inherit;font-weight:700;padding:0 18px;cursor:pointer;white-space:nowrap}}
+.nfquick{{font-size:14px;margin:0 0 22px}}
+.nfquick a{{color:#c2491f;text-decoration:none;font-weight:600}}
+html[dir="rtl"] form.nf{{flex-direction:row-reverse}}
 small{{display:block;margin-top:28px;color:#8698a9;font-size:12.5px}}
 .langsel{{-webkit-appearance:none;appearance:none;height:42px;min-width:130px;padding:0 34px 0 14px;border-radius:10px;
 font:inherit;font-size:14px;font-weight:600;color:#16232e;background:#fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%235d7186' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center/12px 8px;
@@ -2421,7 +2472,15 @@ html[dir="rtl"] .langsel{{padding:0 14px 0 34px;background-position:left 12px ce
   <div class="top">{sel}</div>
   <div class="code">404</div>
   <h1 data-i18n="nf_h1">Page not found</h1>
-  <p data-i18n="nf_p">The part may have moved. Search by OE number on the home page, or message us on WhatsApp.</p>
+  <p data-i18n="nf_p">The part may have moved. Search by OE number below, or message us on WhatsApp.</p>
+  <form class="nf" action="products.html" method="get" role="search">
+    <input type="search" name="q" data-i18n-ph="home_ph" placeholder="OE number / cross-reference / SKU / model" aria-label="Search parts">
+    <button type="submit" data-i18n="search_oe_btn">Search by OE number</button>
+  </form>
+  <p class="nfquick"><a href="category/index.html" data-i18n="all_cat_h1">All product categories</a>
+    · <a href="products.html" data-i18n="nav_products">Products</a>
+    · <a href="list.html" data-i18n="bulk_check">Bulk check</a>
+    · <a href="about.html" data-i18n="nav_about">About us</a></p>
   <a class="btn" href="{home}" data-i18n="nf_back">Back to the lookup home</a>
   <a class="wa" href="{wa}" target="_blank" rel="noopener">WhatsApp</a>
   <small><span class="notranslate" translate="no">{cn}</span> · <span class="notranslate" translate="no">{en}</span></small>
@@ -2639,7 +2698,8 @@ def inject_home(cfg, cats, by_cat, brand_entries=None):
     h = _put_block(h, "HOME_WHY", why_html(cfg))
     h = _put_block(h, "HOME_FAQ", faq_html(cfg))
     h = _put_block(h, "HOME_FOOT", sitefoot(cfg, base=""))  # 首页也用它，保持全站一致
-    h = _put_block(h, "SITE_LD", _ld_block(site_ld(cfg) + [faq_ld(cfg)]))
+    # 首页 head 里的 SITE_LD 已经由 head_block() 输出（site_ld + faq_ld），
+    # 这里不再往 body 写第二份——否则 Organization/WebSite/FAQPage 各重复一次。
 
     h = h.replace("https://your-domain.com", cfg["site_url"])
     h = h.replace("8615915859048", cfg["whatsapp"])
@@ -2776,19 +2836,26 @@ def load_terms():
 TERMS = {}
 
 
-def _prow(label_key, label_en, main, note=""):
+def _prow(label_key, label_en, main, note="", val_key="", note_key=""):
+    """一行条款。val_key / note_key 是「值」和「小字」的 i18n 键：
+    英文仍然以 付款与装运.txt 为准（data-i18n-src 兜底），翻译在 i18n.js 里。"""
     if not main:
         return ""
-    note_html = ('<em>%s</em>' % esc(note)) if note else ""
+    if note:
+        note_html = '<em><span%s>%s</span></em>' % (
+            (' data-i18n="%s"' % note_key) if note_key else "", esc(note))
+    else:
+        note_html = ""
+    main_html = ('<span data-i18n="%s">%s</span>' % (val_key, esc(main))) if val_key else esc(main)
     return ('<div class="prow"><b data-i18n="%s">%s</b><span>%s%s</span></div>'
-            % (label_key, esc(label_en), esc(main), note_html))
+            % (label_key, esc(label_en), main_html, note_html))
 
 
 def pay_card_html():
     """型号页那一张卡。"""
     t = TERMS
-    rows = _prow("pay_t", "Bank transfer (T/T)", t.get("t_t", ""))
-    rows += _prow("pay_lc", "Letter of credit", t.get("l_c", ""))
+    rows = _prow("pay_t", "Bank transfer (T/T)", t.get("t_t", ""), val_key="payv_t")
+    rows += _prow("pay_lc", "Letter of credit", t.get("l_c", ""), val_key="payv_lc")
     if not rows:
         return ""
     return ('<div class="tc"><b data-i18n="t_pay">Payment</b><span>%s'
@@ -2799,13 +2866,20 @@ def pay_card_html():
 def pay_block_html():
     """联系页那一整块。"""
     t = TERMS
-    pay = (_prow("pay_t", "Bank transfer (T/T)", t.get("t_t", ""), t.get("t_t_note", "")) +
-           _prow("pay_lc", "Letter of credit", t.get("l_c", ""), t.get("l_c_note", "")) +
-           _prow("pay_sample", "Samples / small orders", t.get("sample_pay", ""), t.get("sample_pay_note", "")) +
-           _prow("pay_cur", "Currency", t.get("currency", ""), t.get("currency_note", "")))
-    ship = (_prow("pay_terms", "Shipping terms", t.get("terms", ""), t.get("terms_note", "")) +
-            _prow("t_lead", "Lead time", t.get("lead_time", ""), t.get("lead_time_note", "")))
-    docs = _prow("pay_docs", "Documents", t.get("docs", ""), t.get("docs_note", ""))
+    pay = (_prow("pay_t", "Bank transfer (T/T)", t.get("t_t", ""), t.get("t_t_note", ""),
+                 "payv_t", "payv_t_note") +
+           _prow("pay_lc", "Letter of credit", t.get("l_c", ""), t.get("l_c_note", ""),
+                 "payv_lc", "payv_lc_note") +
+           _prow("pay_sample", "Samples / small orders", t.get("sample_pay", ""),
+                 t.get("sample_pay_note", ""), "payv_sample", "payv_sample_note") +
+           _prow("pay_cur", "Currency", t.get("currency", ""), t.get("currency_note", ""),
+                 "payv_cur", "payv_cur_note"))
+    ship = (_prow("pay_terms", "Shipping terms", t.get("terms", ""), t.get("terms_note", ""),
+                  "payv_terms", "payv_terms_note") +
+            _prow("t_lead", "Lead time", t.get("lead_time", ""), t.get("lead_time_note", ""),
+                  "payv_lead", "payv_lead_note"))
+    docs = _prow("pay_docs", "Documents", t.get("docs", ""), t.get("docs_note", ""),
+                 "payv_docs", "payv_docs_note")
     if not (pay or ship or docs):
         return ""
     return ("""<section class="payblock">
@@ -2823,30 +2897,30 @@ terms can be accommodated on repeat orders.</p>
 # Contact 页的询价表单：纯前端拼消息，不上传任何东西。
 # 这一段必须留在模板里 —— 只改 contact.html 的话，下一次 rerender 会被覆盖掉。
 RFQ_HTML = """  <section class="rfq" id="quote">
-    <h2>Request a quotation</h2>
-    <p class="rfqlead">Fill the four fields and add your part list, then send it on WhatsApp — or by email if you prefer.
+    <h2 data-i18n="rfq_h">Request a quotation</h2>
+    <p class="rfqlead" data-i18n="rfq_lead">Fill the four fields and add your part list, then send it on WhatsApp — or by email if you prefer.
     Nothing is uploaded: the button opens WhatsApp (or your mail app) with the text already filled in.
     <span class="zh-extra">填好四栏、贴上型号和数量，点 WhatsApp 直接发给我们（也可以发邮件）。</span></p>
     <form id="rfq" novalidate>
       <div class="rfqgrid">
-        <label for="rfq-name">Name / company
+        <label for="rfq-name"><span data-i18n="rfq_name">Name / company</span>
           <input id="rfq-name" type="text" autocomplete="organization" placeholder="ACME Auto Parts"></label>
-        <label for="rfq-country">Country
+        <label for="rfq-country"><span data-i18n="rfq_country">Country</span>
           <input id="rfq-country" type="text" autocomplete="country-name" placeholder="Iraq"></label>
-        <label for="rfq-contact">Email or WhatsApp
+        <label for="rfq-contact"><span data-i18n="rfq_contact">Email or WhatsApp</span>
           <input id="rfq-contact" type="text" autocomplete="email" placeholder="buyer@example.com"></label>
-        <label for="rfq-parts">Parts &amp; quantity
+        <label for="rfq-parts"><span data-i18n="rfq_parts">Parts &amp; quantity</span>
           <textarea id="rfq-parts" rows="5" placeholder="WL03-0004 x 200&#10;90919-02248 x 100"></textarea></label>
       </div>
       <div class="rfqbtns">
         <button type="button" class="btn-wa" id="rfq-wa">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
-          <span>Send on WhatsApp</span></button>
+          <span data-i18n="rfq_wa">Send on WhatsApp</span></button>
         <button type="submit" class="btn-ghost">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 6l9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-          <span>Send by email</span></button>
+          <span data-i18n="rfq_mail">Send by email</span></button>
       </div>
-      <p class="rfqnote">We answer within one working day, Mon–Sat 09:00–18:00 (GMT+8).</p>
+      <p class="rfqnote" data-i18n="rfq_note">We answer within one working day, Mon–Sat 09:00–18:00 (GMT+8).</p>
     </form>
   </section>
 """
@@ -3206,6 +3280,9 @@ def build_static(items, cats, log=print):
     # 产品目录页（2026-11-10 从首页拆出来）：全站型号的总入口，优先级高于品类索引
     urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
                 % (esc(rel_url(cfg, "products.html")), today))
+    # 批量查价页：工具体验页，买家经常从导航进来，之前漏在 sitemap 外
+    urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>'
+                % (esc(rel_url(cfg, "list.html")), today))
     sm = ('<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "\n".join(urls) + "\n</urlset>\n")

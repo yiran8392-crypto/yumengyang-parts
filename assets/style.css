@@ -39,13 +39,9 @@ h1,h2,h3{color:var(--ink);font-weight:700;letter-spacing:-.01em}
   padding:10px 18px;border-radius:0 0 10px 0;font-weight:600;font-size:14px;text-decoration:none}
 .skip:focus{inset-inline-start:0;outline:2px solid var(--accent);outline-offset:2px}
 #main:focus{outline:none}
-html[data-lang="zh"] .zh-extra,
-html[data-lang="ar"] .zh-extra,
-html[data-lang="ru"] .zh-extra,
-html[data-lang="es"] .zh-extra,
-html[data-lang="pt"] .zh-extra,
-html[data-lang="id"] .zh-extra,
-html[data-lang="fr"] .zh-extra{display:none!important}
+/* 中文补充说明：默认隐藏，只在中文界面显示（英文页曾因漏掉 en 规则而漏出中文） */
+.zh-extra{display:none}
+html[data-lang="zh"] .zh-extra{display:inline}
 html[lang="ar"] body{line-height:1.8}
 html[lang="ar"]{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Arial",sans-serif}
 html[lang="ru"] body{line-height:1.62}
@@ -760,7 +756,8 @@ html[dir="rtl"] .docaddr,html[dir="rtl"] .docorg{direction:ltr;text-align:right}
 .lkimg img{width:100%;height:100%;object-fit:contain;padding:3px}
 .lkimg.none{background:repeating-linear-gradient(45deg,#f4f7fa,#f4f7fa 6px,#eef2f6 6px,#eef2f6 12px)}
 .lk b{grid-area:sku;font-size:13.5px;font-weight:700;color:#1f3b52;word-break:break-all;line-height:1.3;align-self:end}
-.lkoe{grid-area:oe;font-size:11.5px;color:#7c8fa0;font-variant-numeric:tabular-nums;white-space:nowrap;align-self:end}
+.lkoe{grid-area:oe;font-size:11.5px;color:#7c8fa0;font-variant-numeric:tabular-nums;
+  white-space:normal;overflow-wrap:anywhere;align-self:end;min-width:0}
 .lkf{grid-area:fit;font-size:11.5px;color:#7b8d9d;line-height:1.35;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
 html[dir="rtl"] .lk b,html[dir="rtl"] .lkf{direction:ltr;text-align:right}
@@ -1039,7 +1036,7 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 @media (max-width:600px){.bulktable th:nth-child(3),.bulktable td:nth-child(3){display:none}}
 
 /* 首页搜索按钮（2026-11-10 拆页后新增） */
-.searchbar .go{border:0;background:#eaf1f6;color:#16232e;font:inherit;font-weight:700;font-size:13.5px;padding:9px 16px;border-radius:10px;margin-inline-end:8px;cursor:pointer}
+.searchbar .go{border:0;background:#eaf1f6;color:#16232e;font:inherit;font-weight:700;font-size:13.5px;padding:9px 16px;border-radius:10px;margin-inline-end:8px;cursor:pointer;white-space:nowrap;flex:0 0 auto}
 .searchbar .go:hover{background:#dde8f0}
 
 /* ============================================================
@@ -1053,9 +1050,12 @@ html[dir="rtl"] .sf2 .line a[href^="tel"],
 html[dir="rtl"] .sf2 .line a[href^="mailto"],
 html[dir="rtl"] .sf2 .line span[data-i18n="foot_addr"],
 html[dir="rtl"] .hct .ci span,
+html[dir="rtl"] .doccontact a[href^="tel"],
+html[dir="rtl"] .doccontact a[href^="mailto"],
 html[dir="rtl"] .st b,
 html[dir="rtl"] .herostat,
 html[dir="rtl"] .docaddr{unicode-bidi:isolate;direction:ltr}
 
 /* 中文提示行（.zh-extra / .doczh）只在中文界面出现，别的语种别把中文漏出来 */
-html[data-lang]:not([data-lang="zh"]) .zh-extra{display:none}
+html[data-lang]:not([data-lang="zh"]) .zh-extra,
+html[data-lang]:not([data-lang="zh"]) .doczh{display:none}
