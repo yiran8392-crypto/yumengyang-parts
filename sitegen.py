@@ -108,7 +108,8 @@ FAVICON = ('<link rel="icon" href="data:image/svg+xml,'
 # 界面多语言：文案字典在 assets/i18n.js（全站共用一个文件，页面里只放 data-i18n 标记）。
 # 这里只负责语言切换器的 HTML 和“首屏防闪”的小脚本。
 LANG_OPTIONS = [("en", "English"), ("zh", "简体中文"), ("ar", "العربية"), ("ru", "Русский"),
-                ("fr", "Français"), ("es", "Español"), ("pt", "Português"), ("id", "Bahasa Indonesia")]
+                ("fr", "Français"), ("es", "Español"), ("pt", "Português"), ("id", "Bahasa Indonesia"),
+                ("fa", "فارسی")]
 
 
 def lang_sel_html():
@@ -121,9 +122,9 @@ LANG_BOOT = ('<script>try{var l=(new URLSearchParams(location.search).get("lang"
              'localStorage.getItem("ymy_lang")||"en").toLowerCase();'
              'l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru"'
              ':l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt"'
-             ':l.indexOf("id")===0?"id":"en";'
+             ':l.indexOf("id")===0?"id":l.indexOf("fa")===0?"fa":"en";'
              'var d=document.documentElement;d.setAttribute("data-lang",l);'
-             'if(l==="ar")d.setAttribute("dir","rtl")}catch(e){}</script>')
+             'if(l==="ar"||l==="fa")d.setAttribute("dir","rtl")}catch(e){}</script>')
 
 # 热销品类排最前，其余按型号数从多到少（首页按钮 / 导航 / 品类总览 / 首页目录块共用）
 HOT_ORDER = ["coil", "fuelpump", "o2", "plug"]
@@ -155,7 +156,8 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261111a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261111c"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+I18N_V = "20261111fa"        # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -337,7 +339,7 @@ def org_ld(cfg):
             "telephone": "+" + cfg["whatsapp"],
             "email": cfg["email"],
             "areaServed": "Worldwide",
-            "availableLanguage": ["en", "zh", "ar", "ru", "fr", "es", "pt", "id"],
+            "availableLanguage": ["en", "zh", "ar", "ru", "fr", "es", "pt", "id", "fa"],
         }],
     }
     return ld
@@ -352,7 +354,7 @@ def website_ld(cfg, total):
         "name": "%s · OE / cross-reference lookup" % cfg["company_en"].split(" Co.")[0],
         "alternateName": BRAND_CN,
         "url": base,
-        "inLanguage": ["en", "zh", "ar", "ru", "fr", "es", "pt", "id"],
+        "inLanguage": ["en", "zh", "ar", "ru", "fr", "es", "pt", "id", "fa"],
         "potentialAction": {
             "@type": "SearchAction",
             "target": {"@type": "EntryPoint", "urlTemplate": base + "?q={search_term_string}"},
@@ -609,10 +611,10 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 {favicon}
 <link rel="stylesheet" href="{base}assets/style.css?v={cssv}">
 {langboot}
-<script defer src="{base}assets/i18n.js"></script>{an}{extra}{ld}
+<script defer src="{base}assets/i18n.js?v={i18nv}"></script>{an}{extra}{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
                  ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON, base=base,
-                 an=an, extra=extra_scripts, cssv=CSS_V)
+                 an=an, extra=extra_scripts, cssv=CSS_V, i18nv=I18N_V)
 
 
 
@@ -2377,6 +2379,7 @@ def page_code(cfg, c, resolve, cat_counts):
 def page_404(cfg):
     home = rel_url(cfg, "") if has_site(cfg) else "index.html"
     js = rel_url(cfg, "assets/i18n.js") if has_site(cfg) else "assets/i18n.js"
+    js += "?v=" + I18N_V
     sel = lang_sel_html().replace('class="langsel"', 'class="langsel dark"')
     an = ""
     if (cfg.get("analytics") or "").strip():

@@ -2,7 +2,7 @@
    ---------------------------------------------------------------
    服务端先把英文版的 wa.me 链接写进 href（没 JS 也能分享）；
    这个脚本只做三件事：
-     1. 按当前界面语言重写分享文案（en / zh / ar / ru / fr）
+     1. 按当前界面语言重写分享文案（en / zh / ar / ru / fr / es / pt / id / fa）
      2. 复制链接按钮（clipboard API，失败退回 execCommand）
      3. 跟着 <select class="langsel"> 的 i18n:change 事件重跑一遍
 
@@ -54,6 +54,11 @@
       share: "Bagikan ke WhatsApp", copy: "Salin tautan", copied: "Tersalin!",
       a: "Lihat part ini: ", b: ". ", fits: "Cocok untuk ",
       c: "Part pengganti setara OE — harga dan MOQ via WhatsApp: "
+    },
+    fa: {
+      share: "اشتراک در واتساپ", copy: "کپی لینک", copied: "کپی شد!",
+      a: "این قطعه را ببینید: ", b: ". ", fits: "سازگار با ",
+      c: "قطعه جایگزین در حد OE — قیمت و حداقل سفارش در واتساپ: "
     }
   };
 

@@ -1041,3 +1041,21 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 /* 首页搜索按钮（2026-11-10 拆页后新增） */
 .searchbar .go{border:0;background:#eaf1f6;color:#16232e;font:inherit;font-weight:700;font-size:13.5px;padding:9px 16px;border-radius:10px;margin-inline-end:8px;cursor:pointer}
 .searchbar .go:hover{background:#dde8f0}
+
+/* ============================================================
+   2026-11-11 · RTL 的拉丁串隔离（阿拉伯语 / 波斯语共用）
+   电话号码、邮箱、地址这类拉丁串放在 RTL 段落里，浏览器双向算法会把
+   "+86 159 1585 9048" 排成 "9048 1585 159 86+"、"10,000+ m²" 排成 "م² +10,000"。
+   给它们单独做 LTR 隔离，整串当一个不可拆的块。
+   ============================================================ */
+html[dir="rtl"] .sf2 .hot,
+html[dir="rtl"] .sf2 .line a[href^="tel"],
+html[dir="rtl"] .sf2 .line a[href^="mailto"],
+html[dir="rtl"] .sf2 .line span[data-i18n="foot_addr"],
+html[dir="rtl"] .hct .ci span,
+html[dir="rtl"] .st b,
+html[dir="rtl"] .herostat,
+html[dir="rtl"] .docaddr{unicode-bidi:isolate;direction:ltr}
+
+/* 中文提示行（.zh-extra / .doczh）只在中文界面出现，别的语种别把中文漏出来 */
+html[data-lang]:not([data-lang="zh"]) .zh-extra{display:none}

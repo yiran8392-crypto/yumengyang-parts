@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-四语搜索词典（中文 / 阿拉伯语 / 俄语 → 英文检索词）
+五语搜索词典（中文 / 阿拉伯语 / 俄语 / 波斯语 → 英文检索词）
 =====================================================
 站点产品数据是英文的，但买家会用母语搜。这里把常见「品牌 / 车系 / 品类」的
-中/阿/俄写法映射成数据里的英文词，前端搜索时先过一遍词典再匹配。
+中/阿/俄/波斯写法映射成数据里的英文词，前端搜索时先过一遍词典再匹配。
 
 生成：assets/search_i18n.js（window.SEARCH_I18N = {"非英文词": "英文词"}）
 
@@ -230,6 +230,70 @@ PART_WORDS = {
 }
 
 
+# ---- 波斯语（伊朗）写法：en → 波斯文 -------------------------------
+# 伊朗买家几乎只打波斯文，单独成表，不动上面三语的表结构。
+# 写法和本站 i18n.js 的 fa 文案保持一套用词（پژو / بی‌ام‌و / فولکس‌واگن …）。
+FA = {
+    "Toyota": "تویوتا", "Lexus": "لکسوس", "Honda": "هوندا", "Acura": "آکورا",
+    "Nissan": "نیسان", "Infiniti": "اینفینیتی", "Mazda": "مزدا", "Mitsubishi": "میتسوبیشی",
+    "Subaru": "سوبارو", "Suzuki": "سوزوکی", "Isuzu": "ایسوزو", "Daihatsu": "دایهاتسو",
+    "Hyundai": "هیوندای", "Kia": "کیا", "Genesis": "جنسیس", "Daewoo": "دوو",
+    "SsangYong": "سانگ یونگ", "Chevrolet": "شورولت", "Buick": "بیوک", "Cadillac": "کادیلاک",
+    "GMC": "جی‌ام‌سی", "Ford": "فورد", "Lincoln": "لینکلن", "Chrysler": "کرایسلر",
+    "Dodge": "دوج", "Jeep": "جیپ", "Ram": "رم", "Tesla": "تسلا",
+    "Volkswagen": "فولکس‌واگن", "Audi": "آئودی", "BMW": "بی‌ام‌و", "Mini": "مینی",
+    "Mercedes-Benz": "مرسدس بنز", "Smart": "اسمارت", "Porsche": "پورشه", "Opel": "اوپل",
+    "Peugeot": "پژو", "Citroen": "سیتروئن", "Renault": "رنو", "Dacia": "داچیا",
+    "Skoda": "اشکودا", "Seat": "سیت", "Volvo": "ولوو", "Saab": "ساب",
+    "Land Rover": "لندروور", "Jaguar": "جگوار", "Fiat": "فیات", "Alfa Romeo": "آلفا رومئو",
+    "Lancia": "لانچیا", "Chery": "چری", "Geely": "جیلی", "BYD": "بی‌وای‌دی",
+    "Great Wall": "گریت وال", "Haval": "هاوال", "Changan": "چانگان", "BAIC": "بایک",
+    "Dongfeng": "دانگ‌فنگ", "FAW": "فاو", "JAC": "جک", "Lifan": "لیفان",
+    "MG": "ام‌جی", "Roewe": "رووی", "Wuling": "وولینگ", "Baojun": "بائوجون",
+    "Mahindra": "ماهیندرا", "Tata": "تاتا", "Maruti": "ماروتی", "Proton": "پروتون",
+    "Perodua": "پرودوا", "UAZ": "اواز", "Lada": "لادا", "Jinbei": "جین‌بی",
+    "Foton": "فوتون", "Haima": "هایما", "Zotye": "زوتی", "Brilliance": "بریلیانس",
+    "Trumpchi": "ترامپچی", "Forthing": "فورسینگ", "Maxus": "ماکسوس", "Soueast": "سوئیست",
+    "DFSK": "دی‌اف‌اس‌کی", "Karry": "کاری", "Venucia": "ونوسیا", "Borgward": "بورگوارت",
+    "Lynk": "لینک", "NETA": "نیتا", "Jetour": "جتور", "Senova": "سنووا",
+    "Besturn": "بسترن", "Hanteng": "هانتنگ", "Huanghai": "هوانگ‌های", "Hawtai": "هاوتای",
+    "Landwind": "لندویند", "SWM": "اس‌دبلیو‌ام", "Iveco": "ایوکو", "Maserati": "مازراتی",
+    "Luxgen": "لوکسجن", "Weiwang": "ویوانگ", "Oushan": "اوشان", "Exeed": "اکسید",
+    # 车系
+    "Camry": "کامری", "Corolla": "کرولا", "Yaris": "یاریس", "Vios": "ویوس",
+    "Prius": "پریوس", "RAV4": "راو۴", "Highlander": "هایلندر", "Prado": "پرادو",
+    "Land Cruiser": "لندکروزر", "Hilux": "هایلوکس", "Crown": "کرون",
+    "Accord": "اکورد", "Civic": "سیویک", "Fit": "فیت", "City": "سیتی",
+    "Odyssey": "اودیسه", "Elantra": "النترا", "Sonata": "سوناتا", "Tucson": "توسان",
+    "Accent": "اکسنت", "Santa Fe": "سانتافه", "Sportage": "اسپورتیج", "Rio": "ریو",
+    "Cerato": "سراتو", "Camry Solara": "کامری سولارا",
+    "Passat": "پاسات", "Jetta": "جتا", "Golf": "گلف", "Polo": "پولو",
+    "Bora": "بورا", "Lavida": "لاویدا", "Sagitar": "ساگیتار", "Tiguan": "تیگوان",
+    "Touareg": "توآرگ", "Magotan": "ماگوتان", "Santana": "سانتانا",
+    "Focus": "فوکوس", "Mondeo": "موندئو", "Fiesta": "فیستا", "Kuga": "کوگا",
+    "Edge": "ادج", "Transit": "ترانزیت",
+    "Cruze": "کروز", "Malibu": "مالیبو", "Regal": "ریگال", "LaCrosse": "لاکراس",
+    "Excelle": "اکسله", "Sail": "سیل", "Captiva": "کاپتیوا",
+    "Teana": "تیانا", "Sylphy": "سیلفی", "X-Trail": "ایکس‌تریل", "Qashqai": "قشقایی",
+    "Lancer": "لنسر", "Outlander": "اوتلندر", "Pajero": "پاجیرو",
+    "Mazda 3": "مزدا ۳", "Mazda 6": "مزدا ۶",
+    "Tiggo": "تیگو", "Arrizo": "آریزو", "Emgrand": "امگرند", "Boyue": "بویوئه",
+    "Wingle": "وینگل", "Vision": "ویژن", "Selphy": "سیلفی",
+}
+
+# 波斯语零件单词（买家常只打一个词）
+PART_WORDS_FA = {
+    "کوئل": "ignition coil", "کویل": "ignition coil", "کوئل جرقه": "ignition coil",
+    "شمع": "spark plug", "وایر شمع": "spark plug wire", "وایر": "spark plug wire",
+    "پمپ بنزین": "fuel pump", "پمپ": "fuel pump",
+    "سنسور": "sensor", "حسگر": "sensor",
+    "انژکتور": "fuel injector", "ترموستات": "thermostat",
+    "دریچه گاز": "throttle body", "شیر": "valve",
+    # 伊朗买家习惯用波斯数字写车型
+    "۲۰۶": "206", "۴۰۵": "405",
+}
+
+
 def build():
     d = {}
     for en, (zh, ar, ru) in list(BRANDS.items()) + list(MODELS.items()):
@@ -243,12 +307,18 @@ def build():
                 d.setdefault(w, en)
     for w, en in PART_WORDS.items():
         d.setdefault(w, en)
+    # 波斯语：品牌 / 车系 / 零件词 / 波斯数字
+    for en, fa in FA.items():
+        if fa:
+            d.setdefault(fa, en.lower())
+    for w, en in PART_WORDS_FA.items():
+        d.setdefault(w, en)
     return d
 
 
 def main():
     d = build()
-    js = ("/* 四语搜索词典：中文/阿拉伯语/俄语 → 英文检索词（由 models_i18n.py 生成，别手改） */\n"
+    js = ("/* 五语搜索词典：中文/阿拉伯语/俄语/波斯语 → 英文检索词（由 models_i18n.py 生成，别手改） */\n"
           "window.SEARCH_I18N=%s;\n" % json.dumps(d, ensure_ascii=False, separators=(",", ":")))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with io.open(OUT, "w", encoding="utf-8", newline="\n") as f:
