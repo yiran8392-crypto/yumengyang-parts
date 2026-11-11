@@ -29,9 +29,21 @@ except Exception:                      # 指南模块缺失时站点照常生成
     guides_content = None
 
 try:
+    import codes_content              # 故障码诊断页正文（codes/），缺了就跳过这一层
+except Exception:
+    codes_content = None
+
+try:
     import brands as brandlib          # 品牌 / 车系词典（/brand/、/vehicle/ 落地页用）
 except Exception:
     brandlib = None
+
+# 二维码里解出来的「加好友」链接（2026-11-11 用 zxing-cpp 解 qr-wecom.webp / qr-whatsapp.webp 得到）。
+# 页脚和联系页二维码下面的按钮直接指向它们：手机点一下 = 打开微信添加页 / 拉起 WhatsApp 对话。
+# 换二维码后必须同步改这里（解一下新二维码就行）。
+QR_LINK_WECOM = ("https://work.weixin.qq.com/u/vc7fdb77fb9d4687fc"
+                 "?v=5.0.13.84802&bb=cd29c15e19")
+QR_LINK_WHATSAPP = "https://wa.me/message/AH6U2Q2P7BKZH1"
 
 # 站点自己的号码（分享按钮不强制发给某个号，先让客户自己选人）
 SHARE_ICON = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 '
@@ -143,7 +155,7 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261110"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261111a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 
 
 # ------------------------------------------------------------------ 配置
@@ -620,10 +632,12 @@ def sitehead(cfg, active="", base="../"):
     main = ('<nav class="mainnav">'
             '<a href="%sindex.html"%s data-i18n="nav_home">Home</a>'
             '<a href="%scategory/index.html"%s data-i18n="nav_products">Products</a>'
+            '<a href="%scodes/index.html"%s data-i18n="nav_codes">Fault codes</a>'
             '<a href="%sabout.html"%s data-i18n="nav_about">About us</a>'
             '<a href="%scontact.html"%s data-i18n="nav_contact">Contact</a>'
             '</nav>') % (base, ' class="on"' if active == "home" else "",
                          base, ' class="on"' if active == "products" else "",
+                         base, ' class="on"' if active == "codes" else "",
                          base, ' class="on"' if active == "about" else "",
                          base, ' class="on"' if active == "contact" else "")
     return """<a class="skip" href="#main">Skip to content</a>
@@ -653,9 +667,9 @@ def sitefoot(cfg, base="../"):
   <div>
     <div class="qrs">
       <div class="qr"><div class="box"><img src="%(base)sassets/hero/qr-wecom.webp" alt="WeCom QR" loading="lazy"></div>
-        <span data-i18n="foot_qr_wecom">WeCom</span></div>
+        <a class="qrbtn qrbtn-wecom" href="%(qrwecom)s" target="_blank" rel="noopener" data-i18n="foot_qr_wecom">WeCom</a></div>
       <div class="qr"><div class="box"><img src="%(base)sassets/hero/qr-whatsapp.webp" alt="WhatsApp QR" loading="lazy"></div>
-        <span>WHATSAPP</span></div>
+        <a class="qrbtn qrbtn-wa" href="%(qrwa)s" target="_blank" rel="noopener">WhatsApp</a></div>
     </div>
   </div>
   <div>
@@ -683,7 +697,8 @@ def sitefoot(cfg, base="../"):
                "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
                "wa": esc(wa), "wanum": esc(wa_display(cfg["whatsapp"])),
                "phone": esc(PHONE_SALES), "plist": plist,
-               "mail": esc(cfg["email"]), "base": base}
+               "mail": esc(cfg["email"]), "base": base,
+               "qrwecom": esc(QR_LINK_WECOM), "qrwa": esc(QR_LINK_WHATSAPP)}
 
 
 SPEC_LABELS = [("spec_oe", "OE number"), ("spec_xref", "Cross-reference"), ("spec_brand", "Brand"),
@@ -1340,6 +1355,14 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
     else:
         modh = '<span data-i18n="all_models" data-v-n="%d">All models (%d)</span>' % (len(all_items), len(all_items))
 
+    # 品类页 → 故障码页的入链（反向映射从 codes_content 的 parts 算，双向内链加速收录）
+    code_hint = ""
+    _cl = [c["code"] for c in _code_list()
+           if any(k == cat for k, _n in (c.get("parts") or []))]
+    if _cl:
+        code_hint = ' &middot; <span data-i18n="codes_h">Fault codes</span>: ' + " ".join(
+            '<a href="../codes/%s.html">%s</a>' % (esc(x.lower()), esc(x)) for x in _cl[:10])
+
     body = """<body>
 %s
 <main id="main" tabindex="-1" class="cat-main">
@@ -1347,7 +1370,7 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
 <div class="cat-head">
   <h1><span data-cat="%s">%s</span> <span class="h1sub zh-extra">%s</span></h1>
   <p data-i18n="cat_lead">Every %s we stock, with OE number and cross-reference. Click a part number to see fitment, photos and a WhatsApp quote button.</p>
-  <div class="stat"><span data-i18n="models_n" data-v-n="%d">%d models</span> · <a href="../index.html" data-i18n="search_oe">search by OE number</a> · <a href="../index.html?cat=%s" data-i18n="filter_search">filter on the search page</a></div>
+  <div class="stat"><span data-i18n="models_n" data-v-n="%d">%d models</span> · <a href="../index.html" data-i18n="search_oe">search by OE number</a> · <a href="../index.html?cat=%s" data-i18n="filter_search">filter on the search page</a>%s</div>
   %s
 </div>
 <div class="modlist"><h2>%s</h2><ul class="modgrid">%s</ul>%s</div>
@@ -1355,7 +1378,7 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
 %s
 </body></html>
 """ % (sitehead(cfg, cat), cat, esc(en), cat, esc(en), esc(cn), esc(one),
-       len(all_items), len(all_items), cat, price_html(cat), modh, lis, pager, sitefoot(cfg))
+       len(all_items), len(all_items), cat, code_hint, price_html(cat), modh, lis, pager, sitefoot(cfg))
     return head_block(cfg, title, desc, canonical, "assets/og/%s.jpg" % slug, "website",
                       noindex=not all_items) + "\n" + body
 
@@ -1995,6 +2018,7 @@ def make_guide_resolver(items):
         key = _norm_key(it.get("oe"))
         if key and key not in oe_map:
             oe_map[key] = it["s"]
+    code_slugs = {c["code"].lower() for c in _code_list()}
 
     def resolve(target):
         t = (target or "").strip()
@@ -2008,6 +2032,11 @@ def make_guide_resolver(items):
             return "../c/%s.html" % slug if slug else "../index.html?q=%s" % quote(oe, safe="")
         if low.startswith("guides/"):
             return "./" + t[7:]
+        if low.startswith("code/"):
+            slug = t[5:].strip().lower()
+            return ("./%s.html" % slug) if slug in code_slugs else "./index.html"
+        if low.startswith("codes/"):
+            return "./" + t[6:]
         if low in ("home", "index.html", "/", ""):
             return "../index.html"
         return "../index.html"
@@ -2140,8 +2169,8 @@ def page_guides_index(cfg):
     <ul>
       <li><a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> — %s part numbers by OE, cross-reference or vehicle.</li>
       <li><a href="../category/index.html" data-i18n="all_cat_h1">All product categories</a> — browse the full catalogue.</li>
-    </ul>
-  </section>
+      <li><a href="../codes/index.html" data-i18n="codes_h">Fault codes</a> — the OBD codes our own catalogue can fix, with the order we check parts in.</li>
+    </ul>  </section>
 </article>
 </main>
 %s
@@ -2149,6 +2178,200 @@ def page_guides_index(cfg):
 """ % (sitehead(cfg, "", base="../"), "".join(cards), esc(total_txt), sitefoot(cfg, base="../"))
     return head_block(cfg, title, desc, rel_url(cfg, "guides/index.html"), "assets/og/og-default.webp",
                       "website", base="../") + "\n" + body
+
+
+CODES_DATE = "2026-11-10"     # 故障码页正文的维护日期（改了 CODES 就改这个）
+
+
+def _code_list():
+    return list(getattr(codes_content, "CODES", None) or []) if codes_content else []
+
+
+def _code_sys_list():
+    return list(getattr(codes_content, "SYSTEMS", None) or []) if codes_content else []
+
+
+def _codes_by_system():
+    out = {}
+    for c in _code_list():
+        out.setdefault(c["system"], []).append(c)
+    return out
+
+
+def code_url(cfg, slug):
+    return rel_url(cfg, "codes/%s.html" % slug)
+
+
+def _code_lead_part(c):
+    """码卡片右下角那句：取第一个品类的英文名，让买家一眼知道要动什么件。"""
+    for key, _note in (c.get("parts") or []):
+        if key in CAT_META:
+            return CAT_META[key][1]
+    return "Diagnosis"
+
+
+def page_codes_index(cfg):
+    """故障码总目录：按系统分组。故意不列"全部 OBD 码"——我们只收录我们的件能修的码。"""
+    by_sys = _codes_by_system()
+    sections = []
+    for key, en, span in _code_sys_list():
+        lst = by_sys.get(key) or []
+        if not lst:
+            continue
+        cards = "".join(
+            '<a class="guidecard" href="./%s.html"><b class="notranslate" translate="no">%s</b>'
+            '<span>%s</span><em>%s &rarr;</em></a>'
+            % (esc(c["code"].lower()), esc(c["code"]), esc(c["name"]), esc(_code_lead_part(c)))
+            for c in sorted(lst, key=lambda x: x["code"]))
+        sections.append('<section class="dsec"><h2>%s <code>%s</code></h2>'
+                        '<div class="guidecards">%s</div></section>' % (esc(en), esc(span), cards))
+    n = len(_code_list())
+    title = "OBD fault code diagnosis: what to check, what to replace | Yumengyang"
+    desc = ("%d OBD-II fault codes explained the way an export desk explains them: what the code means, "
+            "the order we check parts in, the mistake that costs the most, and the parts we actually "
+            "stock for each one." % n)
+    wa = wa_link(cfg, "Hi, my car shows a fault code. Can you help me pick the part?")
+    body = """<body class="docpage">
+%s
+<main id="main" tabindex="-1" class="policy">
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="codes_h">Fault codes</span></nav>
+<article class="doc guide">
+  <h1 data-i18n="codes_h">Fault codes</h1>
+  <p class="docmeta">%d codes &middot; updated %s &middot; <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead">A code tells you which system failed, not which part. These pages are the ones we use
+  at the desk when a customer sends a photo of the scanner: what the code actually means, the order we
+  check parts in, the mistake that costs the most money, and the part numbers we hold for it.</p>
+  <p class="doclead" style="border:0;padding-bottom:0;margin-bottom:0">We do not list all 12,000 OBD codes.
+  We list the ones our own catalogue can fix &mdash; if your code is here, we very likely have the part.</p>
+  %s
+  <section class="dsec">
+    <h2 data-i18n="codes_next">What you can do next</h2>
+    <ul>
+      <li><a href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a> &mdash; search the catalogue by OE, cross-reference or vehicle.</li>
+      <li><a href="../vehicle/index.html" data-i18n="nav_vehicles">Browse by vehicle</a> &mdash; pick the car, then the part.</li>
+      <li><a href="../guides/index.html" data-i18n="guides_h">Buying guides</a> &mdash; how to read an OE number and place a car from its VIN.</li>
+    </ul>
+  </section>
+  <section class="doccontact">
+    <h2 data-i18n="foot_contact">Contact</h2>
+    <p class="docorg"><b class="notranslate" %s>%s</b> &middot; <span class="notranslate" %s>%s</span></p>
+    <p class="docaddr">%s</p>
+    <p>Send us the code and the car &mdash; year, engine, and a photo of the scanner if you have one. We will
+    tell you which of our numbers fits before you order.</p>
+    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+       <a class="btn-ghost" href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a></p>
+  </section>
+</article>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, "codes", base="../"), n, CODES_DATE, "".join(sections),
+       NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
+       esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
+    return head_block(cfg, title, desc, rel_url(cfg, "codes/index.html"), "assets/og/og-default.webp",
+                      "website", base="../") + "\n" + body
+
+
+def page_code(cfg, c, resolve, cat_counts):
+    """单个故障码页。正文来自 codes_content，品类表由模板按 parts 自动生成。"""
+    code = c["code"]
+    slug = code.lower()
+    canonical = code_url(cfg, slug)
+    og = "assets/og/og-default.webp"
+    sys_name = ""
+    for key, en, _span in _code_sys_list():
+        if key == c["system"]:
+            sys_name = en
+            break
+    title = "%s %s — causes, tests and parts we stock | Yumengyang" % (code, c["name"])
+    ld = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "%s: %s" % (code, c["name"]),
+        "description": clean_text(c["desc"]),
+        "datePublished": CODES_DATE,
+        "dateModified": CODES_DATE,
+        "inLanguage": "en",
+        "articleSection": "Fault codes",
+        "author": {"@type": "Organization", "name": cfg["company_en"], "url": cfg["site_url"] + "/"},
+        "publisher": {"@type": "Organization", "name": cfg["company_en"],
+                      "logo": {"@type": "ImageObject", "url": rel_url(cfg, og)}},
+        "image": [rel_url(cfg, og)],
+        "mainEntityOfPage": {"@type": "WebPage", "@id": canonical},
+    }
+    if has_site(cfg):
+        ld["url"] = canonical
+    crumbs = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": rel_url(cfg, "")},
+        {"@type": "ListItem", "position": 2, "name": "Fault codes", "item": rel_url(cfg, "codes/index.html")},
+        {"@type": "ListItem", "position": 3, "name": code},
+    ]}
+    ld_list = [ld, crumbs]
+    if c.get("qa"):
+        ld_list.append({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+            {"@type": "Question", "name": clean_text(q),
+             "acceptedAnswer": {"@type": "Answer", "text": clean_text(a)}}
+            for q, a in c["qa"]]})
+
+    # 我们手上的件：品类 + 型号数 + 什么时候换。数字取本次生成的真实计数。
+    prows = []
+    for key, note in (c.get("parts") or []):
+        meta = CAT_META.get(key)
+        if not meta:
+            continue
+        prows.append('<tr><td><a href="../category/%s.html">%s</a></td><td>%s</td><td>%s</td></tr>'
+                     % (esc(meta[0]), esc(meta[1]), "{:,}".format(cat_counts.get(key, 0)), esc(note)))
+    parts_block = ""
+    if prows:
+        parts_block = ('<section class="dsec"><h2>Parts we stock for a %s</h2>'
+                       '<p class="gp">Stocked numbers and fitment for these categories are in the catalogue; '
+                       'message us with the car details and we will pick the right one.</p>'
+                       '<div class="gtable"><table><thead><tr><th>Our category</th><th>Part numbers</th>'
+                       '<th>When</th></tr></thead><tbody>%s</tbody></table></div></section>'
+                       % (esc(code), "".join(prows)))
+
+    faq_block = ""
+    if c.get("qa"):
+        faq_block = ('<section class="dsec"><h2>Questions we get</h2>%s</section>'
+                     % "".join('<details class="fq"><summary>%s</summary><div class="fqa">%s</div></details>'
+                               % (esc(q), esc(a)) for q, a in c["qa"]))
+
+    have = {x["code"].lower() for x in _code_list()}
+    rel = "".join('<a href="./%s.html">%s</a>' % (esc(x.lower()), esc(x))
+                  for x in (c.get("related") or []) if x.lower() in have)
+    wa = wa_link(cfg, "Hi, my car shows %s (%s). What part do you recommend?" % (code, c["name"]))
+    body = """<body class="docpage">
+%s
+<main id="main" tabindex="-1" class="policy">
+<nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
+<a href="./index.html" data-i18n="codes_h">Fault codes</a> &rsaquo; <span class="notranslate" translate="no">%s</span></nav>
+<article class="doc guide">
+  <h1><span class="notranslate" translate="no">%s</span> &mdash; %s</h1>
+  <p class="docmeta">OBD-II fault code &middot; %s &middot; updated %s &middot; <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead">%s</p>
+  %s
+  %s
+  %s
+  <nav class="gmore"><b data-i18n="codes_more">More codes</b><a href="./index.html" data-i18n="codes_all">All codes we cover</a>%s</nav>
+  <section class="doccontact">
+    <h2 data-i18n="foot_contact">Contact</h2>
+    <p class="docorg"><b class="notranslate" %s>%s</b> &middot; <span class="notranslate" %s>%s</span></p>
+    <p class="docaddr">%s</p>
+    <p>Send us the code, the car and the year. If this page points at several parts, we will tell you which
+    one to change first &mdash; and which one not to change.</p>
+    <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
+       <a class="btn-ghost" href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a></p>
+  </section>
+</article>
+</main>
+%s
+</body></html>
+""" % (sitehead(cfg, "codes", base="../"), esc(code), esc(code), esc(c["name"]), esc(sys_name),
+       CODES_DATE, esc(c["lead"]), guide_blocks_html(c["body"], resolve), parts_block, faq_block,
+       rel, NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
+       esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
+    return head_block(cfg, title, c["desc"], canonical, og, "article",
+                      ld_list, base="../") + "\n" + body
 
 
 def page_404(cfg):
@@ -2381,36 +2604,39 @@ def home_brands_html(cfg, entries):
             '<p class="lst">%s</p>' % chips)
 
 
+def _put_block(text, name, block, label="index.html"):
+    """把 <!-- NAME_START --> 与 <!-- NAME_END --> 之间换成 block。
+    标记不存在就原样返回并提示——不猜位置、不往别的区块里硬塞。"""
+    pat = r"(<!-- %s_START -->)(.*?)(<!-- %s_END -->)" % (name, name)
+    new, n = re.subn(pat, lambda m: m.group(1) + "\n" + block + "\n" + m.group(3),
+                     text, count=1, flags=re.S)
+    if not n:
+        print("  [warn] %s 缺少标记 %s_START/END，跳过" % (label, name), flush=True)
+        return text
+    return new
+
+
 def inject_home(cfg, cats, by_cat, brand_entries=None):
-    """把首页里所有动态块按标记重写一遍（标记外面的手写 HTML 不动）。"""
+    """首页 = 公司页。
+
+    ⚠ 落地页拆分（1d9f94710）之后，产品列表面 —— TOP_CARDS / HOME_HOT /
+    HOME_BRANDS / HOME_LINKS —— 已经搬到 products.html（见 inject_products）。
+    别再往首页找这四块：模板里没有标记，找到了也会把产品网格塞回公司页，
+    造成和 products.html 重复的内容。HOME_TRUST 同理已并入公司介绍块。
+    """
     path = os.path.join(HERE, "index.html")
     if not os.path.exists(path):
         return
     h = open(path, encoding="utf-8").read()
     total = sum(len(v) for v in by_cat.values())
 
-    def put(text, name, block):
-        pat = r"(<!-- %s_START -->)(.*?)(<!-- %s_END -->)" % (name, name)
-        new, n = re.subn(pat, lambda m: m.group(1) + "\n" + block + "\n" + m.group(3),
-                         text, count=1, flags=re.S)
-        if not n:
-            print("  [warn] 首页缺少标记 %s_START/END，跳过" % name, flush=True)
-            return text
-        return new
-
-    h = put(h, "TOP_CARDS", top_cards(cfg, cats, by_cat))
-    h = put(h, "HOME_TRUST", "")  # 数据已并入公司介绍块，避免位置错乱
-    h = put(h, "HOME_COMPANY", home_company_html(cfg, total, len(cats)))
-    h = put(h, "HOME_CORE", home_core_html(cfg, by_cat))
-    h = put(h, "HOME_CONTACT", home_contact_html(cfg))
-    h = put(h, "HOME_WHY", why_html(cfg))
-    h = put(h, "HOME_HOT", hot_html(cfg, cats, by_cat))
-    h = put(h, "HOME_FAQ", faq_html(cfg))
-    h = put(h, "HOME_FOOT", sitefoot(cfg, base=""))  # 首页也用它，保持全站一致
-    if brand_entries:
-        h = put(h, "HOME_BRANDS", home_brands_html(cfg, brand_entries))
-    h = put(h, "SITE_LD", _ld_block(site_ld(cfg) + [faq_ld(cfg)]))
-    h = put(h, "HOME_LINKS", home_links(cfg, cats, by_cat))
+    h = _put_block(h, "HOME_COMPANY", home_company_html(cfg, total, len(cats)))
+    h = _put_block(h, "HOME_CORE", home_core_html(cfg, by_cat))
+    h = _put_block(h, "HOME_CONTACT", home_contact_html(cfg))
+    h = _put_block(h, "HOME_WHY", why_html(cfg))
+    h = _put_block(h, "HOME_FAQ", faq_html(cfg))
+    h = _put_block(h, "HOME_FOOT", sitefoot(cfg, base=""))  # 首页也用它，保持全站一致
+    h = _put_block(h, "SITE_LD", _ld_block(site_ld(cfg) + [faq_ld(cfg)]))
 
     h = h.replace("https://your-domain.com", cfg["site_url"])
     h = h.replace("8615915859048", cfg["whatsapp"])
@@ -2424,6 +2650,36 @@ def inject_home(cfg, cats, by_cat, brand_entries=None):
         h = re.sub(r'\n<meta property="og:url"[^>]*>', "", h)
         h = re.sub(r'\n<meta property="og:image"[^>]*>', "", h)
     open(path, "w", encoding="utf-8", newline="\n").write(h)
+
+
+def inject_products(cfg, cats, by_cat, brand_entries=None):
+    """products.html = 产品目录页：热销品类 / 热门型号 / 按品类浏览全部型号 / 按品牌浏览。
+
+    这一页是落地页拆分时新增的，模板里只有空容器和标记，内容全靠这里填。
+    全部写成静态 HTML（不靠 JS 拉），爬虫和 file:// 双击都能看到型号页入口。
+    不放 faq_ld：页面正文里没有 FAQ 区块，结构化数据和可见内容对不上会被判无效。
+    """
+    path = os.path.join(HERE, "products.html")
+    if not os.path.exists(path):
+        print("  [warn] 没有 products.html，跳过产品目录页注入", flush=True)
+        return
+    h = open(path, encoding="utf-8").read()
+    n_before = h.count('href="c/')
+    h = _put_block(h, "TOP_CARDS", top_cards(cfg, cats, by_cat), "products.html")
+    h = _put_block(h, "HOME_HOT", hot_html(cfg, cats, by_cat), "products.html")
+    if brand_entries:
+        h = _put_block(h, "HOME_BRANDS", home_brands_html(cfg, brand_entries), "products.html")
+    h = _put_block(h, "HOME_LINKS", home_links(cfg, cats, by_cat), "products.html")
+    h = _put_block(h, "SITE_LD", _ld_block(site_ld(cfg)), "products.html")
+    h = _put_block(h, "HOME_FOOT", sitefoot(cfg, base=""), "products.html")
+    h = h.replace("https://your-domain.com", cfg["site_url"])
+    h = h.replace("8615915859048", cfg["whatsapp"])
+    if not has_site(cfg):
+        h = re.sub(r'\n<link rel="canonical"[^>]*>', "", h)
+        h = re.sub(r'\n<meta property="og:url"[^>]*>', "", h)
+        h = re.sub(r'\n<meta property="og:image"[^>]*>', "", h)
+    open(path, "w", encoding="utf-8", newline="\n").write(h)
+    print("  产品目录页：型号页入口 %d -> %d 条" % (n_before, h.count('href="c/')), flush=True)
 
 
 
@@ -2647,10 +2903,10 @@ def page_contact(cfg):
     <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
       <div style="text-align:center"><img src="assets/hero/qr-wecom.webp" alt="WeCom QR"
         style="width:132px;height:132px;background:#fff;border:1px solid #e6edf2;border-radius:10px;padding:5px">
-        <div style="font-size:12.5px;color:#5d7285;margin-top:6px" data-i18n="foot_qr_wecom">WeCom</div></div>
+        <div><a class="qrbtn qrbtn-wecom" href="%s" target="_blank" rel="noopener" data-i18n="foot_qr_wecom">WeCom</a></div></div>
       <div style="text-align:center"><img src="assets/hero/qr-whatsapp.webp" alt="WhatsApp QR"
         style="width:132px;height:132px;background:#fff;border:1px solid #e6edf2;border-radius:10px;padding:5px">
-        <div style="font-size:12.5px;color:#5d7285;margin-top:6px">WHATSAPP</div></div>
+        <div><a class="qrbtn qrbtn-wa" href="%s" target="_blank" rel="noopener">WhatsApp</a></div></div>
     </div>
     <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
        <a class="btn-ghost" href="index.html" data-i18n="nf_back">Back to the lookup home</a></p>
@@ -2661,7 +2917,8 @@ def page_contact(cfg):
 </body></html>""" % (sitehead(cfg, "contact", base=""), NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE,
                       esc(cfg["company_en"]), esc(wa), esc(wa_display(cfg["whatsapp"])),
                       esc(PHONE_SALES), esc(cfg["email"]), esc(cfg["email"]), addr_span(cfg),
-                      esc(cfg["hours"]), esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
+                      esc(cfg["hours"]), esc(QR_LINK_WECOM), esc(QR_LINK_WHATSAPP),
+                      esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])),
                       sitefoot(cfg, base=""))
     body = body.replace('<section class="doccontact">',
                         RFQ_HTML + '<section class="doccontact">', 1)
@@ -2877,6 +3134,30 @@ def build_static(items, cats, log=print):
             guide_files.append(g["slug"] + ".html")
         log("  采购指南：%d 篇 + 目录页" % (len(guides_content.GUIDES)))
 
+    # 故障码诊断页（codes/）：正文在 codes_content.py。定位是"码 → 我们的件"，
+    # 不是全量字典，所以数量少、每页厚。
+    code_files = []
+    if _code_list():
+        codir = os.path.join(HERE, "codes")
+        os.makedirs(codir, exist_ok=True)
+        for fn in os.listdir(codir):
+            if fn.endswith(".html"):
+                try:
+                    os.remove(os.path.join(codir, fn))
+                except OSError:
+                    pass
+        cresolve = make_guide_resolver(items)
+        cat_counts = {k: len(v) for k, v in by_cat.items()}
+        with open(os.path.join(codir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page_codes_index(cfg))
+        code_files.append("index.html")
+        for c in _code_list():
+            with open(os.path.join(codir, c["code"].lower() + ".html"), "w",
+                      encoding="utf-8", newline="\n") as f:
+                f.write(page_code(cfg, c, cresolve, cat_counts))
+            code_files.append(c["code"].lower() + ".html")
+        log("  故障码页：%d 个 + 目录页" % len(_code_list()))
+
     # sitemap：lastmod 用本次生成的时间戳（带时区），内容是每页都变了，别再用「今天」糊过去
     today = __import__("datetime").datetime.now().astimezone().replace(microsecond=0).isoformat()
     urls = ['<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>'
@@ -2906,6 +3187,11 @@ def build_static(items, cats, log=print):
         pr = "0.6" if fname == "index.html" else "0.7"
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>%s</priority></url>'
                     % (esc(rel_url(cfg, "guides/" + fname)), today, pr))
+    # 故障码诊断页
+    for fname in code_files:
+        pr = "0.6" if fname == "index.html" else "0.7"
+        urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>%s</priority></url>'
+                    % (esc(rel_url(cfg, "codes/" + fname)), today, pr))
     for fname in policy_files:
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>'
                     % (esc(rel_url(cfg, fname)), POLICY_DATE))
@@ -2928,6 +3214,7 @@ def build_static(items, cats, log=print):
     open(os.path.join(HERE, "404.html"), "w", encoding="utf-8", newline="\n").write(page_404(cfg))
 
     inject_home(cfg, cats, by_cat, bentries or None)
+    inject_products(cfg, cats, by_cat, bentries or None)
 
     log("  型号页 %d 个（slug 冲突加后缀 %d 个）" % (len(items), len(clash)))
     log("  品类页 %d 个（%d 条/页）· sitemap %d 条 URL" % (len(cat_files), PER_PAGE, len(urls)))

@@ -399,6 +399,21 @@ def write_chunks(payload):
         body = "(window.YMY_CHUNKS=window.YMY_CHUNKS||{})[%d]=%s;\n" % (
             k, json.dumps(part, ensure_ascii=False, separators=(",", ":")))
         io.open(os.path.join(DATA_DIR, "chunk-%02d.js" % k), "w", encoding="utf-8", newline="\n").write(body)
+    # cats 里的 n 必须是本次实际条数：payload 里那份是 build 时代写进去的统计，
+    # 后来补录/下架过的品类会跟真实数据对不上（wire 曾经写着 818、实际 182）。
+    cnt = {}
+    for it in items:
+        k = it.get("c")
+        cnt[k] = cnt.get(k, 0) + 1
+    cats = []
+    for c in (payload.get("cats") or []):
+        d = dict(c)
+        d["n"] = cnt.get(c.get("key"), 0)
+        cats.append(d)
+    _seen = {c.get("key") for c in cats}
+    for k in sorted(cnt):
+        if k not in _seen:
+            cats.append({"key": k, "name": k, "en": k, "n": cnt[k]})
     meta = {
         "generated": payload.get("generated") or "",
         "company": payload.get("company") or "",
@@ -406,7 +421,7 @@ def write_chunks(payload):
         "photos": sum(1 for it in items if it.get("p")),
         "size": CHUNK,
         "chunks": n,
-        "cats": payload.get("cats") or [],
+        "cats": cats,
         "clean": CLEAN_VER,
     }
     io.open(os.path.join(DATA_DIR, "meta.js"), "w", encoding="utf-8", newline="\n").write(
