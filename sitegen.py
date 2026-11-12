@@ -1125,7 +1125,40 @@ def share_bar_html(cfg, it, cat):
 </div>""" % (esc(href), esc(url), esc(sku), esc(oe), esc(fit), SHARE_ICON, esc(url), COPY_ICON)
 
 
-def page_model(cfg, it, cat, related=None):
+def build_oe_canon(items):
+    """同一个 OE 号挂了多个料号（WL12-0004 / WL12-0004B / WL12-0004Y）时，给变体页一条
+    canonical 指向主 SKU。只影响 head 里的 canonical，页面照常访问、站内链接不变；
+    目的是别再让 40 组重复 title 各自去抢同一个长尾词。"""
+    groups = {}
+    for it in items:
+        oe = re.sub(r"[^0-9A-Z]", "", (it.get("oe") or "").upper())
+        if len(oe) < 4:
+            continue
+        groups.setdefault(oe, []).append(it)
+    out = {}
+    for oe, lst in groups.items():
+        if len(lst) < 2:
+            continue
+        # 只在「同一基础料号的改良/包装变体」里合并（WL12-0004 / -B / -Y），
+        # 不跨基础料号合并（f01r00f009 与 f01r00f009-2 是两个独立型号）。
+        sub = {}
+        for x in lst:
+            base = re.sub(r"[ABHY]$", "", (x.get("m") or "").upper())
+            sub.setdefault(base, []).append(x)
+        for base, sib in sub.items():
+            if len(sib) < 2:
+                continue
+            def rank(x):
+                return (-(x.get("si") or 0), 0 if x.get("p") else 1,
+                        len(x.get("m") or ""), x.get("s") or "")
+            main = sorted(sib, key=rank)[0]
+            for x in sib:
+                if x["s"] != main["s"]:
+                    out[x["s"]] = main["s"]
+    return out
+
+
+def page_model(cfg, it, cat, related=None, canon_slug=None):
     one = type_name(cat)
     primary = it.get("oe") or it.get("m")
     # share_fit 会跳过「Bosch / Delphi」这类供应商开头的段，避免写出 "... for Bosch Safe" 这种标题
@@ -1169,7 +1202,10 @@ def page_model(cfg, it, cat, related=None):
 
     slug = it["s"]
     page_path = "c/%s.html" % slug
-    canonical = rel_url(cfg, page_path)
+    canonical = rel_url(cfg, "c/%s.html" % (canon_slug or slug))
+    # 没有 OE 号的型号页：页面保留（老链接、站内浏览都还能用），但不进 sitemap、不加 index。
+    # 这些页搜不到长尾词（只剩料号+适配），留在 sitemap 里只会消耗抓取预算（1,189 页）。
+    noindex = not (it.get("oe") or "").strip()
 
     # Product schema 必备四件套：brand / sku / mpn(=OE 号) / image（没实拍图就退回品类分享图）
     ld = {
@@ -1292,6 +1328,7 @@ def page_model(cfg, it, cat, related=None):
 
     og_img = it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat))
     return head_block(cfg, title, desc, canonical, og_img, "website", [ld, crumbs],
+                      noindex=noindex,
                       extra_scripts='\n<script defer src="../assets/share.js"></script>') + "\n" + body
 
 
@@ -3140,9 +3177,12 @@ def build_static(items, cats, log=print):
     else:
         LIVE_BRAND_SLUGS = set()
 
+    canon_map = build_oe_canon(items)      # 同 OE 的变体页 → canonical 指向主 SKU
+    if canon_map:
+        log("  同 OE 变体：%d 页的 canonical 指向主 SKU" % len(canon_map))
     for idx, it in enumerate(items):
         cat = it["cat"]
-        htmltext = page_model(cfg, it, cat)
+        htmltext = page_model(cfg, it, cat, canon_slug=canon_map.get(it["s"]))
         with open(os.path.join(cdir, it["s"] + ".html"), "w", encoding="utf-8", newline="\n") as f:
             f.write(htmltext)
         counts[cat] = counts.get(cat, 0) + 1
@@ -3328,6 +3368,10 @@ def build_static(items, cats, log=print):
             urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
                         % (esc(rel_url(cfg, "vehicle/" + fname)), today))
     for it in items:
+        if not (it.get("oe") or "").strip():
+            continue          # 没 OE 的页面是 noindex，别再进 sitemap
+        if it["s"] in canon_map:
+            continue          # 同 OE 变体页 canonical 指向主 SKU，不重复占位
         urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
                     % (esc(rel_url(cfg, "c/%s.html" % it["s"])), today))
     # 采购指南：内容页 priority 与品类页看齐，目录页略低
