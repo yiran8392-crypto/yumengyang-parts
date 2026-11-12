@@ -972,6 +972,14 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
   padding:10px 13px;background:#fff8f4;border:1px solid #f3ddcf;border-radius:10px}
 .priceline b{font-size:13.5px;color:#b8481c}
 .priceline span{font-size:12px;color:#8a7a72}
+/* 型号页价格带：MOQ + 三档参考价（2026-11-12） */
+.priceline.tiers{flex-direction:column;align-items:stretch;gap:3px}
+.priceline.tiers>b{font-size:14.5px}
+.pricetiers{display:flex;flex-wrap:wrap;gap:4px 18px;margin:2px 0}
+.pricetiers .pi{display:inline-flex;align-items:baseline;gap:6px;font-size:12.5px;color:#8a7a72}
+.pricetiers .pi em{font-style:normal;color:#9aa8b4}
+.pricetiers .pi b{font-size:15px;color:#b8481c;font-variant-numeric:tabular-nums}
+.priceline.tiers>span{font-size:11.5px;color:#9a8a82}
 
 /* 付款与装运 */
 .payblock{max-width:900px;margin:26px 0 6px}

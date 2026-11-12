@@ -159,7 +159,7 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261111g"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261112a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 I18N_V = "20261112i18n2"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
@@ -1267,13 +1267,15 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
   <div class="tc"><b data-i18n="t_lead">Lead time</b>
     <span data-i18n="t_lead_v">Stock items leave our Guangzhou warehouse in days; production depends on quantity. We confirm the date per order.</span></div>
   <div class="tc"><b data-i18n="t_moq">MOQ</b>
-    <span data-i18n="t_moq_v">Set per model and packing. Send your list and we confirm the MOQ line by line — small first orders are fine.</span></div>
+    <span data-i18n="t_moq_v">10 pcs for most categories; spark plugs 10 boxes (40 pcs); fuel pumps and throttle bodies 5 pcs minimum, single pieces are not accepted.</span></div>
   <div class="tc"><b data-i18n="t_sample">Samples</b>
     <span data-i18n="t_sample_v">Available on request before a bulk order for testing; the buyer covers the freight.</span></div>
 </div>
 </section>"""
 
     terms = terms.replace('</div>\n</section>', pay_card_html() + '</div>\n</section>')
+
+    price_block = model_price_html(it, cat)
 
     cta_text = ("Hi, please quote %s%s. Quantity: ____. Vehicle / year: ____. Ship to: ____."
                 % (it.get("m"), (" (OE %s)" % it["oe"]) if it.get("oe") else ""))
@@ -1298,6 +1300,7 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
     <p class="sub2"><span data-i18n="our_sku">Our SKU</span> <b>%s</b>%s</p>
     <p class="langnote" data-i18n="langnote">Product data is shown in English</p>
     <table class="spec">%s</table>
+    %s
     <div class="cta">
       <a class="btn-wa" href="%s" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.4A10 10 0 1012 2zm0 2a8 8 0 016.9 12l-.3.5 1 3-3.1-.9-.5.3A8 8 0 1112 4z"/></svg>
@@ -1319,7 +1322,7 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
 """ % (sitehead(cfg, cat), cat_slug(cat), cat, esc(CAT_META[cat][1]), esc(primary), pic,
        cat, esc(CAT_META[cat][1]), esc(one), esc(primary), esc(it["m"]),
        (" · <span data-i18n=\"spec_brand\">Brand</span> " + esc(it["b"])) if it.get("b") else "",
-       spec_rows(it), esc(wa), quote(it.get("oe") or it["m"], safe=""),
+       spec_rows(it), price_block, esc(wa), quote(it.get("oe") or it["m"], safe=""),
        total_txt, total_txt, share_bar_html(cfg, it, cat),
        terms, app_html, rel_html,
        esc(cfg["company_en"]), esc(it.get("b") or "WEILI"),
@@ -1358,21 +1361,95 @@ def load_pricing():
 
 PRICING = {}
 
+# ---- 型号页价格带（2026-11-12 奕然的口径）----
+# 统一 MOQ 10 件；火花塞 10 盒（按 4 支/盒 = 40 支）；油泵、节气门 5 件起、不接受单件。
+MODEL_MOQ = 10
+MOQ_OVERRIDE = {"plug": 40, "njkspark": 40, "fuelpump": 5, "throttle": 5}
+# (起, 止, 进价倍数)：10–20 件 ×1.40，20–50 件 ×1.25，50–200 件 ×1.10
+PRICE_TIERS = [(10, 20, 1.40), (20, 50, 1.25), (50, 200, 1.10)]
+FX_CNY_USD = 7.1          # 人民币→美元只用于把进价折成参考价，页面会注明 FOB 广州、以报价为准
+PRICE_COST = {}           # 归一化料号 -> 进价（RMB），load_price_costs() 填充
+
+
+def _price_key(s):
+    return re.sub(r"[^0-9A-Z]", "", (s or "").upper())
+
+
+def load_price_costs():
+    """读 内部价格-不发布/价格表.csv，每个料号取最小价当进价。
+    这张表本身不发布（gitignore），站点只输出折算后的 USD 参考价；读不到就不显示价格。"""
+    global PRICE_COST
+    PRICE_COST = {}
+    path = os.path.join(HERE, "内部价格-不发布", "价格表.csv")
+    if not os.path.exists(path):
+        return 0
+    try:
+        import csv
+        rows = list(csv.reader(open(path, encoding="utf-8-sig")))
+    except Exception as e:
+        print("  [warn] 价格表读不了，型号页不显示价格：%s" % e)
+        return 0
+    for r in rows[1:]:
+        if len(r) < 8 or not (r[3] or "").strip():
+            continue
+        key = _price_key(r[3])
+        vals = []
+        for v in r[5:12]:
+            try:
+                vals.append(float((v or "").strip()))
+            except Exception:
+                pass
+        if not vals:
+            continue
+        c = min(vals)
+        if key not in PRICE_COST or c < PRICE_COST[key]:
+            PRICE_COST[key] = c
+    return len(PRICE_COST)
+
+
+def _model_cost(it):
+    c = PRICE_COST.get(_price_key(it.get("m")))
+    if not c:
+        c = PRICE_COST.get(re.sub(r"[ABHCY]$", "", _price_key(it.get("m"))))
+    return c
+
+
+def model_price_html(it, cat):
+    """型号页价格带：MOQ + 三档参考价（USD，FOB 广州）。
+    档位按 MOQ 过滤：火花塞起订 100 支时只显示 100–200 这一档。"""
+    moq = MOQ_OVERRIDE.get(cat, MODEL_MOQ)
+    cost = _model_cost(it)
+    note = ('<span data-i18n="price_note">Final price depends on quantity and packing — '
+            'we confirm it in the quotation.</span>')
+    if not cost:
+        return ('<div class="priceline"><b data-i18n="price_req" data-v-moq="%d">MOQ %d pcs · Price on quotation</b>%s</div>'
+                % (moq, moq, note))
+    parts = []
+    mult = 1.05 if cat == "abs" else 1.0      # 2026-11-12：ABS 全线统一上调 5%
+    for lo, hi, f in PRICE_TIERS:
+        if hi <= moq:
+            continue
+        a = max(lo, moq)
+        parts.append('<span class="pi"><em>%d–%d pcs</em> <b>$%.2f</b></span>' % (a, hi, cost * f * mult / FX_CNY_USD))
+    return ('<div class="priceline tiers"><b data-i18n="price_moq" data-v-moq="%d">MOQ %d pcs</b>'
+            '<span data-i18n="price_ref">Reference price · FOB Guangzhou, USD / pc</span>'
+            '<div class="pricetiers">%s</div>%s</div>'
+            % (moq, moq, "".join(parts), note))
+
 
 def price_html(key):
-    d = PRICING.get(key)
-    if not d or not d.get("moq"):
-        return ""
+    d = PRICING.get(key) or {}
+    moq = MOQ_OVERRIDE.get(key, MODEL_MOQ)
     if d.get("lo") is not None and d.get("hi") is not None:
         lo, hi = ("%g" % d["lo"]), ("%g" % d["hi"])
         return ('<div class="priceline"><b data-i18n="price_range" data-v-moq="%s" data-v-cur="%s" '
                 'data-v-lo="%s" data-v-hi="%s">MOQ %s pcs · %s %s–%s / pc · FOB Guangzhou</b>'
                 '<span data-i18n="price_note">Final price depends on quantity and packing — '
                 'we confirm it in the quotation.</span></div>'
-                % (d["moq"], d["cur"], lo, hi, d["moq"], d["cur"], lo, hi))
-    return ('<div class="priceline"><b data-i18n="price_req" data-v-moq="%s">MOQ %s pcs · Price on quotation</b>'
+                % (moq, d.get("cur") or "USD", lo, hi, moq, d.get("cur") or "USD", lo, hi))
+    return ('<div class="priceline"><b data-i18n="price_req" data-v-moq="%d">MOQ %d pcs · Price on quotation</b>'
             '<span data-i18n="price_note">Final price depends on quantity and packing — '
-            'we confirm it in the quotation.</span></div>' % (d["moq"], d["moq"]))
+            'we confirm it in the quotation.</span></div>' % (moq, moq))
 
 
 def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
@@ -3178,6 +3255,8 @@ def build_static(items, cats, log=print):
         LIVE_BRAND_SLUGS = set()
 
     canon_map = build_oe_canon(items)      # 同 OE 的变体页 → canonical 指向主 SKU
+    n_price = load_price_costs()
+    log("  价格表：%d 个料号有进价，型号页按三档折算参考价" % n_price)
     if canon_map:
         log("  同 OE 变体：%d 页的 canonical 指向主 SKU" % len(canon_map))
     for idx, it in enumerate(items):

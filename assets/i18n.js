@@ -194,7 +194,7 @@
       t_lead: "交期",
       t_lead_v: "现货几天内从广州发出；生产单的交期按订单确认。",
       t_moq: "起订量",
-      t_moq_v: "按型号和包装定。把清单发来，我们逐条确认起订量——小批量首单也接。",
+      t_moq_v: "多数品类起订 10 件；火花塞 10 盒（40 支）；汽油泵与节气门最低 5 件，不接受单件。",
       t_sample: "样品",
       t_sample_v: "大货前可申请样品测试，运费由买家承担。",
       rel_more_h: "更多",
@@ -505,7 +505,9 @@
       cd_p0300_qa_q0: "P0300 还能开吗？",
       cd_p0300_qa_a0: "短距离、低负荷可以。故障灯闪就必须停：未燃烧的燃油正在催化器里烧，会把换线圈的活变成换催化器的活。",
       cd_p0300_qa_q1: "为什么 P0300 比 P0301 难修？",
-      cd_p0300_qa_a1: "P0300 不点名某个缸，所以指不到一个线圈或一个喷油嘴。它指的是所有缸共用的东西，那份清单更长。"
+      cd_p0300_qa_a1: "P0300 不点名某个缸，所以指不到一个线圈或一个喷油嘴。它指的是所有缸共用的东西，那份清单更长。",
+      price_moq: "起订量 {moq} 件",
+      price_ref: "参考价 · FOB 广州，美元/件"
     },
     ar: {
       nav_all: "كل الفئات ({n})",
@@ -687,7 +689,7 @@
       t_lead: "مدة التسليم",
       t_lead_v: "المخزون يخرج من قوانغتشو خلال أيام؛ موعد طلبات الإنتاج يؤكد لكل طلب على حدة.",
       t_moq: "الحد الأدنى للطلب",
-      t_moq_v: "يُحدد حسب القطعة والتغليف. أرسل قائمتك ونؤكد الحد الأدنى بندًا بندًا — الطلبات الأولى الصغيرة مقبولة.",
+      t_moq_v: "10 قطع لمعظم الفئات؛ شمعات الإشعال 10 علب (40 قطعة)؛ مضخات الوقود وجسم الخنق بحد أدنى 5 قطع، ولا تُقبل القطعة الواحدة.",
       t_sample: "العيّنات",
       t_sample_v: "تتوفر عينات للاختبار قبل الطلب الكبير؛ يتحمل المشتري الشحن.",
       rel_more_h: "المزيد من",
@@ -998,7 +1000,9 @@
       cd_p0300_qa_q0: "هل يمكنني القيادة مع P0300؟",
       cd_p0300_qa_a0: "مسافات قصيرة وبحمل منخفض، نعم. لكن إذا ومضت لمبة المحرك فتوقف: وقود غير محترق يحترق داخل المحول الحفاز، وهذا يحوّل مهمة ملف إلى مهمة محول.",
       cd_p0300_qa_q1: "لماذا إصلاح P0300 أصعب من P0301؟",
-      cd_p0300_qa_a1: "P0300 لا يسمّي أسطوانة، فلا يمكنه الإشارة إلى ملف أو بخاخ واحد. يشير إلى أي شيء تشترك فيه الأسطوانات، وتلك القائمة أطول."
+      cd_p0300_qa_a1: "P0300 لا يسمّي أسطوانة، فلا يمكنه الإشارة إلى ملف أو بخاخ واحد. يشير إلى أي شيء تشترك فيه الأسطوانات، وتلك القائمة أطول.",
+      price_moq: "الحد الأدنى {moq} قطعة",
+      price_ref: "سعر مرجعي · FOB قوانغتشو، دولار / قطعة"
     },
     ru: {
       nav_all: "Все категории ({n})",
@@ -1180,7 +1184,7 @@
       t_lead: "Сроки",
       t_lead_v: "Складские позиции уходят из Гуанчжоу за считанные дни; срок производственных заказов подтверждается по каждому заказу.",
       t_moq: "MOQ",
-      t_moq_v: "Зависит от детали и упаковки. Пришлите список — подтвердим MOQ построчно; небольшие первые заказы принимаем.",
+      t_moq_v: "10 шт. для большинства категорий; свечи — 10 коробок (40 шт.); топливные насосы и дроссели — от 5 шт., поштучно не продаём.",
       t_sample: "Образцы",
       t_sample_v: "Образцы для тестирования до основного заказа; доставку оплачивает покупатель.",
       rel_more_h: "Ещё",
@@ -1491,7 +1495,9 @@
       cd_p0300_qa_q0: "Можно ли ехать с P0300?",
       cd_p0300_qa_a0: "На короткие расстояния с малой нагрузкой — да. Но если лампа мигает, нужно остановиться: несгоревшее топливо горит в катализаторе, и замена катушки превращается в замену катализатора.",
       cd_p0300_qa_q1: "Почему P0300 труднее P0301?",
-      cd_p0300_qa_a1: "P0300 не называет цилиндр, поэтому не может указать на одну катушку или одну форсунку. Он указывает на всё, что объединяет цилиндры, а этот список длиннее."
+      cd_p0300_qa_a1: "P0300 не называет цилиндр, поэтому не может указать на одну катушку или одну форсунку. Он указывает на всё, что объединяет цилиндры, а этот список длиннее.",
+      price_moq: "Мин. заказ {moq} шт.",
+      price_ref: "Ориентировочная цена · FOB Гуанчжоу, USD/шт."
     },
     fr: {
       nav_all: "Toutes les catégories ({n})",
@@ -1673,7 +1679,7 @@
       t_lead: "Délais",
       t_lead_v: "Le stock quitte Guangzhou en quelques jours ; le délai des commandes de production est confirmé commande par commande.",
       t_moq: "MOQ",
-      t_moq_v: "Selon la pièce et l'emballage. Envoyez votre liste, nous confirmons le MOQ ligne par ligne — les petites premières commandes sont acceptées.",
+      t_moq_v: "10 pièces pour la plupart des catégories ; bougies 10 boîtes (40 pièces) ; pompes à carburant et boîtiers papillon 5 pièces minimum, pas d'unité seule.",
       t_sample: "Échantillons",
       t_sample_v: "Échantillons disponibles avant une grosse commande ; le fret est à la charge de l'acheteur.",
       rel_more_h: "Plus",
@@ -1984,7 +1990,9 @@
       cd_p0300_qa_q0: "Puis-je rouler avec un P0300 ?",
       cd_p0300_qa_a0: "Sur de courtes distances à faible charge, oui. Mais si le voyant clignote, arrêtez-vous : du carburant imbrûlé brûle dans le catalyseur, et un remplacement de bobine devient un remplacement de catalyseur.",
       cd_p0300_qa_q1: "Pourquoi P0300 est-il plus dur à réparer que P0301 ?",
-      cd_p0300_qa_a1: "P0300 ne nomme pas de cylindre, il ne peut donc pas pointer une bobine ou un injecteur. Il pointe tout ce que les cylindres ont en commun, et cette liste est plus longue."
+      cd_p0300_qa_a1: "P0300 ne nomme pas de cylindre, il ne peut donc pas pointer une bobine ou un injecteur. Il pointe tout ce que les cylindres ont en commun, et cette liste est plus longue.",
+      price_moq: "MOQ {moq} pièces",
+      price_ref: "Prix indicatif · FOB Guangzhou, USD / pièce"
     },
     es: {
       nav_all: "Las {n} categorías",
@@ -2166,7 +2174,7 @@
       t_lead: "Plazo",
       t_lead_v: "El stock sale de Guangzhou en pocos días; en pedidos de producción la fecha se confirma pedido a pedido.",
       t_moq: "MOQ",
-      t_moq_v: "Depende de la referencia y el embalaje. Envíe su lista y lo confirmamos línea por línea; se aceptan primeros pedidos pequeños.",
+      t_moq_v: "10 piezas en la mayoría de categorías; bujías 10 cajas (40 piezas); bombas de combustible y cuerpos de mariposa mínimo 5 piezas, no se aceptan unidades sueltas.",
       t_sample: "Muestras",
       t_sample_v: "Muestras de prueba bajo pedido antes del pedido grande; el transporte corre por cuenta del comprador.",
       rel_more_h: "Más",
@@ -2474,7 +2482,9 @@
       cd_p0300_qa_q0: "¿Puedo conducir con un P0300?",
       cd_p0300_qa_a0: "Distancias cortas y poca carga, sí. Pero si la luz parpadea, para: combustible sin quemar se está quemando dentro del catalizador y eso convierte un cambio de bobina en un cambio de catalizador.",
       cd_p0300_qa_q1: "¿Por qué P0300 es más difícil de arreglar que P0301?",
-      cd_p0300_qa_a1: "P0300 no nombra un cilindro, así que no puede señalar una bobina o un inyector. Señala todo lo que comparten los cilindros, y esa lista es más larga."
+      cd_p0300_qa_a1: "P0300 no nombra un cilindro, así que no puede señalar una bobina o un inyector. Señala todo lo que comparten los cilindros, y esa lista es más larga.",
+      price_moq: "MOQ {moq} piezas",
+      price_ref: "Precio orientativo · FOB Guangzhou, USD / pieza"
     },
     pt: {
       nav_all: "As {n} categorias",
@@ -2656,7 +2666,7 @@
       t_lead: "Prazo",
       t_lead_v: "O estoque sai de Guangzhou em poucos dias; em pedidos de produção a data é confirmada pedido a pedido.",
       t_moq: "MOQ",
-      t_moq_v: "Depende da referência e da embalagem. Envie sua lista e confirmamos linha por linha; primeiros pedidos pequenos são aceitos.",
+      t_moq_v: "10 peças na maioria das categorias; velas 10 caixas (40 peças); bombas de combustível e corpos de borboleta mínimo 5 peças, não aceitamos unidades avulsas.",
       t_sample: "Amostras",
       t_sample_v: "Amostras de teste sob pedido antes do pedido grande; o frete é por conta do comprador.",
       rel_more_h: "Mais",
@@ -2964,7 +2974,9 @@
       cd_p0300_qa_q0: "Posso dirigir com um P0300?",
       cd_p0300_qa_a0: "Distancias curtas e pouca carga, sim. Mas se a luz piscar, pare: combustível não queimado está queimando dentro do catalisador, e isso transforma troca de bobina em troca de catalisador.",
       cd_p0300_qa_q1: "Por que o P0300 é mais difícil de resolver que o P0301?",
-      cd_p0300_qa_a1: "O P0300 não nomeia um cilindro, então não aponta uma bobina ou um injetor. Aponta tudo o que os cilindros compartilham, e essa lista é maior."
+      cd_p0300_qa_a1: "O P0300 não nomeia um cilindro, então não aponta uma bobina ou um injetor. Aponta tudo o que os cilindros compartilham, e essa lista é maior.",
+      price_moq: "MOQ {moq} peças",
+      price_ref: "Preço de referência · FOB Guangzhou, USD / peça"
     },
     id: {
       nav_all: "{n} kategori",
@@ -3146,7 +3158,7 @@
       t_lead: "Pengiriman",
       t_lead_v: "Stok keluar dari Guangzhou dalam beberapa hari; untuk pesanan produksi tanggal dikonfirmasi per pesanan.",
       t_moq: "MOQ",
-      t_moq_v: "Tergantung part dan kemasan. Kirim daftar Anda, kami konfirmasi baris per baris; pesanan pertama kecil pun bisa.",
+      t_moq_v: "10 pcs untuk sebagian besar kategori; busi 10 kotak (40 pcs); pompa bahan bakar dan bodi throttle minimal 5 pcs, satuan tidak diterima.",
       t_sample: "Sampel",
       t_sample_v: "Sampel uji tersedia atas permintaan sebelum pesanan besar; ongkos kirim ditanggung pembeli.",
       rel_more_h: "Lainnya",
@@ -3454,7 +3466,9 @@
       cd_p0300_qa_q0: "Bisakah saya mengemudi dengan P0300?",
       cd_p0300_qa_a0: "Jarak pendek dan beban ringan, ya. Tapi jika lampu berkedip, berhenti: bahan bakar tak terbakar terbakar di dalam katalis, dan itu mengubah pekerjaan koil menjadi pekerjaan katalis.",
       cd_p0300_qa_q1: "Mengapa P0300 lebih sulit diperbaiki daripada P0301?",
-      cd_p0300_qa_a1: "P0300 tidak menyebut silinder, jadi tidak bisa menunjuk satu koil atau satu injektor. Ia menunjuk apa pun yang dipakai bersama silinder, dan daftarnya lebih panjang."
+      cd_p0300_qa_a1: "P0300 tidak menyebut silinder, jadi tidak bisa menunjuk satu koil atau satu injektor. Ia menunjuk apa pun yang dipakai bersama silinder, dan daftarnya lebih panjang.",
+      price_moq: "MOQ {moq} pcs",
+      price_ref: "Harga acuan · FOB Guangzhou, USD / pcs"
     },
     fa: {
       nav_all: "همه {n} دسته‌بندی",
@@ -3636,7 +3650,7 @@
       t_lead: "ارسال",
       t_lead_v: "اقلام موجود در چند روز از گوانگژو ارسال می‌شود؛ برای سفارش تولیدی تاریخ به‌صورت موردی تأیید می‌شود.",
       t_moq: "حداقل سفارش",
-      t_moq_v: "به قطعه و بسته‌بندی بستگی دارد. فهرست خود را بفرستید تا سطر به سطر تأیید کنیم؛ اولین سفارش کوچک هم ممکن است.",
+      t_moq_v: "۱۰ عدد برای بیشتر دسته‌ها؛ شمع ۱۰ جعبه (۴۰ عدد)؛ پمپ بنزین و بدنه گاز حداقل ۵ عدد، تک‌فروشی پذیرفته نمی‌شود.",
       t_sample: "نمونه",
       t_sample_v: "نمونه آزمایشی پیش از سفارش انبوه در صورت درخواست ارائه می‌شود؛ هزینه ارسال با خریدار است.",
       rel_more_h: "بیشتر",
@@ -3947,7 +3961,9 @@
       cd_p0300_qa_q0: "آیا می‌توان با P0300 رانندگی کرد؟",
       cd_p0300_qa_a0: "مسافت کوتاه و بار کم، بله. اما اگر چراغ چشمک بزند باید بایستید: سوخت نسوخته داخل کاتالیزور می‌سوزد و تعویض کویل تبدیل به تعویض کاتالیزور می‌شود.",
       cd_p0300_qa_q1: "چرا P0300 از P0301 سخت‌تر تعمیر می‌شود؟",
-      cd_p0300_qa_a1: "P0300 سیلندر را نام نمی‌برد، پس نمی‌تواند به یک کویل یا یک انژکتور اشاره کند. به هر چیزی اشاره می‌کند که سیلندرها در آن شریک‌اند، و آن فهرست بلندتر است."
+      cd_p0300_qa_a1: "P0300 سیلندر را نام نمی‌برد، پس نمی‌تواند به یک کویل یا یک انژکتور اشاره کند. به هر چیزی اشاره می‌کند که سیلندرها در آن شریک‌اند، و آن فهرست بلندتر است.",
+      price_moq: "حداقل سفارش {moq} عدد",
+      price_ref: "قیمت مرجع · FOB گوانگژو، دلار / عدد"
     }
   };
 
