@@ -159,7 +159,7 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261112a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261112d"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 I18N_V = "20261112i18n3"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
@@ -2265,17 +2265,17 @@ def guide_blocks_html(blocks, resolve, pfx=""):
         elif kind in ("ul", "ol"):
             out.append("<%s>%s</%s>" % (
                 kind,
-                "".join("<li%s>%s</li>" % (_i18n_attr(x, pfx, "b", i, "l", j),
-                                           _guide_text(x, resolve))
+                "".join("<li%s dir='auto'>%s</li>" % (_i18n_attr(x, pfx, "b", i, "l", j),
+                                                      _guide_text(x, resolve))
                         for j, x in enumerate(b[1])), kind))
         elif kind == "table":
-            head = "".join("<th%s>%s</th>" % (_i18n_attr(h, pfx, "b", i, "h", j),
+            head = "".join("<th%s dir='auto'>%s</th>" % (_i18n_attr(h, pfx, "b", i, "h", j),
                                               _guide_text(h, resolve))
                            for j, h in enumerate(b[1]))
             rows = []
             for r, row in enumerate(b[2]):
                 rows.append("<tr>%s</tr>" % "".join(
-                    "<td%s>%s</td>" % (_i18n_attr(c, pfx, "b", i, "c", r, ci),
+                    "<td%s dir='auto'>%s</td>" % (_i18n_attr(c, pfx, "b", i, "c", r, ci),
                                        _guide_text(c, resolve))
                     for ci, c in enumerate(row)))
             out.append('<div class="gtable"><table><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>'
@@ -2534,7 +2534,7 @@ def page_code(cfg, c, resolve, cat_counts):
         if not meta:
             continue
         prows.append('<tr><td><a href="../category/%s.html" data-cat="%s">%s</a></td>'
-                     '<td>%s</td><td data-i18n="%s_pn_%d">%s</td></tr>'
+                     '<td>%s</td><td data-i18n="%s_pn_%d" dir="auto">%s</td></tr>'
                      % (esc(meta[0]), esc(key), esc(meta[1]),
                         "{:,}".format(cat_counts.get(key, 0)),
                         "cd_%s" % slug.replace("-", "_"), len(prows), esc(note)))

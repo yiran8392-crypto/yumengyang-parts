@@ -1064,6 +1064,12 @@ html[dir="rtl"] .st b,
 html[dir="rtl"] .herostat,
 html[dir="rtl"] .docaddr{unicode-bidi:isolate;direction:ltr}
 
+/* RTL 里 .doc .dsec 的 <ol>/<ul>：序号默认落在行末（左边），读起来像句号后面挂了个数字。
+   把标记改成 inside，让它跟着文字从右侧起排；行内代码也要单独切 LTR，不然括号会打乱。 */
+html[dir="rtl"] .doc .dsec ol,
+html[dir="rtl"] .doc .dsec ul{list-style-position:inside;padding-inline-start:2px}
+html[dir="rtl"] .doc .dsec code{unicode-bidi:isolate;direction:ltr;display:inline-block}
+
 /* 中文提示行（.zh-extra / .doczh）只在中文界面出现，别的语种别把中文漏出来 */
 html[data-lang]:not([data-lang="zh"]) .zh-extra,
 html[data-lang]:not([data-lang="zh"]) .doczh{display:none}
