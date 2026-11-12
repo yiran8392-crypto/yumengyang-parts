@@ -160,7 +160,7 @@ POS_WORDS = {
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
 CSS_V = "20261111g"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261111i18n6"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+I18N_V = "20261112i18n1"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -2108,36 +2108,64 @@ def make_guide_resolver(items):
 
 def _guide_text(raw, resolve):
     def rep(m):
-        return '<a href="%s">%s</a>' % (esc(resolve(m.group(1))), esc(m.group(2)))
+        target, label = m.group(1), m.group(2)
+        extra = ""
+        if target.lower().startswith("cat/"):
+            key = target[4:]
+            if key in CAT_META:
+                extra = ' data-cat="%s"' % key      # 品类名跟着界面语种走（C 字典）
+        return '<a href="%s"%s>%s</a>' % (esc(resolve(target)), extra, esc(label))
     return GUIDE_LINK_RE.sub(rep, raw or "")
 
 
-def guide_blocks_html(blocks, resolve):
-    """块状正文 → HTML。h2 开一段 .dsec（沿用政策页的排版）。"""
+def _i18n_attr(raw, pfx, *parts):
+    """有前缀才挂钩子；块里有 [[L:...]] 链接就用 innerHTML 版本，否则用纯文本版本。"""
+    if not pfx:
+        return ""
+    key = "_".join((pfx,) + tuple(str(p) for p in parts))
+    if "[[" in (raw or ""):
+        return ' data-i18n-html="%s"' % key
+    return ' data-i18n="%s"' % key
+
+
+def guide_blocks_html(blocks, resolve, pfx=""):
+    """块状正文 → HTML。h2 开一段 .dsec（沿用政策页的排版）。
+    pfx 给了（如 cd_p0301）就给每块挂 data-i18n；字典里没有对应键时前端保持英文。"""
     out, open_sec = [], False
-    for b in blocks:
+    for i, b in enumerate(blocks):
         kind = b[0]
         if kind == "h2":
             if open_sec:
                 out.append("</section>")
-            out.append('<section class="dsec"><h2>%s</h2>' % _guide_text(b[1], resolve))
+            out.append('<section class="dsec"><h2%s>%s</h2>'
+                       % (_i18n_attr(b[1], pfx, "b", i), _guide_text(b[1], resolve)))
             open_sec = True
             continue
         if not open_sec:
             out.append('<section class="dsec">')
             open_sec = True
         if kind in ("p", "tip"):
-            out.append('<p class="%s">%s</p>' % ("gtip" if kind == "tip" else "gp",
-                                                 _guide_text(b[1], resolve)))
+            out.append('<p class="%s"%s>%s</p>'
+                       % ("gtip" if kind == "tip" else "gp",
+                          _i18n_attr(b[1], pfx, "b", i), _guide_text(b[1], resolve)))
         elif kind in ("ul", "ol"):
-            out.append("<%s>%s</%s>" % (kind, "".join("<li>%s</li>" % _guide_text(x, resolve)
-                                                      for x in b[1]), kind))
+            out.append("<%s>%s</%s>" % (
+                kind,
+                "".join("<li%s>%s</li>" % (_i18n_attr(x, pfx, "b", i, "l", j),
+                                           _guide_text(x, resolve))
+                        for j, x in enumerate(b[1])), kind))
         elif kind == "table":
-            head = "".join("<th>%s</th>" % _guide_text(h, resolve) for h in b[1])
-            rows = "".join("<tr>%s</tr>" % "".join("<td>%s</td>" % _guide_text(c, resolve) for c in r)
-                           for r in b[2])
+            head = "".join("<th%s>%s</th>" % (_i18n_attr(h, pfx, "b", i, "h", j),
+                                              _guide_text(h, resolve))
+                           for j, h in enumerate(b[1]))
+            rows = []
+            for r, row in enumerate(b[2]):
+                rows.append("<tr>%s</tr>" % "".join(
+                    "<td%s>%s</td>" % (_i18n_attr(c, pfx, "b", i, "c", r, ci),
+                                       _guide_text(c, resolve))
+                    for ci, c in enumerate(row)))
             out.append('<div class="gtable"><table><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>'
-                       % (head, rows))
+                       % (head, "".join(rows)))
     if open_sec:
         out.append("</section>")
     return "".join(out)
@@ -2182,9 +2210,9 @@ def page_guide(cfg, g, resolve):
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <a href="./index.html" data-i18n="guides_h">Buying guides</a> &rsaquo; <span>%s</span></nav>
 <article class="doc guide">
-  <h1>%s</h1>
+  <h1 data-i18n="%s">%s</h1>
   <p class="docmeta">%s · %d min read · <span data-i18n="doc_ref">English version is the reference</span></p>
-  <p class="doclead">%s</p>
+  <p class="doclead" data-i18n="%s">%s</p>
   %s
   <nav class="gmore"><b data-i18n="guides_more">More guides</b><a href="./index.html" data-i18n="guides_h">Buying guides</a>%s</nav>
   <section class="doccontact">
@@ -2198,9 +2226,11 @@ def page_guide(cfg, g, resolve):
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg, "", base="../"), esc(g["h1"]), esc(g["h1"]),
-       "Published " + g["date"], g.get("minutes", 6), esc(g["lead"]),
-       guide_blocks_html(g["body"], resolve), more,
+""" % (sitehead(cfg, "", base="../"), esc(g["h1"]),
+       "gd_%s_h1" % slug.replace("-", "_"), esc(g["h1"]),
+       "Published " + g["date"], g.get("minutes", 6),
+       "gd_%s_lead" % slug.replace("-", "_"), esc(g["lead"]),
+       guide_blocks_html(g["body"], resolve, "gd_%s" % slug.replace("-", "_")), more,
        NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
     return head_block(cfg, g["title"] + " | Yumengyang Auto Parts", g["desc"], canonical, og, "article",
@@ -2343,7 +2373,8 @@ def page_code(cfg, c, resolve, cat_counts):
     sys_name = ""
     for key, en, _span in _code_sys_list():
         if key == c["system"]:
-            sys_name = en
+            # 系统名（misfire / air / abs …）跟着界面语种走
+            sys_name = '<span data-i18n="csys_%s">%s</span>' % (esc(key), esc(en))
             break
     # 标题压到 70 字符内（之前最长 114 字符，Google 摘要里会被截掉一半）
     _suffix = " | Yumengyang"
@@ -2388,22 +2419,34 @@ def page_code(cfg, c, resolve, cat_counts):
         meta = CAT_META.get(key)
         if not meta:
             continue
-        prows.append('<tr><td><a href="../category/%s.html">%s</a></td><td>%s</td><td>%s</td></tr>'
-                     % (esc(meta[0]), esc(meta[1]), "{:,}".format(cat_counts.get(key, 0)), esc(note)))
+        prows.append('<tr><td><a href="../category/%s.html" data-cat="%s">%s</a></td>'
+                     '<td>%s</td><td data-i18n="%s_pn_%d">%s</td></tr>'
+                     % (esc(meta[0]), esc(key), esc(meta[1]),
+                        "{:,}".format(cat_counts.get(key, 0)),
+                        "cd_%s" % slug.replace("-", "_"), len(prows), esc(note)))
     parts_block = ""
     if prows:
-        parts_block = ('<section class="dsec"><h2>Parts we stock for a %s</h2>'
-                       '<p class="gp">Stocked numbers and fitment for these categories are in the catalogue; '
-                       'message us with the car details and we will pick the right one.</p>'
-                       '<div class="gtable"><table><thead><tr><th>Our category</th><th>Part numbers</th>'
-                       '<th>When</th></tr></thead><tbody>%s</tbody></table></div></section>'
-                       % (esc(code), "".join(prows)))
+        parts_block = ('<section class="dsec"><h2 data-i18n="cdx_parts_h" data-v-c="%s">'
+                       'Parts we stock for a %s</h2>'
+                       '<p class="gp" data-i18n="cdx_parts_p">Stocked numbers and fitment for these categories '
+                       'are in the catalogue; message us with the car details and we will pick the right one.</p>'
+                       '<div class="gtable"><table><thead><tr>'
+                       '<th data-i18n="cdx_parts_th1">Our category</th>'
+                       '<th data-i18n="cdx_parts_th2">Part numbers</th>'
+                       '<th data-i18n="cdx_parts_th3">When</th>'
+                       '</tr></thead><tbody>%s</tbody></table></div></section>'
+                       % (esc(code), esc(code), "".join(prows)))
 
     faq_block = ""
     if c.get("qa"):
-        faq_block = ('<section class="dsec"><h2>Questions we get</h2>%s</section>'
-                     % "".join('<details class="fq"><summary>%s</summary><div class="fqa">%s</div></details>'
-                               % (esc(q), esc(a)) for q, a in c["qa"]))
+        pfx_qa = "cd_%s" % slug.replace("-", "_")
+        items = []
+        for qi, (q, a) in enumerate(c["qa"]):
+            items.append('<details class="fq"><summary data-i18n="%s_qa_q%d">%s</summary>'
+                         '<div class="fqa" data-i18n="%s_qa_a%d">%s</div></details>'
+                         % (pfx_qa, qi, esc(q), pfx_qa, qi, esc(a)))
+        faq_block = ('<section class="dsec"><h2 data-i18n="cdx_faq_h">Questions we get</h2>%s</section>'
+                     % "".join(items))
 
     have = {x["code"].lower() for x in _code_list()}
     rel = "".join('<a href="./%s.html">%s</a>' % (esc(x.lower()), esc(x))
@@ -2415,9 +2458,11 @@ def page_code(cfg, c, resolve, cat_counts):
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo;
 <a href="./index.html" data-i18n="codes_h">Fault codes</a> &rsaquo; <span class="notranslate" translate="no">%s</span></nav>
 <article class="doc guide">
-  <h1><span class="notranslate" translate="no">%s</span> &mdash; %s</h1>
-  <p class="docmeta">OBD-II fault code &middot; %s &middot; updated %s &middot; <span data-i18n="doc_ref">English version is the reference</span></p>
-  <p class="doclead">%s</p>
+  <h1><span class="notranslate" translate="no">%s</span> &mdash; <span data-i18n="%s">%s</span></h1>
+  <p class="docmeta"><span data-i18n="cdx_obd">OBD-II fault code</span> &middot; %s &middot;
+     <span data-i18n="cdx_updated">updated</span> %s &middot;
+     <span data-i18n="doc_ref">English version is the reference</span></p>
+  <p class="doclead" data-i18n="%s">%s</p>
   %s
   %s
   %s
@@ -2426,8 +2471,8 @@ def page_code(cfg, c, resolve, cat_counts):
     <h2 data-i18n="foot_contact">Contact</h2>
     <p class="docorg"><b class="notranslate" %s>%s</b> &middot; <span class="notranslate" %s>%s</span></p>
     <p class="docaddr">%s</p>
-    <p>Send us the code, the car and the year. If this page points at several parts, we will tell you which
-    one to change first &mdash; and which one not to change.</p>
+    <p data-i18n="cdx_contact_p">Send us the code, the car and the year. If this page points at several parts,
+    we will tell you which one to change first &mdash; and which one not to change.</p>
     <p><a class="btn-wa" href="%s" target="_blank" rel="noopener">%s</a>
        <a class="btn-ghost" href="../index.html" data-i18n="lookup">OE / cross-reference lookup</a></p>
   </section>
@@ -2435,8 +2480,11 @@ def page_code(cfg, c, resolve, cat_counts):
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg, "codes", base="../"), esc(code), esc(code), esc(c["name"]), esc(sys_name),
-       CODES_DATE, esc(c["lead"]), guide_blocks_html(c["body"], resolve), parts_block, faq_block,
+""" % (sitehead(cfg, "codes", base="../"), esc(code), esc(code),
+       "cd_%s_name" % slug.replace("-", "_"), esc(c["name"]),
+       sys_name, CODES_DATE,
+       "cd_%s_lead" % slug.replace("-", "_"), esc(c["lead"]),
+       guide_blocks_html(c["body"], resolve, "cd_%s" % slug.replace("-", "_")), parts_block, faq_block,
        rel, NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
     return head_block(cfg, title, c["desc"], canonical, og, "article",
