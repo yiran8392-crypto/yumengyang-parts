@@ -30,15 +30,17 @@ WhatsApp=8615915859048
 
 # 访问统计（可选，不填 = 关闭，页面不会请求任何第三方）
 # 写法是「提供方:参数」，换后端只改这一行，代码在 assets/analytics.js（顶部有说明，加一种后端约 10 行）
-#   goatcounter:yumengyang        ← 推荐。无 cookie、不用弹同意框。去 https://www.goatcounter.com/
-#                                    用邮箱注册，Site code 填 yumengyang（被占用就换一个，改这里再重生成）
+#   goatcounter:yumengyang-parts  ← 现在用的就是这个。无 cookie、不用弹同意框。
+#                                    后台 https://yumengyang-parts.goatcounter.com
+#                                    注意：2026-11-13 发现原来的 site code「yumengyang」已被别人抢注
+#                                    （count 端点有响应但账号不是我们的，数据会进别人后台），已全站换成 -parts 版并全量替换了已生成的 HTML。
 #   ga4:G-XXXXXXXX                ← Google Analytics 4 的测量 ID（会有 cookie，欧盟访问按 GDPR 要同意框）
 #   umami:站点ID|https://cloud.umami.is
 #   plausible:parts.yumengyang.com
 #   custom:https://你的收集地址    ← 自建（Cloudflare Worker / 飞书 Webhook 都行），POST JSON
 #   off                           ← 明确关闭
 # 只想在本机验证埋点有没有生效：浏览器打开页面时加 ?ymy_analytics=local，事件会打印在控制台和 window.__YMY_AEV
-统计=goatcounter:yumengyang
+统计=goatcounter:yumengyang-parts
 
 # 要不要连"买家搜了什么"一起记（记的是型号/OE 号，不是人名）：
 # 1 = 记，能看到 /ev/search_miss/q-xxx 这种路径，等于白拿一份"客户在问、我们没货"的清单
