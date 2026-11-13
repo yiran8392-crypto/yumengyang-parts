@@ -253,7 +253,7 @@ main{max-width:1200px;margin:0 auto;padding:26px 20px 70px}
 .panel .close:hover{background:#e2ebf1}
 .detail{display:grid;grid-template-columns:minmax(0,44%) minmax(0,56%)}
 .detail .pic{background:#f2f5f7;display:flex;align-items:center;justify-content:center;padding:20px;min-height:250px}
-.detail .pic img{max-height:52vh;width:auto;object-fit:contain;border-radius:8px;cursor:zoom-in}
+.detail .pic img{max-height:52vh;width:auto;object-fit:contain;border-radius:8px}
 .detail .info{padding:28px 30px 30px;min-width:0}
 .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700}
 .detail h2{margin:8px 0 4px;font-size:27px;letter-spacing:.01em;word-break:break-all;font-variant-numeric:tabular-nums;color:var(--ink)}

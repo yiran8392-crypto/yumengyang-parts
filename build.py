@@ -59,12 +59,12 @@ CATS = [
     {"key": "plug",   "name": "火花塞",     "en": "Spark Plugs",         "dir": "plug"},
 ]
 
-FULL_EDGE = 800        # 大图长边
-FULL_QUALITY = 88      # 大图质量
-FULL_MAX_BYTES = 120 * 1024
+FULL_EDGE = 1200       # 大图长边（2026-11-13 从 800 提到 1200，配合 2x 屏弹窗）
+FULL_QUALITY = 85      # 大图质量
+FULL_MAX_BYTES = 200 * 1024
 THUMB_EDGE = 260       # 缩略图长边
 THUMB_QUALITY = 80
-TARGET_TOTAL_MB = 150  # 图片总体积目标
+TARGET_TOTAL_MB = 240  # 图片总体积目标
 
 fails = []   # (品类, 位置, 问题, 原始内容)
 warns = []

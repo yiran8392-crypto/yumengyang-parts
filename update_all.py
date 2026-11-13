@@ -66,6 +66,9 @@ def main():
         print("!! 型号数从 %d 掉到 %d，停下来，请用 data.js.bak-* 还原。" % (before, after))
         return 1
 
+    print("\n[1.5/4] 重新套用人工改过的价格 …")
+    reapply_price_adjustments()
+
     print("\n[2/4] 重新生成页面 …")
     import rerender
     rc = rerender.main()
@@ -95,6 +98,36 @@ INTERNAL_CANDIDATES = [
     os.path.join(os.path.dirname(HERE), "型号查询站-内部版"),
     os.path.join(os.path.dirname(HERE), "内部版"),
 ]
+
+# 人工改价的记录目录：import_more 每次都会按源表重写价格，所以这边要再套一遍
+PRICE_ADJ_DIR = os.path.join(HERE, "内部价格-不发布", "价格调整记录")
+PRICE_ADJ_SCRIPT = os.path.join(os.path.dirname(HERE), "01-汽配业务", "_生成脚本", "应用价格调整.py")
+
+
+def reapply_price_adjustments():
+    """import_more 会按源表重写价格表，人工改过的价会被冲掉。
+    这里把「价格调整记录」里最新那份结果重新套用一遍（脚本自身幂等：值已对上就跳过）。"""
+    import glob
+    import subprocess
+    if not os.path.isdir(PRICE_ADJ_DIR):
+        print("   没有价格调整记录目录，跳过。")
+        return
+    files = sorted(glob.glob(os.path.join(PRICE_ADJ_DIR, "*.csv")))
+    if not files:
+        print("   价格调整记录是空的，跳过。")
+        return
+    if not os.path.exists(PRICE_ADJ_SCRIPT):
+        print("   找不到 应用价格调整.py，跳过（人工改价可能被本次导入覆盖，请检查）。")
+        return
+    for f in files:
+        print("   套用：%s" % os.path.basename(f))
+        try:
+            r = subprocess.run([sys.executable, PRICE_ADJ_SCRIPT, f, "--apply"], timeout=600)
+        except Exception as e:
+            print("   套用出错（不影响站点继续生成）：%s" % e)
+            continue
+        if r.returncode != 0:
+            print("   套用返回 %d（不影响站点继续生成）。" % r.returncode)
 
 
 def refresh_internal():

@@ -44,7 +44,7 @@ X = "{http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing}"
 A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
 REL = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 
-FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 800, 80 * 1024, 260, 78
+FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 1200, 200 * 1024, 260, 78
 
 SHEET_CAT = {
     "点火线圈": "coil", "分火线": "wire", "高压线": "wire",

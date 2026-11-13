@@ -36,7 +36,7 @@ PRICE_DIR = os.path.join(HERE, "内部价格-不发布")
 PRICE_CSV = os.path.join(PRICE_DIR, "价格表.csv")
 REPORT = os.path.join(HERE, "解析失败清单-大目录补图.txt")
 
-FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 800, 80 * 1024, 260, 78
+FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 1200, 200 * 1024, 260, 78
 
 S = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 X = "{http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing}"

@@ -42,7 +42,7 @@ PRICE_DIR = os.path.join(HERE, "内部价格-不发布")
 PRICE_CSV = os.path.join(PRICE_DIR, "价格表.csv")
 REPORT = os.path.join(HERE, "解析失败清单-氧传感器.txt")
 
-FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 800, 80 * 1024, 260, 78
+FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 1200, 200 * 1024, 260, 78
 
 SHEET_NAMES = ["红盒包装", "白色包装", "红色包装01"]
 

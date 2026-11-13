@@ -159,8 +159,8 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261112d"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261112i18n3"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+CSS_V = "20261113a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+I18N_V = "20261113i18n4"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -1376,7 +1376,8 @@ def _price_key(s):
 
 
 def load_price_costs():
-    """读 内部价格-不发布/价格表.csv，每个料号取最小价当进价。
+    """读 内部价格-不发布/价格表.csv，按 档位 取进价（哪一列是进价由 price_labels.py 定义）。
+    只有一级价/二级价的表（氧传感器、真空阀等）仍退化成「这套里最低价当进价」。
     这张表本身不发布（gitignore），站点只输出折算后的 USD 参考价；读不到就不显示价格。"""
     global PRICE_COST
     PRICE_COST = {}
@@ -1385,32 +1386,88 @@ def load_price_costs():
         return 0
     try:
         import csv
-        rows = list(csv.reader(open(path, encoding="utf-8-sig")))
+        rows = list(csv.DictReader(open(path, encoding="utf-8-sig", newline="")))
     except Exception as e:
         print("  [warn] 价格表读不了，型号页不显示价格：%s" % e)
         return 0
-    for r in rows[1:]:
-        if len(r) < 8 or not (r[3] or "").strip():
+    try:
+        import price_labels
+    except Exception:
+        price_labels = None
+
+    # 来源优先级：主力目录（有进价的）> 油泵价格1 > 油泵目录表 > 其它
+    def src_rank(fname):
+        if "产品目录-带价格" in fname or "ABS等传感器" in fname or "油泵价格（含进价）" in fname:
+            return 0
+        if "油泵价格1" in fname:
+            return 2
+        if "油泵目录表" in fname:
+            return 3
+        return 5
+
+    best_cost = {}       # key -> 进价（同一料号多来源时取最低）
+    fallback = {}        # key -> (来源优先级, 这套里的最低价)
+    for r in rows:
+        code = (r.get("商品编码") or "").strip()
+        if not code:
             continue
-        key = _price_key(r[3])
-        vals = []
-        for v in r[5:12]:
+        fname = (r.get("来源文件") or "").strip()
+        sheet = (r.get("工作表") or "").strip()
+        lab = price_labels.labels_for(fname, sheet) if price_labels else None
+        cost = None
+        others = []
+        for k, v in r.items():
+            if not k or not k.startswith("价格col"):
+                continue
+            s = (v or "").strip()
+            if not s:
+                continue
             try:
-                vals.append(float((v or "").strip()))
+                x = float(s)
             except Exception:
-                pass
-        if not vals:
-            continue
-        c = min(vals)
-        if key not in PRICE_COST or c < PRICE_COST[key]:
-            PRICE_COST[key] = c
+                continue
+            if x <= 0:
+                continue
+            try:
+                col = int(k.replace("价格col", ""))
+            except Exception:
+                continue
+            label = (lab or {}).get(col)
+            if label == "新进价":
+                cost = x          # 机械表两列并存时，新进价优先
+            elif label == "进价" and cost is None:
+                cost = x
+            others.append(x)
+        key = _price_key(code)
+        rank = src_rank(fname)
+        if cost is not None:
+            if key not in best_cost or cost < best_cost[key]:
+                best_cost[key] = cost
+        elif others:
+            # 这套没有进价列（氧传感器、老燃油泵…）：记下来，按来源优先级挑，不跨来源取最低
+            cand = (rank, min(others))
+            cur = fallback.get(key)
+            if cur is None or cand[0] < cur[0] or (cand[0] == cur[0] and cand[1] < cur[1]):
+                fallback[key] = cand
+    for key, (rank, val) in fallback.items():
+        if key not in best_cost:
+            best_cost[key] = val
+    PRICE_COST = best_cost
     return len(PRICE_COST)
 
 
 def _model_cost(it):
-    c = PRICE_COST.get(_price_key(it.get("m")))
+    """料号 → 进价。两处回退跟内部版一致：
+      1) 末尾 A/B/H（改良版/修订版）去掉基础号再查
+      2) 氧传感器料号 2026-11 统一加了 WL 前缀（10-BC001 → WL10-BC001），价格表里两种写法都有"""
+    code = it.get("m")
+    k = _price_key(code)
+    c = PRICE_COST.get(k)
     if not c:
-        c = PRICE_COST.get(re.sub(r"[ABHCY]$", "", _price_key(it.get("m"))))
+        c = PRICE_COST.get(re.sub(r"[ABHCY]$", "", k))
+    if not c:
+        alt = re.sub(r"^WL", "", k) if k.startswith("WL") else ("WL" + k)
+        c = PRICE_COST.get(alt) or PRICE_COST.get(re.sub(r"[ABHCY]$", "", alt))
     return c
 
 

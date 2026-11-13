@@ -42,7 +42,7 @@ PRICE_CSV = os.path.join(PRICE_DIR, "价格表.csv")
 REPORT = os.path.join(HERE, "解析失败清单-补录.txt")
 NEW_CSV = os.path.join(HERE, "新增型号清单-%s.csv" % time.strftime("%Y%m%d"))
 
-FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 800, 80 * 1024, 260, 78
+FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 1200, 200 * 1024, 260, 78
 
 S = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 X = "{http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing}"
@@ -217,10 +217,21 @@ def sp(**kw):
 
 
 def specs():
-    new = os.path.join(SRC, "线圈 碳罐 机油阀 阀体 马达 分火线 产品目录（带价格）(2).xlsx")
-    absf = os.path.join(SRC, "ABS  凸轮  曲轴  节气门  进气压力传感器目录表(2).xlsx")
+    # 2026-11-12：大目录 / ABS 目录改成读归档的新版进价表（内部价格-不发布/源表/）。
+    # 旧版（D:\111A剪辑\111资料 里那份）列位不同、ABS 那套还没有进价列，一跑就会把旧价
+    # 写回价格表，所以这里只认归档版。换新表时：改下面两行的版本号 + price_labels.py，
+    # 然后跑 import_price_update.py。
+    _ARCH = os.path.join(PRICE_DIR, "源表")
+    new = os.path.join(_ARCH, "产品目录-带价格-20261112.xlsx")
+    absf = os.path.join(_ARCH, "ABS等传感器目录-20261112.xlsx")
+    for _p in (new, absf):
+        if not os.path.exists(_p):
+            raise SystemExit(
+                "找不到新版进价表：\n  %s\n"
+                "企业微信收到的表先另存到 内部价格-不发布/源表/，再跑 import_price_update.py，"
+                "并把这里的版本号改成新的。" % _p)
     out = []
-    # ---- 大目录（2026-11-03 版，含供应商/进价）
+    # ---- 大目录（2026-11-12 版，含供应商/进价）
     out += [
         sp(file=new, sheet="点火线圈", hdr=2, cat="coil", code=1, name=0, brand=3, oe=4, app=5,
            prices=[6, 7, 8], qty=10, stars=11),
@@ -237,7 +248,7 @@ def specs():
         sp(file=new, sheet="电子", hdr=1, cat="throttle", code=1, name=None, oe=3, app=4,
            prices=[5, 6, 7], brand_fixed="WEILI"),
         sp(file=new, sheet="机械", hdr=1, cat="throttle", code=1, name=2, oe=4, app=5,
-           prices=[9, 10, 11], brand_fixed="WEILI", system=6, stepper=7, sensor=8),
+           prices=[9, 10, 11, 12], brand_fixed="WEILI", system=6, stepper=7, sensor=8),
         sp(file=new, sheet="高压线", hdr=1, cat="wire", code=0, name=None, brand=2, app=3,
            prices=[4, 5]),
         sp(file=new, sheet="碳罐电磁阀", hdr=1, cat="purge", code=1, name=0, brand=3, oe=4,
@@ -249,22 +260,22 @@ def specs():
         sp(file=new, sheet="机油控制阀", hdr=1, cat="ocv", code=1, name=0, oe=3, app=4,
            prices=[5, 6, 7], brand_fixed="WEILI"),
         sp(file=new, sheet="火花塞", hdr=3, cat="plug", code=1, name=None, model=2, app=5,
-           prices=[6, 9], brand_fixed="WEILI", material=4, packing=8),
+           prices=[6, 7, 9], brand_fixed="WEILI", material=4, packing=8),
     ]
-    # ---- ABS 五大类（336MB）
+    # ---- ABS 五大类（2026-11-12 版：每张表都多了一列「进价」，价格列整体往后挪一位）
     out += [
         sp(file=absf, sheet="进气压力传感器", hdr=1, cat="map", code=0, name=1, oe=3, app=4,
-           prices=[5, 6], brand_fixed="WEILI"),
+           prices=[5, 6, 7], brand_fixed="WEILI"),
         sp(file=absf, sheet="节气门位置传感器", hdr=1, cat="tps", code=1, name=0, brand=3, app=4,
-           prices=[5]),
+           prices=[5, 6]),
         sp(file=absf, sheet="曲轴位置传感器", hdr=1, cat="ckp", code=0, name=1, brand=3, oe=4,
-           app=5, prices=[6, 7]),
+           app=5, prices=[6, 7, 8]),
         sp(file=absf, sheet="ABS传感器", hdr=1, cat="abs", code=1, name=0, brand=3, oe=4, app=5,
-           prices=[6, 7]),
+           prices=[6, 7, 8]),
         sp(file=absf, sheet="凸轮轴位置传感器", hdr=1, cat="cmp", code=0, name=1, brand=3, oe=4,
-           app=5, prices=[6, 7]),
+           app=5, prices=[6, 7, 8]),
         sp(file=absf, sheet="压差传感器", hdr=1, cat="dpfe", code=0, name=1, brand=3, oe=4,
-           app=5, prices=[6, 7]),
+           app=5, prices=[6, 7, 8]),
     ]
     # ---- 其余单表
     out += [

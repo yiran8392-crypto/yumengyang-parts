@@ -7,7 +7,8 @@
 
 做了两件事：
   1. 站上没有图的型号 → 按文件名里的型号/OE 配一张主图（800px webp + 260px 缩略图）。
-  2. 站上已有图但宽度 < 400px 的 → 用图库同型号的高清图替换，旧图备份到 images/_v1/<品类>/。
+  2. 站上已有图但宽度 < 1200px 的 → 用图库同型号的高清图替换（源图至少比现在宽 10% 才换），
+     旧图备份到 images/_v1/<品类>/。
 
 文件名规律（1688 商品图）：
   WL 型号常省前缀：03-0114(1).jpg = WL03-0114；28-0001 (2).jpg = WL28-0001
@@ -52,13 +53,19 @@ FOLDERS = {
     "蒸发探测器": "purge",
     "点火线圈": "coil",
     "分火线": "wire",
+    # 2026-11-13 加：实拍/供应商高清图的归档目录（文件夹不存在时 collect() 返回空，无副作用）
+    "ABS传感器": "abs",
+    "ABS 传感器": "abs",
+    "温度传感器": "temp",
+    "凸轮轴位置传感器": "cmp",
+    "喷油嘴": "injector",
 }
 SKIP_DIRS = {"海报", "详情图", "定制"}
 SKIP_WORDS = ("图片文字修改", "框", "英文", "海报", "详情", "logo")
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
 
-FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 800, 80 * 1024, 260, 78
-UPGRADE_UNDER = 400      # 宽度小于这个就算低清，可用图库替换
+FULL_EDGE, FULL_BYTES, THUMB_EDGE, THUMB_Q = 1200, 200 * 1024, 260, 78
+UPGRADE_UNDER = 1200     # 宽度小于这个就算低清，可用图库替换（2026-11-13 从 400 提到 1200）
 EDGE_MIN = 0.80          # 图片四边白色比例下限：1688 宣传海报整张有底色，四边几乎没白色
 WHITE_MIN = 0.25         # 整体白色占比下限
 
@@ -289,6 +296,7 @@ def main():
 
     # 同一型号多张图：只留「最像白底产品图」的一张（海报图整张有底色，四边没白）
     fill, upgrade, unknown = {}, {}, {}
+    up_src = {}          # iid -> 图库源图长边（写报告用）
     per_folder = []
     skipped_poster = 0
     for folder, cat in FOLDERS.items():
@@ -319,7 +327,7 @@ def main():
                     return hits[0]
             return None
 
-        best = {}      # iid -> (score, path, kind)
+        best = {}      # iid -> (score, path, kind, 源图长边)
         for p in files:
             code = code_from_name(os.path.basename(p))
             if len(norm(code)) < 4:
@@ -335,6 +343,14 @@ def main():
             else:
                 kind = "fill"
             try:
+                with Image.open(p) as _im:
+                    sedge = max(_im.size)
+            except Exception:
+                continue
+            # 只换「真变大」的：源图至少比现在宽 10% 才换，否则会把清图换成更糊的图
+            if kind == "upgrade" and sedge < cur * 1.10:
+                continue
+            try:
                 wr, ew = img_quality(p)
             except Exception:
                 continue
@@ -344,14 +360,15 @@ def main():
             score = wr + ew * 0.5
             old = best.get(it["i"])
             if old is None or score > old[0]:
-                best[it["i"]] = (score, p, kind)
+                best[it["i"]] = (score, p, kind, sedge)
         nf = nu = 0
-        for iid, (sc, p, kind) in best.items():
+        for iid, (sc, p, kind, sedge) in best.items():
             if kind == "fill":
                 fill[iid] = p
                 nf += 1
             else:
                 upgrade[iid] = p
+                up_src[iid] = sedge
                 nu += 1
         per_folder.append((folder, cat, len(files), nf, nu))
         print("%-12s → %-9s 图=%-5d 补缺=%-4d 升级=%d" % (folder, cat, len(files), nf, nu))
@@ -448,8 +465,9 @@ def main():
     lines.append("升级明细：")
     for iid in sorted(upgrade, key=lambda x: by_i[x]["m"]):
         it = by_i[iid]
-        lines.append("   %-10s %-9s 原宽 %dpx ← %s" % (it["m"], it["c"], dims.get(iid, 0),
-                                                    os.path.relpath(upgrade[iid], BASE)))
+        lines.append("   %-10s %-9s 原宽 %dpx → 源图 %dpx  %s" % (it["m"], it["c"], dims.get(iid, 0),
+                                                            up_src.get(iid, 0),
+                                                            os.path.relpath(upgrade[iid], BASE)))
     with io.open(REPORT, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
     print("报告：%s" % REPORT)
