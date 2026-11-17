@@ -24,7 +24,7 @@
 <link rel="stylesheet" href="assets/style.css?v=20261113a">
 <script>try{var l=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("ymy_lang")||"en").toLowerCase();l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt":l.indexOf("id")===0?"id":l.indexOf("fa")===0?"fa":"en";var d=document.documentElement;d.setAttribute("data-lang",l);if(l==="ar"||l==="fa")d.setAttribute("dir","rtl");if(l!=="en")d.setAttribute("translate","no")}catch(e){}</script>
 <script defer src="assets/search_i18n.js"></script>
-<script defer src="assets/i18n.js?v=20261113i18n4"></script>
+<script defer src="assets/i18n.js?v=20261117i18n5"></script>
 <meta name="ymy-analytics" content="goatcounter:yumengyang-parts">
 <meta name="ymy-analytics-q" content="1">
 <script defer src="assets/analytics.js?v=20261110a"></script>
@@ -198,9 +198,9 @@ R350/GL450
 
 <script src="data/meta.js"></script>
 <script src="data/chunk-00.js"></script>
-<script src="data/facets.js"></script>
+<script src="data/facets.js?v=20261117a"></script>
 <script src="assets/catalog.js"></script>
-<script src="assets/facets.js"></script>
+<script src="assets/facets.js?v=20261117a"></script>
 <script src="assets/vin.js"></script>
 <script>
 (function(){
@@ -325,11 +325,13 @@ R350/GL450
     render(true);
   });
 
-  /* ---------- 级联筛选：品牌 → 车型 → 年款 → 排量（从适配车型字段现解析） ---------- */
+  /* ---------- 筛选项：品牌 / 车型 / 年款 / 排量，谁先选都行 ----------
+     车型要先有品牌（同一车系名会跨品牌）；品牌 / 年款 / 排量随时可选。
+     每选一个，其余几个的选项按数据自动收窄；收窄后不再成立的旧选择自动丢掉。 */
   var $fb = document.getElementById('f-b'), $fm = document.getElementById('f-m'),
       $fy = document.getElementById('f-y'), $fd = document.getElementById('f-d'),
       $fclear = document.getElementById('f-clear'), $fsum = document.getElementById('f-sum');
-  var SEL = { b: '', m: '', y: 0, d: 0 };
+  var SEL = { b: '', m: '', y: 0, d: '' };
   var FON = !!(window.FACETS && $fb);
   if(FON) window.FACETS.build(ALL);
 
@@ -345,27 +347,73 @@ R350/GL450
     }
     sel.innerHTML = h;
   }
+  function fHas(list, v){
+    for(var i = 0; i < list.length; i++){ var o = list[i]; if(String(o && typeof o === 'object' ? o.v : o) === String(v)) return true; }
+    return false;
+  }
+  /* 逐项体检：检查某一项时先把这一项自己排除掉。
+     否则「车型 POLO + 3.0T」这种组合会互相连坐——车型不成立被清掉时，
+     排量又因为「当时的车型范围里没有 3.0T」被一起清掉，结果两个都丢。 */
+  function fFirstBad(){
+    var o;
+    if(SEL.b){
+      o = window.FACETS.opts(ALL, { b: '', m: '', y: SEL.y, d: SEL.d }, state.cat);
+      if(!fHas(o.brands, SEL.b)) return 'b';
+    }
+    if(SEL.m){
+      o = window.FACETS.opts(ALL, { b: SEL.b, m: '', y: SEL.y, d: SEL.d }, state.cat);
+      if(!fHas(o.models, SEL.m)) return 'm';
+    }
+    if(SEL.y){
+      o = window.FACETS.opts(ALL, { b: SEL.b, m: SEL.m, y: 0, d: SEL.d }, state.cat);
+      if(!fHas(o.years, SEL.y)) return 'y';
+    }
+    if(SEL.d){
+      o = window.FACETS.opts(ALL, { b: SEL.b, m: SEL.m, y: SEL.y, d: '' }, state.cat);
+      if(!fHas(o.disps, SEL.d)) return 'd';
+    }
+    return '';
+  }
+  function fPrune(){
+    for(var guard = 0; guard < 4; guard++){
+      var bad = fFirstBad();
+      if(!bad) return;
+      if(bad === 'b'){ SEL.b = ''; SEL.m = ''; }
+      else if(bad === 'm'){ SEL.m = ''; }
+      else if(bad === 'y'){ SEL.y = 0; }
+      else { SEL.d = ''; }
+    }
+  }
   function fRebuild(){
     if(!FON) return;
+    fPrune();
     var o = window.FACETS.opts(ALL, SEL, state.cat);
+
     fFill($fb, o.brands, T('f_brand_any', 'Any brand'), '', SEL.b);
-    fFill($fm, o.models, T('f_model_any', 'Any model'), '', SEL.m);
+    if(SEL.b){
+      $fm.disabled = false;
+      fFill($fm, o.models, T('f_model_any', 'Any model'), '', SEL.m);
+    } else {
+      $fm.disabled = true;
+      fFill($fm, [], T('f_model_first', 'Choose a brand first'), '', '');
+    }
     fFill($fy, o.years, T('f_year_any', 'Any year'), '', SEL.y || '');
     fFill($fd, o.disps, T('f_disp_any', 'Any engine'), '', SEL.d || '');
+
     var bits = [];
     if(SEL.b) bits.push(SEL.b);
     if(SEL.m) bits.push(SEL.m);
     if(SEL.y) bits.push(SEL.y);
-    if(SEL.d) bits.push(SEL.d + 'L');
+    if(SEL.d) bits.push(SEL.d);
     $fsum.textContent = bits.join(' · ');
   }
   if(FON){
     fRebuild();
-    $fb.addEventListener('change', function(){ SEL.b = $fb.value; SEL.m = ''; SEL.y = 0; SEL.d = 0; fRebuild(); maybeLoadAll(); render(true); });
-    $fm.addEventListener('change', function(){ SEL.m = $fm.value; SEL.y = 0; SEL.d = 0; fRebuild(); maybeLoadAll(); render(true); });
-    $fy.addEventListener('change', function(){ SEL.y = +$fy.value || 0; SEL.d = 0; fRebuild(); maybeLoadAll(); render(true); });
-    $fd.addEventListener('change', function(){ SEL.d = +$fd.value || 0; maybeLoadAll(); render(true); });
-    $fclear.addEventListener('click', function(){ SEL = { b: '', m: '', y: 0, d: 0 }; fRebuild(); render(true); });
+    $fb.addEventListener('change', function(){ SEL.b = $fb.value; SEL.m = ''; fRebuild(); maybeLoadAll(); render(true); });
+    $fm.addEventListener('change', function(){ SEL.m = $fm.value; fRebuild(); maybeLoadAll(); render(true); });
+    $fy.addEventListener('change', function(){ SEL.y = +$fy.value || 0; fRebuild(); maybeLoadAll(); render(true); });
+    $fd.addEventListener('change', function(){ SEL.d = $fd.value; fRebuild(); maybeLoadAll(); render(true); });
+    $fclear.addEventListener('click', function(){ SEL = { b: '', m: '', y: 0, d: '' }; fRebuild(); render(true); });
   }
 
   /* ---------- 搜索 ---------- */
@@ -559,7 +607,7 @@ R350/GL450
     if(SEL.b) act.push(['b', SEL.b]);
     if(SEL.m) act.push(['m', SEL.m]);
     if(SEL.y) act.push(['y', String(SEL.y)]);
-    if(SEL.d) act.push(['d', SEL.d + 'L']);
+    if(SEL.d) act.push(['d', SEL.d]);
     var fnote = act.length
       ? '<p class="fnote"><span>' + esc(T('empty_filters', 'Active filters')) + '</span> ' +
         act.map(function(p){ return '<b>' + esc(p[1]) + '</b>'; }).join(' · ') + '</p>'
@@ -597,10 +645,11 @@ R350/GL450
     var d = e.target.closest('button[data-drop]');
     if(!d) return;
     var k = d.dataset.drop;
-    if(k === 'b' || k === 'all'){ SEL = { b: '', m: '', y: 0, d: 0 }; }
-    else if(k === 'm'){ SEL.m = ''; SEL.y = 0; SEL.d = 0; }
-    else if(k === 'y'){ SEL.y = 0; SEL.d = 0; }
-    else if(k === 'd'){ SEL.d = 0; }
+    if(k === 'b'){ SEL.b = ''; SEL.m = ''; }
+    else if(k === 'm'){ SEL.m = ''; }
+    else if(k === 'y'){ SEL.y = 0; }
+    else if(k === 'd'){ SEL.d = ''; }
+    else if(k === 'all'){ SEL = { b: '', m: '', y: 0, d: '' }; }
     fRebuild();
     render(true);
   });
@@ -759,9 +808,16 @@ R350/GL450
   if(dl.id){ setTimeout(function(){ open(parseInt(dl.id, 10)); }, 60); }
   /* 分享链接：?brand=Nissan&model=SUNNY 直接落到某个车系 */
   if(dl.brand){ SEL.b = dl.brand; }
-  if(dl.model){ SEL.m = String(dl.model).toUpperCase(); }
-  if(dl.year){ SEL.y = dl.year; }
-  if(dl.disp){ SEL.d = dl.disp; }
+  /* 只给了车型的名（?model=POLO）时，按车系词典把品牌补回来，否则车型一栏是空的 */
+  if(dl.model){
+    SEL.m = String(dl.model).toUpperCase();
+    if(!SEL.b && window.YMY_FACETS && window.YMY_FACETS.models){
+      SEL.b = window.YMY_FACETS.models[SEL.m] || '';
+    }
+  }
+  if(dl.year){ SEL.y = +dl.year || 0; }
+  /* 老链接写的是 ?disp=1.4（没带 L/T），统一归一成 1.4L */
+  if(dl.disp){ SEL.d = (window.FACETS && window.FACETS.dispTok(dl.disp)) || ''; }
   if(dl.brand || dl.model || dl.year || dl.disp){ fRebuild(); maybeLoadAll(); }
 
   if(/[?&]cats=open/.test(location.search + location.hash)){ var cb=document.querySelector('.catbox'); if(cb) cb.open=true; }

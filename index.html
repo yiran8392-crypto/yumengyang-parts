@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="assets/style.css?v=20261112d">
 <script>try{var l=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("ymy_lang")||"en").toLowerCase();l=l.indexOf("zh")===0?"zh":l.indexOf("ar")===0?"ar":l.indexOf("ru")===0?"ru":l.indexOf("fr")===0?"fr":l.indexOf("es")===0?"es":l.indexOf("pt")===0?"pt":l.indexOf("id")===0?"id":l.indexOf("fa")===0?"fa":"en";var d=document.documentElement;d.setAttribute("data-lang",l);if(l==="ar"||l==="fa")d.setAttribute("dir","rtl");if(l!=="en")d.setAttribute("translate","no")}catch(e){}</script>
 <script defer src="assets/search_i18n.js"></script>
-<script defer src="assets/i18n.js?v=20261112i18n3"></script>
+<script defer src="assets/i18n.js?v=20261117i18n5"></script>
 <meta name="ymy-analytics" content="goatcounter:yumengyang-parts">
 <meta name="ymy-analytics-q" content="1">
 <script defer src="assets/analytics.js?v=20261110a"></script>
@@ -299,72 +299,209 @@
   <span class="fabt">WhatsApp</span>
 </a>
 
-<script src="data/facets.js"></script>
+<script src="data/facets.js?v=20261117a"></script>
 <script>
 (function(){
   "use strict";
+  /* 按车型选件：四个下拉框谁先选都行。
+     品牌 / 年款 / 排量 随时可选；车型要先有品牌（否则同一车系名会串品牌）。
+     每选一个，其余几个的选项按数据自动收窄；收窄后不再成立的旧选择会被丢掉。 */
   var F = window.YMY_FACETS || { brands: [] };
   var $b = document.getElementById('f-b'), $m = document.getElementById('f-m'),
       $y = document.getElementById('f-y'), $d = document.getElementById('f-d'),
       $reset = document.getElementById('f-clear'), $sum = document.getElementById('f-sum'),
       $q = document.getElementById('q'), $form = document.getElementById('homesearch');
-  function opt(sel, txt, val, key){ var o = document.createElement('option'); o.textContent = txt; o.value = val || ''; if(key) o.setAttribute('data-i18n', key); sel.appendChild(o); }
-  function fill(sel, arr, anyTxt, anyKey){
-    sel.innerHTML = '';
-    opt(sel, anyTxt, '', anyKey);
-    (arr || []).forEach(function(v){ opt(sel, v[0], v[1]); });
-    if(window.I18N) try{ I18N.apply(); }catch(e){}
-  }
   if(!$b) return;
-  var brands = (F.brands || []).map(function(b){ return [b[0] + ' (' + b[1] + ')', b[0]]; });
-  fill($b, brands, 'Any brand', 'f_brand_any');
-  fill($m, [], 'Any model', 'f_model_any'); fill($y, [], 'Any year', 'f_year_any'); fill($d, [], 'Any engine', 'f_disp_any');
 
-  function curBrand(){ var v = $b.value; for(var i=0;i<F.brands.length;i++) if(F.brands[i][0] === v) return F.brands[i]; return null; }
-  function curModel(b){ if(!b) return null; for(var i=0;i<b[2].length;i++) if(b[2][i][0] === $m.value) return b[2][i]; return null; }
+  function T(k, fb){ return window.I18N ? window.I18N.t(k, fb) : (fb || ''); }
 
-  function onBrand(){
-    var b = curBrand();
-    if(!b){ fill($m, [], 'Any model', 'f_model_any'); fill($y, [], 'Any year', 'f_year_any'); fill($d, [], 'Any engine', 'f_disp_any'); return; }
-    var models = b[2].map(function(m){ return [m[1] + ' (' + m[2] + ')', m[0]]; });
-    fill($m, models, 'Any model', 'f_model_any'); fill($y, [], 'Any year', 'f_year_any'); fill($d, [], 'Any engine', 'f_disp_any');
+  var BR = (F.brands || []).slice(), BY = {}, i;
+  for(i = 0; i < BR.length; i++) BY[BR[i][0]] = BR[i];
+
+  var SEL = { b: '', m: '', y: 0, d: '' };   /* 当前选择 */
+
+  /* 车系记录：[key, 显示名, 条数, 起始年, 结束年, [排量...], [[起,止,"1.4L,1.4T"], ...]] */
+  function spans(m){ return m[6] || []; }
+
+  /* 这个车系在「某年 + 某排量」上成不成立（两个都不填就等于都成立） */
+  function fits(m, y, d){
+    if(!y && !d) return true;
+    var sp = spans(m);
+    for(var k = 0; k < sp.length; k++){
+      var s = sp[k];
+      if(y && (y < s[0] || y > s[1])) continue;
+      if(d && (',' + s[2] + ',').indexOf(',' + d + ',') < 0) continue;
+      return true;
+    }
+    return false;
   }
-  function onModel(){
-    var b = curBrand(), m = curModel(b);
-    if(!m){ fill($y, [], 'Any year', 'f_year_any'); fill($d, [], 'Any engine', 'f_disp_any'); return; }
-    var ys = [];
-    if(m[3] && m[4]){ for(var y = m[3]; y <= m[4]; y++) ys.push([String(y), String(y)]); }
-    fill($y, ys.reverse(), 'Any year');
-    fill($d, (m[5] || []).map(function(v){ return [v + 'L', v]; }), 'Any engine');
+
+  /* 已经定下来的车系范围：有品牌 → 该品牌（选了车型就只留那一个）；没品牌 → 全站 */
+  function scope(){
+    var out = [], b = SEL.b ? BY[SEL.b] : null, j, k;
+    if(b){
+      for(j = 0; j < b[2].length; j++){
+        if(SEL.m && b[2][j][0] !== SEL.m) continue;
+        out.push(b[2][j]);
+      }
+      return out;
+    }
+    for(j = 0; j < BR.length; j++)
+      for(k = 0; k < BR[j][2].length; k++) out.push(BR[j][2][k]);
+    return out;
   }
+
+  function dispCmp(a, b){
+    var ma = /^([\d.]+)([LT])$/.exec(a) || [0, 99, 'Z'], mb = /^([\d.]+)([LT])$/.exec(b) || [0, 99, 'Z'];
+    return (+ma[1] - +mb[1]) || (ma[2] === 'L' ? 0 : 1) - (mb[2] === 'L' ? 0 : 1);
+  }
+
+  /* 年款选项：看排量，不看年款自己 */
+  function yearList(){
+    var set = {}, sc = scope(), k, j, s, y;
+    for(k = 0; k < sc.length; k++){
+      var sp = spans(sc[k]);
+      for(j = 0; j < sp.length; j++){
+        s = sp[j];
+        if(SEL.d && (',' + s[2] + ',').indexOf(',' + SEL.d + ',') < 0) continue;
+        for(y = s[0]; y <= s[1]; y++) set[y] = 1;
+      }
+    }
+    return Object.keys(set).map(Number).sort(function(a, b){ return b - a; });
+  }
+
+  /* 排量选项：看年款，不看排量自己 */
+  function dispList(){
+    var set = {}, sc = scope(), k, j, s, t;
+    for(k = 0; k < sc.length; k++){
+      var sp = spans(sc[k]);
+      for(j = 0; j < sp.length; j++){
+        s = sp[j];
+        if(SEL.y && (SEL.y < s[0] || SEL.y > s[1])) continue;
+        var ts = s[2] ? s[2].split(',') : [];
+        for(t = 0; t < ts.length; t++) set[ts[t]] = 1;
+      }
+    }
+    return Object.keys(set).sort(dispCmp);
+  }
+
+  /* 车型选项：只有选了品牌才有，且按年款/排量收窄 */
+  function modelList(){
+    var b = SEL.b ? BY[SEL.b] : null, out = [];
+    if(!b) return out;
+    for(var k = 0; k < b[2].length; k++) if(fits(b[2][k], SEL.y, SEL.d)) out.push(b[2][k]);
+    return out;
+  }
+
+  /* 品牌选项：按年款/排量收窄（品牌自己那层不参与） */
+  function brandList(){
+    var out = [];
+    for(var k = 0; k < BR.length; k++){
+      var ms = BR[k][2];
+      for(var j = 0; j < ms.length; j++){
+        if(fits(ms[j], SEL.y, SEL.d)){ out.push(BR[k]); break; }
+      }
+    }
+    out.sort(function(a, b){ return b[1] - a[1]; });
+    return out;
+  }
+
+  function has(list, v){ for(var k = 0; k < list.length; k++) if(list[k] === v) return true; return false; }
+  function hasModel(list, key){ for(var k = 0; k < list.length; k++) if(list[k][0] === key) return true; return false; }
+
+  /* 收窄之后旧的不成立了就丢掉（返回 true 表示动过，要再算一遍） */
+  function prune(){
+    var changed = false;
+    if(SEL.b && !BY[SEL.b]){ SEL.b = ''; SEL.m = ''; return true; }
+    if(SEL.m && !hasModel(modelList(), SEL.m)){ SEL.m = ''; changed = true; }
+    if(SEL.y && !has(yearList(), SEL.y)){ SEL.y = 0; changed = true; }
+    if(SEL.d && !has(dispList(), SEL.d)){ SEL.d = ''; changed = true; }
+    if(SEL.b){
+      var ok = false, bl = brandList();
+      for(var k = 0; k < bl.length; k++) if(bl[k][0] === SEL.b) ok = true;
+      if(!ok){ SEL.b = ''; SEL.m = ''; changed = true; }
+    }
+    return changed;
+  }
+
+  function fill(sel, list, anyTxt, anyKey, cur){
+    sel.innerHTML = '';
+    var o = document.createElement('option');
+    o.value = ''; o.textContent = anyTxt;
+    if(anyKey) o.setAttribute('data-i18n', anyKey);
+    sel.appendChild(o);
+    for(var k = 0; k < list.length; k++){
+      var op = document.createElement('option');
+      op.value = list[k][0];
+      op.textContent = list[k][1];
+      sel.appendChild(op);
+    }
+    sel.value = (cur || cur === 0) && String(cur) ? String(cur) : '';
+    if(sel.value === '') sel.selectedIndex = 0;
+  }
+
+  function rebuild(){
+    for(var guard = 0; guard < 4 && prune(); guard++){}
+    var showN = !SEL.y && !SEL.d;      /* 有年款/排量筛选时，静态条数会误导，索性不显示 */
+    var bl = brandList();
+    fill($b, bl.map(function(b){ return [b[0], showN ? b[0] + ' (' + b[1] + ')' : b[0]]; }),
+         T('f_brand_any', 'Any brand'), 'f_brand_any', SEL.b);
+    if(SEL.b){
+      $m.disabled = false;
+      var ml = modelList();
+      fill($m, ml.map(function(m){ return [m[0], showN ? m[1] + ' (' + m[2] + ')' : m[1]]; }),
+           T('f_model_any', 'Any model'), 'f_model_any', SEL.m);
+    } else {
+      $m.disabled = true;
+      fill($m, [], T('f_model_first', 'Choose a brand first'), 'f_model_first', '');
+    }
+    fill($y, yearList().map(function(y){ return [String(y), String(y)]; }),
+         T('f_year_any', 'Any year'), 'f_year_any', SEL.y);
+    fill($d, dispList().map(function(t){ return [t, t]; }),
+         T('f_disp_any', 'Any engine'), 'f_disp_any', SEL.d);
+    summary();
+  }
+
   function summary(){
     var bits = [];
-    if($b.value) bits.push($b.value);
-    if($m.value) bits.push($m.value);
-    if($y.value) bits.push($y.value);
-    if($d.value) bits.push($d.value + 'L');
+    if(SEL.b) bits.push(SEL.b);
+    if(SEL.m){
+      var b = BY[SEL.b];
+      for(var k = 0; b && k < b[2].length; k++) if(b[2][k][0] === SEL.m){ bits.push(b[2][k][1]); break; }
+    }
+    if(SEL.y) bits.push(String(SEL.y));
+    if(SEL.d) bits.push(SEL.d);
     if($sum) $sum.textContent = bits.join(' · ');
   }
-  $b.addEventListener('change', function(){ onBrand(); summary(); });
-  $m.addEventListener('change', function(){ onModel(); summary(); });
-  $y.addEventListener('change', summary);
-  $d.addEventListener('change', summary);
+
+  function onBrand(){ SEL.b = $b.value; SEL.m = ''; rebuild(); }
+  function onModel(){ SEL.m = $m.value; rebuild(); }
+  function onYear(){ SEL.y = +$y.value || 0; rebuild(); }
+  function onDisp(){ SEL.d = $d.value; rebuild(); }
+
+  $b.addEventListener('change', onBrand);
+  $m.addEventListener('change', onModel);
+  $y.addEventListener('change', onYear);
+  $d.addEventListener('change', onDisp);
   if($reset) $reset.addEventListener('click', function(){
-    $b.value = ''; $m.value = ''; $y.value = ''; $d.value = '';
-    fill($m, [], 'Any model', 'f_model_any'); fill($y, [], 'Any year', 'f_year_any'); fill($d, [], 'Any engine', 'f_disp_any'); summary();
+    SEL = { b: '', m: '', y: 0, d: '' }; rebuild();
   });
 
   function go(){
     var p = new URLSearchParams();
     if($q && $q.value.trim()) p.set('q', $q.value.trim());
-    if($b.value) p.set('brand', $b.value);
-    if($m.value) p.set('model', $m.value);
-    if($y.value) p.set('year', $y.value);
-    if($d.value) p.set('disp', $d.value);
+    if(SEL.b) p.set('brand', SEL.b);
+    if(SEL.m) p.set('model', SEL.m);
+    if(SEL.y) p.set('year', String(SEL.y));
+    if(SEL.d) p.set('disp', SEL.d);
     location.href = 'products.html' + (p.toString() ? '?' + p.toString() : '');
   }
   if($form) $form.addEventListener('submit', function(e){ e.preventDefault(); go(); });
   if($q) $q.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
+
+  document.addEventListener('i18n:change', rebuild);   /* 切语言：Any brand / 先选品牌 这些跟着重画 */
+  rebuild();
+  if(window.I18N) try{ I18N.apply(); }catch(e){}
 })();
 </script>
 

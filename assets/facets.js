@@ -1,7 +1,9 @@
-/* 级联筛选（品牌 → 车型 → 年款 → 排量）
-   数据来源：data/facets.js（facets_build.py 生成，含品牌/车系词典与统计）
-   逻辑：车型/品牌在浏览器里按同一套词典解析并缓存到 item._fb / item._fm，
-        选项列表直接用 facets 里的统计（首屏就有全量，不用等 29 个分片）。
+/* 级联筛选（品牌 / 车型 / 年款 / 排量 —— 谁先选都行）
+   数据来源：data/facets.js（facets_build.py 生成，每个车系带「年段 → 排量」）
+   选项怎么来：
+     · 品类 = 全部时，直接按 facets 的统计算（秒出、全量，不用等 29 个分片）
+     · 选中某个品类时，退回按已加载的型号现算（品类不在 facets 的统计维度里）
+   规则：车型要先有品牌（同一个车系名会跨品牌）；品牌 / 年款 / 排量随时可选。
    挂到 window.FACETS。 */
 (function () {
   "use strict";
@@ -49,12 +51,10 @@
   function modelsOf(a, bs) {
     var toks = String(a || "").match(TOK) || [], keys = [], out = [], seen = {}, i, j;
     for (i = 0; i < toks.length; i++) keys.push(norm(toks[i]));
-    // 1) 词典登记过的车系
     for (i = 0; i < keys.length; i++) {
       var k = keys[i], owner = MODELS[k];
       if (owner && bs.indexOf(owner) >= 0 && !seen[k]) { seen[k] = 1; out.push(k); }
     }
-    // 2) 品牌名后面 1–2 个词
     for (i = 0; i < keys.length; i++) {
       var brand = ALIAS_NORM[keys[i]];
       if (!brand || bs.indexOf(brand) < 0) continue;
@@ -67,6 +67,21 @@
     return out;
   }
 
+  /* 排量 token：和 facets_build.py 同一套规则（一位小数 + L/T，「1.4T」不会被当成 1.4L） */
+  function dispTok(raw) {
+    var m = /^(\d(?:\.\d+)?)\s*([LT])?$/i.exec(String(raw || "").trim());
+    if (!m) return "";
+    var v = parseFloat(m[1]);
+    if (!(v >= 0.5 && v <= 8.0)) return "";
+    return v.toFixed(1) + (m[2] ? m[2].toUpperCase() : "L");
+  }
+
+  function dispCmp(a, b) {
+    var ma = /^([\d.]+)([LT])$/.exec(a) || [0, "99", "Z"];
+    var mb = /^([\d.]+)([LT])$/.exec(b) || [0, "99", "Z"];
+    return (+ma[1] - +mb[1]) || ((ma[2] === "L" ? 0 : 1) - (mb[2] === "L" ? 0 : 1));
+  }
+
   function parseItem(it) {
     if (it._fb) return;
     var a = it.a || "";
@@ -74,7 +89,6 @@
     var ms = bs.length ? modelsOf(a, bs) : [];
     it._fb = bs;
     it._fm = ms;
-    // 年款区间（文本兜底只在没有 y 时才用）
     var ymin = 0, ymax = 0;
     if (it.y && it.y.length) {
       for (var q = 0; q < it.y.length; q++) {
@@ -93,8 +107,8 @@
     var ds = [];
     if (it.d && it.d.length) {
       for (var w = 0; w < it.d.length; w++) {
-        var dv = parseFloat(String(it.d[w] || ""));
-        if (dv >= 0.5 && dv <= 8.0 && ds.indexOf(dv) < 0) ds.push(dv);
+        var t = dispTok(it.d[w]);
+        if (t && ds.indexOf(t) < 0) ds.push(t);
       }
     }
     it._fd = ds;
@@ -117,67 +131,131 @@
     return null;
   }
 
-  function counts(items, sel, cat) {
-    var bc = {}, mc = {}, yc = {}, dc = {}, i, it;
+  /* ---------- 车系上的「年段 → 排量」（facets 统计里最后一个字段） ---------- */
+  function spansOf(m) { return (m && m[6]) || []; }
+
+  function fits(m, y, d) {
+    if (!y && !d) return true;
+    var sp = spansOf(m);
+    for (var i = 0; i < sp.length; i++) {
+      var s = sp[i];
+      if (y && (y < s[0] || y > s[1])) continue;
+      if (d && ("," + s[2] + ",").indexOf("," + d + ",") < 0) continue;
+      return true;
+    }
+    return false;
+  }
+
+  /* ---------- 方案 A：选项直接按 facets 统计算（品类 = 全部时用） ---------- */
+  function optsFromCatalog(sel) {
+    var bs = (CAT && CAT.brands) || [];
+    var brands = [], models = [], years = [], disps = [], yset = {}, dset = {}, i, j, y;
+    var showN = !sel.y && !sel.d;
+    var scopeModels = [];      /* 品牌/车型已经定下来的车系 */
+
+    for (i = 0; i < bs.length; i++) {
+      var okBrand = false, bm = bs[i][2];
+      for (j = 0; j < bm.length; j++) {
+        if (!fits(bm[j], sel.y, sel.d)) continue;
+        okBrand = true;
+        if ((!sel.b || bs[i][0] === sel.b) && (!sel.m || bm[j][0] === sel.m)) scopeModels.push(bm[j]);
+      }
+      if (okBrand) brands.push({ v: bs[i][0], n: showN ? bs[i][1] : null });
+    }
+
+    if (sel.b) {
+      var cb = catalogBrand(sel.b);
+      var cbModels = cb ? cb[2] : [];
+      for (i = 0; i < cbModels.length; i++) {
+        var m = cbModels[i];
+        if (!fits(m, sel.y, sel.d)) continue;
+        models.push({ v: m[0], label: m[1], n: showN ? m[2] : null });
+      }
+    }
+
+    for (i = 0; i < scopeModels.length; i++) {
+      var sp = spansOf(scopeModels[i]);
+      for (j = 0; j < sp.length; j++) {
+        var s = sp[j], toks = s[2] ? s[2].split(",") : [];
+        if (!sel.d) {
+          for (y = s[0]; y <= s[1]; y++) yset[y] = 1;
+        } else if (toks.indexOf(sel.d) >= 0) {
+          for (y = s[0]; y <= s[1]; y++) yset[y] = 1;
+        }
+        if (sel.y && (sel.y < s[0] || sel.y > s[1])) continue;
+        for (var t = 0; t < toks.length; t++) dset[toks[t]] = 1;
+      }
+    }
+
+    var yk = Object.keys(yset).map(Number).sort(function (a, b) { return b - a; });
+    for (i = 0; i < yk.length; i++) years.push({ v: yk[i], label: yk[i], n: null });
+    var dk = Object.keys(dset).sort(dispCmp);
+    for (i = 0; i < dk.length; i++) disps.push({ v: dk[i], label: dk[i], n: null });
+
+    return { brands: brands, models: models, years: years, disps: disps };
+  }
+
+  /* ---------- 方案 B：按已加载的型号现算（选了具体品类时用，带条数） ---------- */
+  function yearOk(it, y) { return !y || (!!it._fy && it._fy[0] <= y && y <= it._fy[1]); }
+  function dispOk(it, d) { return !d || (it._fd || []).indexOf(d) >= 0; }
+
+  function optsFromItems(items, sel, cat) {
+    var bc = {}, mc = {}, yc = {}, dc = {}, i, it, k;
     for (i = 0; i < items.length; i++) {
       it = items[i];
       if (cat !== "all" && it.c !== cat) continue;
       parseItem(it);
-      for (var b = 0; b < it._fb.length; b++) if (!sel.b || it._fb[b] === sel.b) bc[it._fb[b]] = (bc[it._fb[b]] || 0) + 1;
-      if (sel.b && it._fb.indexOf(sel.b) < 0) continue;
-      for (var m = 0; m < it._fm.length; m++) mc[it._fm[m]] = (mc[it._fm[m]] || 0) + 1;
-      if (sel.m && it._fm.indexOf(sel.m) < 0) continue;
-      if (it._fy) for (var y = it._fy[0]; y <= it._fy[1]; y++) yc[y] = (yc[y] || 0) + 1;
-      for (var d = 0; d < it._fd.length; d++) dc[it._fd[d]] = (dc[it._fd[d]] || 0) + 1;
+      var yOK = yearOk(it, sel.y), dOK = dispOk(it, sel.d),
+          bOK = !sel.b || it._fb.indexOf(sel.b) >= 0,
+          mOK = !sel.m || it._fm.indexOf(sel.m) >= 0;
+      if (mOK && yOK && dOK) for (k = 0; k < it._fb.length; k++) bc[it._fb[k]] = (bc[it._fb[k]] || 0) + 1;
+      if (sel.b && bOK && yOK && dOK) for (k = 0; k < it._fm.length; k++) mc[it._fm[k]] = (mc[it._fm[k]] || 0) + 1;
+      if (bOK && mOK && dOK && it._fy) for (var y = it._fy[0]; y <= it._fy[1]; y++) yc[y] = (yc[y] || 0) + 1;
+      if (bOK && mOK && yOK) for (k = 0; k < it._fd.length; k++) dc[it._fd[k]] = (dc[it._fd[k]] || 0) + 1;
     }
-    return { bc: bc, mc: mc, yc: yc, dc: dc };
+
+    var brands = [], models = [], years = [], disps = [], b;
+    for (b in bc) brands.push({ v: b, n: bc[b] });
+    brands.sort(function (x, y) { return y.n - x.n; });
+
+    if (sel.b) {
+      var cb = catalogBrand(sel.b), added = {};
+      if (cb) {
+        for (i = 0; i < cb[2].length; i++) {
+          var cm = cb[2][i];
+          if ((sel.y || sel.d) && mc[cm[0]] == null) continue;
+          models.push({ v: cm[0], label: cm[1], n: (sel.y || sel.d) ? mc[cm[0]] : cm[2] });
+          added[cm[0]] = 1;
+        }
+      }
+      for (var mk in mc) if (!added[mk]) models.push({ v: mk, label: mk, n: mc[mk] });
+    }
+
+    var yk = Object.keys(yc).map(Number).sort(function (a, b2) { return b2 - a; });
+    for (i = 0; i < yk.length; i++) years.push({ v: yk[i], label: yk[i], n: yc[yk[i]] });
+    var dk = Object.keys(dc).sort(dispCmp);
+    for (i = 0; i < dk.length; i++) disps.push({ v: dk[i], label: dk[i], n: dc[dk[i]] });
+
+    return { brands: brands, models: models, years: years, disps: disps };
   }
 
   function opts(items, sel, cat) {
-    var c = counts(items, sel, cat), i;
-    var brands = [], models = [], years = [], disps = [];
-
-    if (CAT && cat === "all") {
-      for (i = 0; i < CAT.brands.length; i++) brands.push({ v: CAT.brands[i][0], n: CAT.brands[i][1] });
-    } else {
-      for (var b in c.bc) brands.push({ v: b, n: c.bc[b] });
-      brands.sort(function (x, y) { return y.n - x.n; });
-    }
-
-    if (sel.b) {
-      var cb = CAT && cat === "all" ? catalogBrand(sel.b) : null;
-      if (cb) {
-        for (i = 0; i < cb[2].length; i++) models.push({ v: cb[2][i][0], label: cb[2][i][1], n: cb[2][i][2] });
-      } else {
-        for (var mk in c.mc) models.push({ v: mk, label: mk, n: c.mc[mk] });
-        models.sort(function (x, y) { return y.n - x.n; });
-      }
-    }
-
-    if (sel.m) {
-      var cm = CAT && cat === "all" ? catalogModel(sel.b, sel.m) : null;
-      var y0 = cm ? cm[3] : 0, y1 = cm ? cm[4] : 0;
-      if (!y0) for (var k in c.yc) { if (!y0 || +k < y0) y0 = +k; if (+k > y1) y1 = +k; }
-      for (var y = y1; y >= y0; y--) years.push({ v: y, label: y, n: c.yc[y] || 0 });
-      var dm = cm ? cm[5] : null;
-      if (dm && dm.length) for (i = 0; i < dm.length; i++) disps.push({ v: dm[i], label: dm[i] + " L", n: c.dc[dm[i]] || 0 });
-      else {
-        var dk = Object.keys(c.dc).map(Number).sort(function (a, b) { return a - b; });
-        for (i = 0; i < dk.length; i++) disps.push({ v: dk[i], label: dk[i] + " L", n: c.dc[dk[i]] });
-      }
-    }
-
-    return { brands: brands, models: models, years: years, disps: disps };
+    if (CAT && cat === "all") return optsFromCatalog(sel);
+    return optsFromItems(items, sel, cat);
   }
 
   function match(it, sel) {
     parseItem(it);
     if (sel.b && it._fb.indexOf(sel.b) < 0) return false;
     if (sel.m && it._fm.indexOf(sel.m) < 0) return false;
-    if (sel.y && (!it._fy || it._fy[0] > sel.y || it._fy[1] < sel.y)) return false;
-    if (sel.d && (it._fd || []).indexOf(sel.d) < 0) return false;
+    if (!yearOk(it, sel.y)) return false;
+    if (!dispOk(it, sel.d)) return false;
     return true;
   }
 
-  window.FACETS = { build: build, opts: opts, match: match, modelOf: function (k) { return MODELS[k] || ""; }, catalog: CAT };
+  window.FACETS = {
+    build: build, opts: opts, match: match, catalog: CAT,
+    dispTok: dispTok,
+    modelOf: function (k) { return MODELS[k] || ""; }
+  };
 })();

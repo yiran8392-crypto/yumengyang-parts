@@ -10,11 +10,18 @@
         - 没登记的，只有整条文本里只出现一个品牌时才归给这个品牌；
         - 代号（T31 / J32 / HR16）、方位词、零件词、供应商名一律不要。
   · 年款：item.y（结构化）；开口区间 2019- 算到今年
-  · 排量：item.d
+  · 排量：item.d —— 保留单位，「1.4T」和「1.4L」是两个不同的选项（涡轮/自吸不混）
 
 输出给浏览器的是紧凑数组，省流量：
   window.YMY_FACETS={g, aliases:{NISSAN:"Nissan",...}, models:{SUNNY:"Nissan",...},
-    brands:[["Nissan",177,[["SUNNY","Sunny",6,2007,2024,[1.2,1.5,1.6,2.0]], ...]], ...]}
+    brands:[["Nissan",177,[["SUNNY","Sunny",6,2007,2024,
+              ["1.2L","1.5L","1.6L"],                        # 这个车系出现过的排量
+              [[2007,2012,"1.5L,1.6L"],[2013,2024,"1.2L"]]   # 年段 → 该年段有的排量
+            ], ...]], ...]}
+
+  最后一段（年段）是给「任何一个下拉框都能先选」用的：只有它同时知道年和排量，
+  才能做到「先选排量，再回头看品牌/车型/年款还剩下哪些」。连续且排量集合相同的
+  年份会合成一段，省体积。
 """
 import io
 import json
@@ -121,16 +128,48 @@ def years_of(it):
     return (min(a for a, _ in spans), max(b for _, b in spans))
 
 
+def num_key(v):
+    """排量数字统一一位小数：1.0 / 1.4 / 2.0（源表里 2L 和 2.0L 混着写，也统一掉）。"""
+    return "%.1f" % v
+
+
+def disp_sort_key(t):
+    """排量排序：先按数字，同数字 L 在前 T 在后（1.4L → 1.4T → 1.5L）。"""
+    m = re.match(r"(\d+(?:\.\d+)?)([LT])", t or "")
+    if not m:
+        return (99.0, 9)
+    return (float(m.group(1)), 0 if m.group(2) == "L" else 1)
+
+
 def disps_of(it):
-    out = set()
+    """排量 token 列表——带单位。以前把「2.0T」吞成 2.0、再统一按 L 显示，
+    结果涡轮车全被写成 2.0L，客户拿 2.0T 来反而找不到。"""
+    out = []
     for s in it.get("d") or []:
-        m = re.match(r"(\d(?:\.\d)?)\s*[LT]?", str(s).strip(), re.I)
+        m = re.match(r"(\d(?:\.\d)?)\s*([LT])?", str(s).strip(), re.I)
         if not m:
             continue
         v = float(m.group(1))
         if 0.5 <= v <= 8.0:
-            out.add(round(v, 1))
-    return sorted(out)
+            t = num_key(round(v, 1)) + (m.group(2) or "L").upper()
+            if t not in out:
+                out.append(t)
+    return out
+
+
+def spans_of(by_year):
+    """{年: {排量}} → [[起, 止, "1.4L,1.6L"], ...]。
+    连续、且排量集合完全相同的年份压成一段，前端拿它做「任意顺序筛选」。"""
+    out = []
+    cur = None
+    for y in sorted(by_year):
+        toks = ",".join(sorted(by_year[y], key=disp_sort_key))
+        if cur and cur[2] == toks and y == cur[1] + 1:
+            cur[1] = y
+            continue
+        cur = [y, y, toks]
+        out.append(cur)
+    return out
 
 
 def models_of(a, bs):
@@ -176,8 +215,8 @@ def models_of(a, bs):
 def build(payload, log=print):
     items = payload.get("items") or []
     agg = collections.defaultdict(lambda: collections.defaultdict(
-        lambda: {"n": 0, "y0": 0, "y1": 0, "d": set()}))
-    stats = {"items": 0, "branded": 0, "models": 0}
+        lambda: {"n": 0, "y0": 0, "y1": 0, "d": set(), "yy": {}}))
+    stats = {"items": 0, "branded": 0, "models": 0, "turbo": 0}
     for it in items:
         a = it.get("a") or ""
         bs = brands.brand_hits(a)
@@ -193,6 +232,8 @@ def build(payload, log=print):
                 if y0:
                     rec["y0"] = min(rec["y0"] or y0, y0)
                     rec["y1"] = max(rec["y1"] or y1, y1)
+                    for y in range(y0, y1 + 1):
+                        rec["yy"].setdefault(y, set()).update(ds)
                 rec["d"].update(ds)
                 stats["models"] += 1
 
@@ -201,7 +242,10 @@ def build(payload, log=print):
         models = []
         for k, r in sorted(agg[b].items(), key=lambda kv: -kv[1]["n"]):
             disp = DISPLAY.get(k) or (k.title() if k.isupper() else k)
-            models.append([k, disp, r["n"], r["y0"], r["y1"], sorted(r["d"])])
+            ds = sorted(r["d"], key=disp_sort_key)
+            if any(t.endswith("T") for t in ds):
+                stats["turbo"] += 1
+            models.append([k, disp, r["n"], r["y0"], r["y1"], ds, spans_of(r["yy"])])
         brands_out.append([b, sum(m[2] for m in models), models])
 
     data = {"g": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -217,8 +261,9 @@ def build(payload, log=print):
         f.write(body)
         f.write(";\n")
     os.replace(tmp, out)
-    log("  级联数据：%d 个品牌 / %d 条品牌-车型（%.0f KB）"
-        % (len(brands_out), stats["models"], os.path.getsize(out) / 1024.0))
+    log("  级联数据：%d 个品牌 / %d 条品牌-车型 / %d 个车系带涡轮排量（%.0f KB）"
+        % (len(brands_out), stats["models"], stats["turbo"],
+           os.path.getsize(out) / 1024.0))
     return data
 
 
