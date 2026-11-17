@@ -29,6 +29,8 @@
 <meta name="ymy-analytics" content="goatcounter:yumengyang-parts">
 <meta name="ymy-analytics-q" content="1">
 <script defer src="assets/analytics.js?v=20261110a"></script>
+<!-- 故障码识别：搜索框输 P0301 直接进诊断页，未收录的给「按码段先查哪类件」（2026-11-17） -->
+<script defer src="assets/dtc.js?v=20261117c"></script>
 
 <style>
 /* ---- What we do 轮播（2026-11-10） ---- */
@@ -492,8 +494,16 @@
   });
 
   function go(){
+    var raw = $q ? $q.value.trim() : "";
+    /* 故障码分流（2026-11-17）：P0301 / p 0301 / 0301 这类输入不再进型号搜索拿空结果，
+       有诊断页就直接跳过去，没收录的跳到 codes 目录页给「按码段先查哪类件」。
+       认不出是码就原样继续下面的型号搜索，老行为不变。 */
+    if(raw && window.DTC){
+      var dtcCode = DTC.detect(raw);
+      if(dtcCode){ location.href = DTC.href(dtcCode, ''); return; }
+    }
     var p = new URLSearchParams();
-    if($q && $q.value.trim()) p.set('q', $q.value.trim());
+    if(raw) p.set('q', raw);
     if(SEL.b) p.set('brand', SEL.b);
     if(SEL.m) p.set('model', SEL.m);
     if(SEL.y) p.set('year', String(SEL.y));

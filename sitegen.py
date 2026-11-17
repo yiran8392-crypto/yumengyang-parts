@@ -2506,6 +2506,7 @@ def page_codes_index(cfg):
   check parts in, the mistake that costs the most money, and the part numbers we hold for it.</p>
   <p class="doclead" style="border:0;padding-bottom:0;margin-bottom:0">We do not list all 12,000 OBD codes.
   We list the ones our own catalogue can fix &mdash; if your code is here, we very likely have the part.</p>
+  <div id="dtc-panel" hidden></div>
   %s
   <section class="dsec">
     <h2 data-i18n="codes_next">What you can do next</h2>
@@ -2532,7 +2533,8 @@ def page_codes_index(cfg):
        NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
     return head_block(cfg, title, desc, rel_url(cfg, "codes/index.html"), "assets/og/og-default.webp",
-                      "website", base="../") + "\n" + body
+                      "website", base="../",
+                      extra_scripts='\n<script defer src="../assets/dtc.js?v=20261117c"></script>') + "\n" + body
 
 
 def page_code(cfg, c, resolve, cat_counts):
