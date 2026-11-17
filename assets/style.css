@@ -850,7 +850,7 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 .hero{background:#0d2233}
 .hero::before{content:"";position:absolute;left:0;right:0;top:0;height:430px;z-index:0;
   background:linear-gradient(100deg,rgba(8,20,29,.93) 0%,rgba(9,26,38,.72) 46%,rgba(10,32,46,.30) 100%),
-             url("hero/hero-warehouse.webp?v=20261117q") center/cover no-repeat;
+             url("hero/hero-warehouse.webp?v=20261117t") center/cover no-repeat;
   background-size:100% 100%,cover}
 /* 手机：hero 条带接近正方形（390 宽 × 430 高，比例 0.907），16:9 原图 cover 会按高度
    铺满、整幅塞进来。所以 hero-warehouse-sm.webp 是**单独裁的**近方形素材
