@@ -87,6 +87,8 @@
   /* 只翻这几句；品类名走 data-cat，由 assets/i18n.js 自动翻译，不重复维护。 */
   var STR = {
     en: {
+      hint: "Fault code?",
+      all: "All fault codes",
       nf: "No page for {c} yet",
       lead: "We write up {n} OBD-II codes in detail; {c} is not one of them yet. The code family still tells you where to start.",
       cats: "Parts to check first",
@@ -99,6 +101,8 @@
       then: "then"
     },
     zh: {
+      hint: "故障码也能查",
+      all: "全部故障码",
       nf: "暂时没有 {c} 的诊断页",
       lead: "我们写细的有 {n} 个 OBD-II 码，{c} 还没轮到。但这个码所属的码段还是能告诉你先查哪几类件。",
       cats: "先查这几类件",
@@ -111,6 +115,8 @@
       then: "其次"
     },
     ar: {
+      hint: "رمز العطل؟",
+      all: "كل رموز الأعطال",
       nf: "لا توجد صفحة للرمز {c} حتى الآن",
       lead: "لدينا {n} رمز OBD-II مشروحًا بالتفصيل، و{c} ليس منها بعد. لكن عائلة الرمز تدلّك على القطع التي تُفحص أولًا.",
       cats: "القطع التي تُفحص أولًا",
@@ -123,6 +129,8 @@
       then: "ثم"
     },
     ru: {
+      hint: "Код ошибки?",
+      all: "Все коды",
       nf: "Страницы для кода {c} пока нет",
       lead: "Подробно разобрано {n} кодов OBD-II, {c} пока не входит. Но семейство кода подсказывает, какие детали проверять первыми.",
       cats: "Что проверять первым",
@@ -135,6 +143,8 @@
       then: "затем"
     },
     fr: {
+      hint: "Code défaut ?",
+      all: "Tous les codes",
       nf: "Pas encore de page pour le code {c}",
       lead: "Nous détaillons {n} codes OBD-II ; {c} n'en fait pas encore partie. La famille du code indique toutefois par quelles pièces commencer.",
       cats: "Pièces à vérifier en premier",
@@ -147,6 +157,8 @@
       then: "ensuite"
     },
     es: {
+      hint: "¿Código de avería?",
+      all: "Todos los códigos",
       nf: "Todavía no hay página para el código {c}",
       lead: "Detallamos {n} códigos OBD-II; {c} aún no está entre ellos. La familia del código sí indica por qué piezas empezar.",
       cats: "Piezas que revisar primero",
@@ -159,6 +171,8 @@
       then: "después"
     },
     pt: {
+      hint: "Código de falha?",
+      all: "Todos os códigos",
       nf: "Ainda não há página para o código {c}",
       lead: "Detalhamos {n} códigos OBD-II; {c} ainda não está entre eles. A família do código indica por quais peças começar.",
       cats: "Peças a verificar primeiro",
@@ -171,6 +185,8 @@
       then: "depois"
     },
     id: {
+      hint: "Kode gangguan?",
+      all: "Semua kode",
       nf: "Belum ada halaman untuk kode {c}",
       lead: "Kami membahas {n} kode OBD-II secara rinci; {c} belum termasuk. Namun keluarga kode tetap menunjukkan komponen mana yang diperiksa lebih dulu.",
       cats: "Komponen yang diperiksa lebih dulu",
@@ -183,6 +199,8 @@
       then: "lalu"
     },
     fa: {
+      hint: "کد عیب؟",
+      all: "همهٔ کدها",
       nf: "هنوز صفحه‌ای برای کد {c} نداریم",
       lead: "ما {n} کد OBD-II را با جزئیات توضیح داده‌ایم و {c} هنوز در میان آن‌ها نیست. اما خانوادهٔ کد نشان می‌دهد اول کدام قطعات را بررسی کنید.",
       cats: "قطعاتی که اول بررسی می‌شوند",
@@ -324,20 +342,91 @@
     }
   }
 
+  /* --------------------------------------------- 首页搜索框下：「故障码也能查」 */
+  /* 只在首页插（有 #homesearch + #q）。样式用内联：
+     首页那块底色被配色改成了浅底，style.css 里的 .vtab 是给深底用的（半透明白字），
+     直接套上去会看不见，所以这里自带一套白底深字的 pill。 */
+  var HINT_CSS = {
+    wrap: "display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 0;font-size:13px;color:#41627d",
+    chip: "border:1px solid #cfdae4;background:#fff;color:#16324a;border-radius:999px;" +
+          "font-family:inherit;font-size:12.5px;line-height:1;padding:6px 11px;cursor:pointer",
+    all: "color:#0f334d;text-decoration:none;border-bottom:1px solid rgba(15,51,77,.35)"
+  };
+  var HINT_CODES = ["P0301", "P0171", "C0035"];
+  var PH_EXTRA = " · P0301";
+
+  function submitForm(form) {
+    try { if (form.requestSubmit) { form.requestSubmit(); return; } } catch (e) { /* 旧浏览器走下面 */ }
+    var ev;
+    try { ev = new Event("submit", { bubbles: true, cancelable: true }); }
+    catch (e) { ev = document.createEvent("Event"); ev.initEvent("submit", true, true); }
+    form.dispatchEvent(ev);
+  }
+
+  /* placeholder 里追加一个故障码示例。不改 i18n.js（那要升 I18N_V 全站重渲染），
+     只在运行时追加；切语言后 I18N 会重设 placeholder，所以 i18n:change 时再补一次。 */
+  function extendPlaceholder() {
+    var q = document.getElementById("q");
+    if (!q || q.getAttribute("data-i18n-ph") !== "home_ph") return;
+    var ph = q.getAttribute("placeholder") || "";
+    if (!ph || ph.indexOf("P0301") >= 0) return;
+    q.setAttribute("placeholder", ph + PH_EXTRA);
+  }
+
+  function renderHintBar() {
+    var q = document.getElementById("q");
+    var form = document.getElementById("homesearch");
+    if (!q || !form) return;
+    extendPlaceholder();
+    var L = STR[lang()];
+    var bar = document.getElementById("dtc-hint");
+    if (!bar) {
+      bar = document.createElement("p");
+      bar.id = "dtc-hint";
+      bar.style.cssText = HINT_CSS.wrap;
+      form.parentNode.insertBefore(bar, form.nextSibling);
+      bar.addEventListener("click", function (e) {
+        var b = e.target && e.target.closest ? e.target.closest("[data-dtc-ex]") : null;
+        if (!b) return;
+        e.preventDefault();
+        q.value = b.getAttribute("data-dtc-ex");
+        q.focus();
+        submitForm(form);      /* 点了示例就直接查：示例码就该一路走到底 */
+      });
+    }
+    var html = "<span>" + esc(L.hint) + "</span>";
+    for (var i = 0; i < HINT_CODES.length; i++) {
+      html += "<button type=\"button\" data-dtc-ex=\"" + HINT_CODES[i] + "\" style=\"" + HINT_CSS.chip + "\">" +
+              HINT_CODES[i] + "</button>";
+    }
+    html += "<a href=\"codes/index.html\" style=\"" + HINT_CSS.all + "\">" + esc(L.all) + " &rarr;</a>";
+    bar.innerHTML = html;
+  }
+
+  function boot() {
+    renderPanel();      /* codes/index.html 的「未收录」面板 */
+    renderHintBar();    /* 首页搜索框下的提示条 */
+  }
+
   window.DTC = {
     detect: detect,
     isKnown: isKnown,
     family: family,
     href: href,
     render: renderPanel,
+    hint: renderHintBar,
     known: KNOWN,
     cats: CAT,
     strings: STR
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", renderPanel);
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    renderPanel();
+    boot();
   }
+  document.addEventListener("i18n:change", function () {
+    renderHintBar();
+    renderPanel();
+  });
 })();
