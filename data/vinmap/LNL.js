@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["LNL"]={"s":["14-0087","03-0068"],"v":{"LNLCC2AG4GN000235":[0,1]},"m":{"03-0068":"f01r00a009"}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["LNL"]={"s":["03-0068","03-0069","14-0087"],"v":{"LNLCC2AG4GN000235":[0,1,2]},"m":{"03-0068":"f01r00a009","03-0069":"f01r00a012"}};

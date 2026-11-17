@@ -1,1 +1,1 @@
-window.VINMAPS=window.VINMAPS||{};VINMAPS["JM0"]={"s":["TS10"],"v":{"JM0TB10A5D0401985":[0]},"m":{}};
+window.VINMAPS=window.VINMAPS||{};VINMAPS["JM0"]={"s":["02-0222","TS10"],"v":{"JM0DE10Y1A0152776":[0],"JM0TB10A5D0401985":[1]},"m":{}};

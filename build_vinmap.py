@@ -13,6 +13,7 @@
 """
 
 import csv
+import glob
 import io
 import json
 import os
@@ -23,7 +24,10 @@ from collections import Counter, defaultdict
 
 HERE = r"D:\欧鲸鲸\default-workspace\型号查询站"
 PAIRS = r"D:\欧鲸鲸\default-workspace\03-获客与推广\微信群分析\机器人群-查询对.csv"
-PAIRS_NEW = r"D:\欧鲸鲸\default-workspace\03-获客与推广\微信群分析\机器人群-解析-0805至今.csv"
+PAIRS_OLD = r"D:\欧鲸鲸\default-workspace\03-获客与推广\微信群分析\机器人群-解析-0805至今.csv"
+# 最新一轮「群聊全量解析」明细优先（_parse5.py 产出），没有就退回 0805 旧明细
+_cand = sorted(glob.glob(os.path.join(os.path.dirname(PAIRS), "机器人群-解析-全量-*.csv")))
+PAIRS_NEW = _cand[-1] if _cand else PAIRS_OLD
 OUTDIR = os.path.join(HERE, "data", "vinmap")
 MANIFEST = os.path.join(HERE, "data", "vinmap_manifest.json")
 MISSING = os.path.join(HERE, "_selftest", "站外高频SKU-%s.csv" % time.strftime("%Y%m%d"))
