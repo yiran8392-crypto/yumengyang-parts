@@ -1083,3 +1083,50 @@ html[dir="rtl"] .doc .dsec code{unicode-bidi:isolate;direction:ltr;display:inlin
 /* 中文提示行（.zh-extra / .doczh）只在中文界面出现，别的语种别把中文漏出来 */
 html[data-lang]:not([data-lang="zh"]) .zh-extra,
 html[data-lang]:not([data-lang="zh"]) .doczh{display:none}
+
+/* ================= 首页配色：整屏淡蓝渐变（2026-11-17） =================
+   改前：hero 上半是深色仓库照，430px 往下突然切成 #0d2233 深蓝条（搜索框/筛选那排
+   都在这条深蓝带上），再往下直接是 #f6f8fa 近白底 ——「深蓝色 → 纯白」那道硬缝
+   就是配色难看的原因。
+   改后：整页一条淡蓝渐变；首屏照片用 mask 在底部溶解进淡蓝渐变，深蓝块彻底消失。
+   只作用于 body.home（index.html），products.html 等其他页的 .hero 保持原样。
+   要回到纯淡蓝、连照片都不要的版本，见 _sketches/preview-light/blue-B.css。 */
+body.home{
+  background:linear-gradient(180deg,#d8e8f8 0%,#e3f0fc 10%,#eff7ff 26%,
+    #e8f3fd 48%,#e1eefb 72%,#d9e9f8 100%);
+  background-repeat:no-repeat;
+}
+body.home .hero{background:transparent}
+/* 只加渐隐，**不动 background-image / -size / -position**：
+   首屏图片的裁切和 ?v= 缓存键归上面 .hero::before 那条原创规则管，
+   这里再写一遍会和「素材重新裁条」的改动打架（引用旧键 = 老访客拿到带墙面标牌的旧图）。 */
+body.home .hero::before{
+  /* 430px 的照片块整体渐隐：84% 之前完全不透明（h1/副标题/两个按钮全在这段），
+     之后溶解进 body 的淡蓝渐变 —— 因为下面透出来的就是 body 的背景色，
+     所以接缝处不可能有色差。渐隐区间大半被白色搜索框盖住，露出来只剩
+     搜索框下沿那 30 来像素，过渡不会拖得太长。 */
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 84%,rgba(0,0,0,.55) 94%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 84%,rgba(0,0,0,.55) 94%,transparent 100%);
+}
+/* 原来 430px 下面那条「深蓝压深蓝」的过渡层，改成一层淡蓝薄纱压在照片下沿：
+   仓库地坪本身是很浅的灰，只靠 mask 渐隐会经过一块发灰的过渡带；
+   这层跟页面背景同色的渐变盖上去，过渡就一路走蓝，不会发灰。
+   （.wrap 是 z-index:1，搜索框/筛选项都在它上面，不受影响） */
+body.home .hero::after{
+  content:"";left:0;right:0;top:0;width:auto;height:430px;border-radius:0;opacity:1;
+  background:linear-gradient(180deg,
+    rgba(219,233,248,0) 80%,
+    rgba(219,233,248,.55) 93%,
+    rgba(222,235,249,1) 100%);
+}
+/* hero 下半段已经是淡蓝 → 原来为深蓝底写的白字全部转深色 */
+body.home .bulkhint{color:#3d5c78}
+body.home .bulkhint a{color:#16394f;border-bottom-color:rgba(22,57,79,.35)}
+body.home .bulkhint b{color:#c2491f}
+body.home .ctitle{color:#35566f}
+body.home .fclear{background:rgba(255,255,255,.78);color:#16394f;
+  border:1px solid rgba(13,34,51,.14)}
+body.home .fclear:hover{background:#fff}
+body.home .fsum{color:#4a6a86}
+body.home .searchbar{box-shadow:0 10px 30px rgba(13,44,74,.18)}
+/* 页脚（.sf2）是黑底白字的整块设计，别跟着改透明，不然白字会糊在淡蓝上 */
