@@ -840,19 +840,23 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 /* 首屏：真实仓库实拍打底（url 相对 style.css）
    2026-11-17 换用即梦 AI 生成的 16:9 仓库通道图（1920x1080 源 → Real-ESRGAN 4x
    → 3840x2160 / 移动端 1280x720），生成脚本：_sketches/hero/make_hero_jimeng.py，
-   源图 _sketches/hero/hero-warehouse-jimeng-20261117.png。
+   源图 _sketches/hero/hero-warehouse-jimeng-20261117.png（2026-11-17 二次换图：
+   换成同一张构图的**无损 PNG** 源，丢了原来那张 JPEG 转存的压缩噪点，缓存键 20261117p）。
    取景 50% 82%：新图正中有「货品齐全 / 价格实惠」墙面标牌，居中裁切会和 h1
    撞在一起；82% 取走廊下半段（地坪 + 货架中段），标牌完全出画。
    ?v= 换缓存键，改图后同步改这个版本号。 */
 .hero{background:#0d2233}
 .hero::before{content:"";position:absolute;left:0;right:0;top:0;height:430px;z-index:0;
   background:linear-gradient(100deg,rgba(8,20,29,.93) 0%,rgba(9,26,38,.72) 46%,rgba(10,32,46,.30) 100%),
-             url("hero/hero-warehouse.webp?v=20261117h") 50% 82%/cover no-repeat;
+             url("hero/hero-warehouse.webp?v=20261117p") 50% 82%/cover no-repeat;
   background-size:100% 100%,cover}
+/* 手机：hero 条带接近正方形（430 宽 × 430 高），16:9 原图 cover 会按高度铺满、
+   整幅塞进来，墙面标牌就压在 h1 上。所以 hero-warehouse-sm.webp 是生成时
+   单独裁好的「走廊下半段」，这里用 50% 100% 贴底 → 竖屏再居中裁左右，标牌永远在画外。 */
 @media (max-width:820px){
   .hero::before{
     background:linear-gradient(100deg,rgba(8,20,29,.93) 0%,rgba(9,26,38,.72) 46%,rgba(10,32,46,.30) 100%),
-               url("hero/hero-warehouse-sm.webp?v=20261117h") 50% 82%/cover no-repeat;
+               url("hero/hero-warehouse-sm.webp?v=20261117p") 50% 100%/cover no-repeat;
     background-size:100% 100%,cover}
 }
 .hero::after{content:"";position:absolute;left:0;right:0;top:430px;height:110px;z-index:0;
