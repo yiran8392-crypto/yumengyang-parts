@@ -8,7 +8,7 @@ set "HERE=%~dp0"
 set "SITE=%HERE%"
 if exist "%HERE%–Õ∫≈≤È—Ø’æ\data\data.js" set "SITE=%HERE%–Õ∫≈≤È—Ø’æ"
 set "TOKFILE=D:\≈∑æ®æ®\tools\gh_token.txt"
-set "LIVE=https://yiran8392-crypto.github.io/yumengyang-parts/"
+set "LIVE=https://yumengyangparts.com/"
 set "PYC=D:\≈∑æ®æ®\dsh-home\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
 
 echo ==================================================

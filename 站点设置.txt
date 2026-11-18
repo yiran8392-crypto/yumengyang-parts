@@ -8,7 +8,7 @@
 # 换成自己的域名（比如 https://parts.yumengyang.com）：别手改这一行，
 # 直接双击《推广物料\切换域名.cmd》，它连 CNAME 和检查一起做了。
 
-域名=https://yiran8392-crypto.github.io/yumengyang-parts
+域名=https://yumengyangparts.com
 WhatsApp=8615915859048
 
 # 公司地址：英文站（en / fr / ar / ru）用「地址=」，中文站用「中文地址=」

@@ -7,7 +7,14 @@ set "PYTHONIOENCODING=utf-8"
 set "PY=D:\欧鲸鲸\dsh-home\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
 
 echo ==================================================
-echo   型号查询站 . 切换到 parts.yumengyang.com
+echo   型号查询站 . 切换到自有域名
+echo ==================================================
+echo   用法：
+echo     直接双击              默认 parts.yumengyang.com
+echo     切换域名.cmd 域名      换到指定域名
+echo     切换域名.cmd check     只体检，不改文件
+echo.
+echo   例：切换域名.cmd yumengyangparts.com
 echo ==================================================
 echo.
 
