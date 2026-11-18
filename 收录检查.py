@@ -44,7 +44,7 @@ CFG_FILE = os.path.join(HERE, "站点设置.txt")
 SITEMAP_FILE = os.path.join(HERE, "sitemap.xml")
 
 # 兜底：配置文件读不到时才用（跟线上实际部署一致）
-DEFAULT_SITE = "https://yiran8392-crypto.github.io/yumengyang-parts"
+DEFAULT_SITE = "https://yumengyangparts.com"
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")

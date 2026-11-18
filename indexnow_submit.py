@@ -42,7 +42,7 @@ CFG_FILE = os.path.join(HERE, "站点设置.txt")
 
 # 兜底：配置文件读不到时用这组（跟站点里实际部署的一致）
 DEFAULTS = {
-    "site_url": "https://yiran8392-crypto.github.io/yumengyang-parts",
+    "site_url": "https://yumengyangparts.com",
     "key": "8b3e2eebe992aa73225a4c7073fa6554",
 }
 

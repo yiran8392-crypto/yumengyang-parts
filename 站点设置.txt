@@ -12,13 +12,17 @@
 WhatsApp=8615915859048
 
 # 公司地址：英文站（en / fr / ar / ru）用「地址=」，中文站用「中文地址=」
-地址=E05, Yiyou (Guangyuan East) Auto Parts City, Baiyun District, Guangzhou, China
-中文地址=广州市白云区益友（广元东）汽配城 E05 档
+# 2026-11-18 校正：这写的是「门店档口」（我实际所在的门店），不是总部。
+#   总部地址在发票/装箱单上（白云区白云大道南 金钟大厦 818A），两处不要混。
+#   档口所属行政区以「广州胜路汽车零部件有限公司」营业执照为准 = 越秀区；
+#   原来的「白云区」是误填，「广元东」应为「广园东路」。
+地址=E05, Yiyou Auto Parts City, No. 1540 Guangyuan East Road, Yuexiu District, Guangzhou, China
+中文地址=广州市越秀区广园东路1540号益友汽配城 E05 档
 
 # 结构化地址：写进每页的 Organization JSON-LD。
 # 不填就用 sitegen.py 里的默认值；上面那条「地址=」改了，这里建议一起改。
-街道=E05, Yiyou (Guangyuan East) Auto Parts City
-城市=Baiyun District, Guangzhou
+街道=E05, Yiyou Auto Parts City, No. 1540 Guangyuan East Road
+城市=Yuexiu District, Guangzhou
 省份=Guangdong
 国家=CN
 
