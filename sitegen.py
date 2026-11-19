@@ -183,7 +183,7 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261119a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261119b"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 I18N_V = "20261119i18n1"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
@@ -1627,19 +1627,18 @@ def page_cat_index(cfg, cats, by_cat):
             slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
             n = len(by_cat.get(key, []))
             nsum += n
-            # 非英文界面里 <b> 会被 data-cat 换成当地品类名，.en-extra 那一行补英文名做对照
+            # 非英文界面里 <b> 会被 data-cat 换成当地品类名；中文界面的英文原名由
+            # style.css 的 b[data-cat-src]::after 补出来，不写进 HTML（英文页不留重复词）
             cards.append('<a class="catcard" href="%s.html"><b data-cat="%s">%s</b>'
-                         '<span class="en-extra">%s</span>'
                          '<em data-i18n="cat_arrow" data-v-n="%d">%d models →</em></a>'
-                         % (slug, key, esc(en), esc(en), n, n))
+                         % (slug, key, esc(en), n, n))
         secs.append('<section class="sysblock"><div class="syshead">'
                     '<span class="sysn">%02d</span>'
-                    '<h2><span data-i18n="sys_%s">%s</span>'
-                    '<span class="en-extra">%s</span></h2>'
+                    '<h2><span data-i18n="sys_%s">%s</span></h2>'
                     '<span class="sysmeta" data-i18n="sys_meta" data-v-c="%d" data-v-n="%d">'
                     '%d categories · %d models</span></div>'
                     '<div class="catcards">%s</div></section>'
-                    % (idx, esc(skey), esc(sen), esc(sen), len(keys), nsum,
+                    % (idx, esc(skey), esc(sen), len(keys), nsum,
                        len(keys), nsum, "".join(cards)))
 
     body = """<body>
