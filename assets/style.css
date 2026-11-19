@@ -431,6 +431,10 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(
   .sitehead .wrap{gap:12px}
   .sitehead nav a{font-size:15px;padding:0 10px}
   .sitehead .brand{font-size:17px}
+  /* 平板/小笔记本：主菜单和品类导航各占一整行，别挤在 brand 旁边乱序
+     （760 以下这两行改成横滑，见下面的媒体查询） */
+  .sitehead .mainnav{order:2;width:100%}
+  .sitehead nav{order:3;width:100%}
   .pdp-grid{gap:24px;padding:20px}
   .cat-head,.modlist{padding:20px}
 }
@@ -451,8 +455,19 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(
   #q.hasval{padding-inline-end:112px}
   .bar{gap:6px;margin-bottom:14px}
   .sitehead .wrap{padding:10px 16px;gap:10px}
-  .sitehead nav{gap:2px;order:3;width:100%}
-  .sitehead nav a{font-size:15px;padding:0 9px}
+  /* 窄屏导航改成「一行横滑」：原来是 flex-wrap，7 个品类入口会折成三四行，
+     header 能吃掉 330px，手机上首屏一半没了。横滑只占一行，滑到右边才看得到全部。 */
+  .sitehead nav{gap:2px;order:3;width:100%;flex-wrap:nowrap;overflow-x:auto;
+    overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    margin-inline:-16px;padding-inline:16px}
+  .sitehead nav::-webkit-scrollbar{display:none}
+  .sitehead nav a{flex:0 0 auto;font-size:15px;padding:0 9px}
+  /* 首页 hero 里的主菜单同理：折行太占高度，改成一行横滑。
+     用 .hero 前缀压过后面第 900 多行的 .mainnav{flex-wrap:wrap} */
+  .hero .mainnav{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .hero .mainnav::-webkit-scrollbar{display:none}
+  .hero .mainnav a{flex:0 0 auto}
   .sitehead .tools{margin-inline-start:auto;gap:8px}
   .sitehead .wapush{padding:0 16px;font-size:14.5px}
   .langsel{min-width:120px;font-size:14px;padding:0 32px 0 12px}
@@ -477,8 +492,18 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(
   .chip{min-height:44px;padding:0 14px;font-size:14.5px}
   .herotop{gap:10px}
   .brandline{font-size:11.5px;letter-spacing:.08em}
-  .sitehead .brand{font-size:16px}
-  .sitehead nav a,html[lang="ru"] .sitehead nav a{font-size:14.5px;padding:0 7px}
+  /* 小屏把 brand 和右上角两个按钮压到一行，配合上面的一行横滑导航，header 从 ~330px 降到 ~180px */
+  .sitehead .wrap{padding:8px 14px;gap:6px 8px}
+  .sitehead .brand{font-size:15px;min-height:40px;line-height:40px}
+  .sitehead .tools{gap:6px;flex-wrap:nowrap}
+  .sitehead .wapush{padding:0 10px;font-size:13.5px;min-height:40px}
+  .sitehead nav a,html[lang="ru"] .sitehead nav a{font-size:14.5px;padding:0 7px;min-height:40px}
+  .sitehead nav{margin-inline:-14px;padding-inline:14px}
+  /* 语言下拉的宽度按最长选项（Bahasa Indonesia）撑到 140，会把 brand 挤到下一行；
+     这里直接定宽，选中项照常显示，超长的语言名在框里省略（展开的下拉列表里仍是全名） */
+  .langsel{height:40px;width:96px;min-width:0;font-size:13.5px;line-height:38px;
+    padding:0 22px 0 7px;text-overflow:ellipsis;background-position:right 7px center}
+  html[dir="rtl"] .langsel{padding:0 7px 0 22px;background-position:left 7px center}
   .spec th{width:38%;font-size:13.5px;padding:10px 10px 10px 0}
   html[dir="rtl"] .spec th{padding:10px 0 10px 10px}
   .spec td{font-size:14px}
@@ -894,6 +919,17 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
   font-size:14px;font-weight:800;text-decoration:none}
 .hero .heroc .wa{background:#25d366;color:#06281a}
 .hero .heroc .gh{border:1px solid rgba(255,255,255,.28);color:#fff;background:rgba(255,255,255,.1)}
+/* 主按钮给「浏览产品」：知道型号的客户用搜索框，不知道型号的必须先看到目录 */
+.hero .heroc .gh.main{background:#fff;color:#0d2233;border-color:#fff;box-shadow:0 10px 22px rgba(4,18,30,.22)}
+.hero .heroc .gh.main:hover{background:#ffe9dd;border-color:#ffe9dd}
+/* 搜索框下方的品类直达：不知道型号的客户从这里进（品类名走 data-cat，9 语种自动翻）。
+   首页 hero 的照片只铺到 430px，这一段已经落在淡蓝的渐隐区，所以要用深色字，
+   跟 .bulkhint（Bulk check）同一套颜色。 */
+.catchips{margin:10px 0 0;font-size:13.5px;color:#33556f;line-height:1.95}
+.catchips a{color:#0f334d;font-weight:600;text-decoration:none;
+  border-bottom:1px solid rgba(15,51,77,.32);padding-bottom:1px}
+.catchips a:hover{border-bottom-color:#0f334d}
+.catchips .sep{color:#8fa8bc;margin:0 5px}
 
 
 /* 通用主导航（首页 hero 也用） */
@@ -902,12 +938,17 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
   padding:9px 12px;border-radius:9px;white-space:nowrap}
 .mainnav a:hover{background:rgba(255,255,255,.12);color:#fff}
 .mainnav a.on{color:#fff;background:rgba(255,255,255,.16)}
+/* Products 恒为橙色：买家进站主要是找货，这一项要第一眼跳出来 */
+.mainnav a.hot{background:var(--accent);color:#fff}
+.mainnav a.hot:hover{background:#f0743c;color:#fff}
 /* 顶部主导航（全站） */
 .sitehead .mainnav{display:flex;gap:4px;align-items:center}
 .sitehead .mainnav a{color:#dbe8f2;text-decoration:none;font-size:14.5px;font-weight:700;
   padding:9px 12px;border-radius:9px;white-space:nowrap}
 .sitehead .mainnav a:hover{background:rgba(255,255,255,.1);color:#fff}
 .sitehead .mainnav a.on{color:#fff;background:rgba(255,255,255,.14)}
+.sitehead .mainnav a.hot{background:var(--accent);color:#fff}
+.sitehead .mainnav a.hot:hover{background:#f0743c;color:#fff}
 
 /* 通用小节 */
 .sect{max-width:1240px;margin:0 auto;padding:42px 24px 8px}

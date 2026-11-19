@@ -183,8 +183,8 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261119b"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261119i18n1"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+CSS_V = "20261119l"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+I18N_V = "20261119i18n2"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -666,14 +666,16 @@ def sitehead(cfg, active="", base="../"):
         nav.append('<a href="%scategory/%s.html"%s data-cat="%s">%s</a>'
                    % (base, slug, cls, key, esc(en)))
     # 主导航：官网化以后产品排第二，About / Contact 都要真的能跳
+    # Products 恒用 class="hot"（橙色）：买家进站十有八九是来找货的，
+    # 这一项在深色导航里必须第一眼就跳出来，见 style.css 的 .mainnav a.hot。
     main = ('<nav class="mainnav">'
             '<a href="%sindex.html"%s data-i18n="nav_home">Home</a>'
-            '<a href="%scategory/index.html"%s data-i18n="nav_products">Products</a>'
+            '<a class="hot" href="%scategory/index.html" data-i18n="nav_products">Products</a>'
             '<a href="%scodes/index.html"%s data-i18n="nav_codes">Fault codes</a>'
             '<a href="%sabout.html"%s data-i18n="nav_about">About us</a>'
             '<a href="%scontact.html"%s data-i18n="nav_contact">Contact</a>'
             '</nav>') % (base, ' class="on"' if active == "home" else "",
-                         base, ' class="on"' if active == "products" else "",
+                         base,
                          base, ' class="on"' if active == "codes" else "",
                          base, ' class="on"' if active == "about" else "",
                          base, ' class="on"' if active == "contact" else "")
