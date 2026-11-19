@@ -160,7 +160,7 @@ def order_cats(cats):
 CAT_SYSTEMS = [
     ("ignition", "Ignition system", ["coil", "plug", "njkspark", "wire"]),
     ("fuel", "Fuel system", ["fuelpump", "injector", "fuelpress", "purge"]),
-    ("sensors", "Engine sensors", ["o2", "ckp", "cmp", "temp"]),
+    ("sensors", "Engine sensors", ["o2", "ckp", "cmp", "temp", "speed", "knock"]),
     ("brakes", "Braking & safety", ["abs", "tpms"]),
     ("air", "Air & idle control", ["throttle", "tps", "maf", "map"]),
     ("control", "Engine control & cooling", ["ocv", "vsv", "thermo", "stepper", "dpfe"]),
@@ -174,6 +174,8 @@ CAT_META = {
     "wire": ("spark-plug-wires", "Spark Plug Wire Sets", "Spark Plug Wire Set", "火花塞线"),
     "thermo": ("thermostats", "Thermostats", "Thermostat", "节温器"),
     "plug": ("spark-plugs", "Spark Plugs", "Spark Plug", "火花塞"),
+    "speed": ("speed-sensors", "Speed Sensors", "Speed Sensor", "里程表传感器"),
+    "knock": ("knock-sensors", "Knock Sensors", "Knock Sensor", "爆震传感器"),
 }
 
 POS_WORDS = {
