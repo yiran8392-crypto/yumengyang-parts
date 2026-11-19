@@ -143,6 +143,30 @@ def order_cats(cats):
         return (i, -(c.get("n") or 0), key or "")
     return sorted(cats, key=k)
 
+
+# 品类总览页的系统分组（category/index.html）。
+# 列表顺序 = 权重顺序（也等于买家看目录的顺序）：
+#   1 点火系统（公司头号产品，点火线圈 545 个型号）
+#   2 燃油系统（燃油泵 780，首页主推第 2）
+#   3 发动机传感器（氧传感器 750，首页主推第 3）
+#   4 制动与安全（ABS 2066，全站型号最多的单一品类）
+#   5 进气与怠速控制（节气门阀体，首页主推第 6）
+#   6 发动机控制与冷却（机油控制阀 / 真空阀 / 怠速马达 / 压差 / 节温器，配套小件）
+# 组内顺序同样按权重写死，不按型号数排：火塞跟在点火线圈后面、TPS 跟在节气门后面，
+# 买家找件时是连着一起找的。新增品类记得落到某一组里，漏了会自动进最后的 other 组。
+# 卡片是 4 列网格，所以每组最好凑 4 个／2 个／3 个：5 个的话第二行会剩一张孤卡。
+# 现在分布 4/4/4/2/4/5，把 5 个那组放最后，孤卡在页面底部不显眼。
+# (系统 key, 英文系统名, [品类 key …])  中文名在 assets/i18n.js 的 sys_* 键里
+CAT_SYSTEMS = [
+    ("ignition", "Ignition system", ["coil", "plug", "njkspark", "wire"]),
+    ("fuel", "Fuel system", ["fuelpump", "injector", "fuelpress", "purge"]),
+    ("sensors", "Engine sensors", ["o2", "ckp", "cmp", "temp"]),
+    ("brakes", "Braking & safety", ["abs", "tpms"]),
+    ("air", "Air & idle control", ["throttle", "tps", "maf", "map"]),
+    ("control", "Engine control & cooling", ["ocv", "vsv", "thermo", "stepper", "dpfe"]),
+]
+CAT_SYSTEM_OTHER = ("other", "Other parts")
+
 # 品类元信息：key -> (目录 slug, 英文复名, 英文单数, 中文)
 CAT_META = {
     "coil": ("ignition-coils", "Ignition Coils", "Ignition Coil", "点火线圈"),
@@ -159,8 +183,8 @@ POS_WORDS = {
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261113a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261113i18n4"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+CSS_V = "20261119a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+I18N_V = "20261119i18n1"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
 
 
 # ------------------------------------------------------------------ 配置
@@ -1576,31 +1600,62 @@ def page_category(cfg, cat, all_items, page_items, page_no, total_pages):
 def page_cat_index(cfg, cats, by_cat):
     live = [c for c in order_cats(cats) if by_cat.get(c["key"])]   # 0 型号的品类不摆入口
     total = sum(len(by_cat.get(c["key"], [])) for c in live)
+    live_keys = {c["key"] for c in live}
+
+    # 按系统分组：组序照 CAT_SYSTEMS（权重从高到低），组内也照写死的顺序。
+    # 没归到任何系统的品类兜到最后的 other 组，保证不漏入口。
+    groups = []
+    seen = set()
+    for skey, sen, keys in CAT_SYSTEMS:
+        ks = [k for k in keys if k in live_keys]
+        if ks:
+            seen.update(ks)
+            groups.append((skey, sen, ks))
+    rest = [c["key"] for c in live if c["key"] not in seen]
+    if rest:
+        groups.append((CAT_SYSTEM_OTHER[0], CAT_SYSTEM_OTHER[1], rest))
+    nsys = len(groups)
+
     title = "All %d product categories — %d part numbers | Guangzhou Yumengyang Auto Parts" % (len(live), total)
     desc = ("Ignition coils, ABS sensors, oxygen sensors, fuel pumps, TPMS, throttle bodies and more — "
             "%d part numbers with OE cross-reference." % total)
-    cards = []
-    for c in live:
-        key = c["key"]
-        slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
-        n = len(by_cat.get(key, []))
-        cards.append('<a class="catcard" href="%s.html"><b data-cat="%s">%s</b><span class="zh-extra">%s</span>'
-                     '<em data-i18n="cat_arrow" data-v-n="%d">%d models →</em></a>'
-                     % (slug, key, esc(en), esc(cn), n, n))
+
+    secs = []
+    for idx, (skey, sen, keys) in enumerate(groups, 1):
+        cards, nsum = [], 0
+        for key in keys:
+            slug, en, one, cn = CAT_META.get(key, (key, key, key, key))
+            n = len(by_cat.get(key, []))
+            nsum += n
+            # 非英文界面里 <b> 会被 data-cat 换成当地品类名，.en-extra 那一行补英文名做对照
+            cards.append('<a class="catcard" href="%s.html"><b data-cat="%s">%s</b>'
+                         '<span class="en-extra">%s</span>'
+                         '<em data-i18n="cat_arrow" data-v-n="%d">%d models →</em></a>'
+                         % (slug, key, esc(en), esc(en), n, n))
+        secs.append('<section class="sysblock"><div class="syshead">'
+                    '<span class="sysn">%02d</span>'
+                    '<h2><span data-i18n="sys_%s">%s</span>'
+                    '<span class="en-extra">%s</span></h2>'
+                    '<span class="sysmeta" data-i18n="sys_meta" data-v-c="%d" data-v-n="%d">'
+                    '%d categories · %d models</span></div>'
+                    '<div class="catcards">%s</div></section>'
+                    % (idx, esc(skey), esc(sen), esc(sen), len(keys), nsum,
+                       len(keys), nsum, "".join(cards)))
+
     body = """<body>
 %s
 <main id="main" tabindex="-1" class="cat-main">
 <nav class="crumbs"><a href="../index.html" data-i18n="home">Home</a> &rsaquo; <span data-i18n="all_cat_h1">All categories</span></nav>
 <div class="cat-head">
-  <h1><span data-i18n="all_cat_h1">All product categories</span> <span class="h1sub zh-extra">全部品类</span></h1>
-  <p data-i18n="all_cat_lead" data-v-c="%d" data-v-n="%d">%d categories, %d part numbers. Pick a category to see every model with its OE number, cross-reference and fitment.</p>
+  <h1><span data-i18n="all_cat_h1">All product categories</span></h1>
+  <p data-i18n="all_cat_lead" data-v-s="%d" data-v-c="%d" data-v-n="%d">%d systems, %d categories, %d part numbers. Pick a system, then a category, to see every model with its OE number, cross-reference and fitment.</p>
   <div class="stat"><a href="../index.html" data-i18n="search_oe_btn">Search by OE number</a></div>
 </div>
-<div class="catcards">%s</div>
+%s
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg), len(live), total, len(live), total, "".join(cards), sitefoot(cfg))
+""" % (sitehead(cfg), nsys, len(live), total, nsys, len(live), total, "".join(secs), sitefoot(cfg))
     return head_block(cfg, title, desc, rel_url(cfg, "category/index.html"), "", "website") + "\n" + body
 
 
