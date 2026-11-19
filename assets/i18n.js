@@ -4421,6 +4421,8 @@
     dpfe: ["压差传感器", "حساسات الضغط التفاضلي", "Датчики перепада давления", "Capteurs de pression différentielle", "Sensores de presión diferencial", "Sensores de pressão diferencial", "Sensor tekanan diferensial", "سنسورهای فشار تفاضلی"],
     fuelpress: ["油压调节器", "منظمات ضغط الوقود", "Регуляторы давления топлива", "Régulateurs de pression carburant", "Reguladores de presión de combustible", "Reguladores de pressão de combustível", "Regulator tekanan bahan bakar", "رگولاتورهای فشار سوخت"],
     injector: ["喷油嘴", "حاقنات الوقود", "Форсунки", "Injecteurs", "Inyectores", "Injetores", "Injektor", "انژکتورها"],
+    speed: ["里程表传感器", "حساسات السرعة", "Датчики скорости", "Capteurs de vitesse", "Sensores de velocidad", "Sensores de velocidade", "Sensor kecepatan", "سنسورهای سرعت"],
+    knock: ["爆震传感器", "حساسات الطرق", "Датчики детонации", "Capteurs de cliquetis", "Sensores de detonación", "Sensores de detonação", "Sensor ketukan", "سنسورهای ضربه"],
     maf: ["空气流量计", "حساسات تدفق الهواء", "Датчики массового расхода воздуха", "Débitmètres d'air", "Medidores de flujo de aire", "Medidores de fluxo de ar", "Sensor aliran udara", "سنسورهای دبی هوا"],
     map: ["进气压力传感器", "حساسات ضغط المشعب", "Датчики давления во впуске", "Capteurs de pression d'admission", "Sensores de presión de admisión", "Sensores de pressão de admissão", "Sensor tekanan intake", "سنسورهای فشار منیفولد"],
     njkspark: ["NJK 火花塞", "شمعات NJK", "Свечи NJK", "Bougies NJK", "Bujías NJK", "Velas NJK", "Busi NJK", "شمع‌های NJK"],
