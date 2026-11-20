@@ -2162,7 +2162,7 @@ def page_about(cfg):
     h1 = "About us"
     canon = rel_url(cfg, "about.html")
     wa = wa_link(cfg, "Hi, I would like to know more about your company and your production.")
-    n_total = cfg.get("_total") or 6819
+    n_total = cfg.get("_total") or 11143
     n_txt = "{:,}".format(n_total)
 
 
@@ -3137,7 +3137,7 @@ def home_core_html(cfg, by_cat):
             % (slug, img, esc(en), key, esc(en), n, n))
     return ('<section class="sect"><div class="head">'
             '<h2 data-i18n="core_h2">Three lines we ship every week</h2>'
-            '<b data-i18n="core_sub">from 23 categories</b>'
+            '<b data-i18n="core_sub">from 25 categories</b>'
             '<a href="category/index.html" data-i18n="core_all">All products</a></div>'
             '<div class="hcore">%s</div></section>' % "".join(cards))
 
