@@ -62,6 +62,8 @@ Index pages: [all products](https://yumengyangparts.com/products.html) · [all 2
 - [Throttle Body Cleaning, P0507 and Electronic Throttle Relearn](https://yumengyangparts.com/guides/throttle-body-cleaning-and-relearn.html): Why cleaning an electronic throttle body can put the car in limp mode, what P0120, P0122 and P0507 mean, the safe cleaning sequence, and what decides the part number.
 - [No-Start Diagnosis: Crankshaft and Camshaft Position Sensors](https://yumengyangparts.com/guides/crank-cam-sensor-no-start-diagnosis.html): A crank sensor that fails hot leaves no code and no start. How to prove it in ten minutes, what P0335 and P0340 mean, and how type, length and connector decide the part number.
 - [Spark Plug Heat Range, Reach and Cross-Reference Explained](https://yumengyangparts.com/guides/spark-plug-heat-range-and-cross-reference.html): Why two plugs with the same thread are not interchangeable: heat range, reach, seat type, resistor and electrode material. Plus how to cross-reference NGK, Denso, Bosch and Champion.
+- [Fuel Injectors: Flow Rate, Resistance and How to Match a Part Number](https://yumengyangparts.com/guides/fuel-injector-flow-matching-and-part-numbers.html): How an injector is matched by flow rate, resistance, connector and o-ring, why a set has to be balanced, and what P0201 to P0208 actually tell you.
+- [Engine Sensor Map: Which Sensor Sets Which Fault Code](https://yumengyangparts.com/guides/engine-sensor-map-fault-code-to-part.html): One table from fault code to the sensor that sets it and the part on our site: crank, cam, MAF, MAP, TPS, O2, coolant, knock, speed, purge, oil control valve and idle stepper.
 
 ## Fault-code diagnostics
 

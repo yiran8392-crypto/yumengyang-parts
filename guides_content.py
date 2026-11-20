@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-采购指南正文（英文）· 八篇
+采购指南正文（英文）· 十篇
 =========================
 sitegen.py 生成 guides/*.html 时读这个文件。
 
-2026-11-20 从三篇扩到八篇：新增燃油泵、氧传感器、节气门、曲轴/凸轮轴传感器、火花塞五篇
-（GEO 那版说明里排的内容层第一步；AI 搜索引用最多的是「讲清楚一件事」的长文，不是型号页）。
+2026-11-20 从三篇扩到十篇：
+  新增燃油泵、氧传感器、节气门、曲轴/凸轮轴传感器、火花塞、喷油嘴，
+  外加一篇「传感器地图」（故障码 → 哪个传感器 → 我们哪个目录），当整站的枢纽页。
+  为什么：AI 搜索引用最多的是「讲清楚一件事」的长文，不是型号页。
 
 正文用「块」表示，别直接写一大坨 HTML：
 
@@ -741,6 +743,188 @@ GUIDES = [
             ("p", ("Our spark plug ranges are listed by OE number with the cross-reference list: "
                    "[[L:cat/plug|spark plugs]] and [[L:cat/njkspark|NJK spark plugs]]. A typical entry: "
                    "[[L:part/18846-11070|18846-11070]] for the Hyundai Elantra, i30 and Tucson family.")),
+        ],
+    },
+
+    # ================================================================= 9
+    {
+        "slug": "fuel-injector-flow-matching-and-part-numbers",
+        "nav": "Fuel injector matching",
+        "title": "Fuel Injectors: Flow Rate, Resistance and How to Match a Part Number",
+        "h1": "Fuel injector flow, resistance and part matching",
+        "desc": ("How an injector is matched by flow rate, resistance, connector and o-ring, why a set has to be "
+                 "balanced, and what P0201 to P0208 actually tell you."),
+        "lead": ("Two injectors can look identical, fit the same rail and deliver different amounts of fuel. Flow "
+                 "rate, resistance and spray pattern are what the engine management assumes — get one wrong and the "
+                 "cylinder runs rich or lean while every sensor reports normal. This guide covers what has to "
+                 "match, and what the codes do and do not prove."),
+        "date": "2026-11-20",
+        "minutes": 7,
+        "body": [
+            ("h2", "The five things that must match"),
+            ("table", ["What", "Why it matters", "How it is written on the part"], [
+                ["Flow rate", "The control unit's fuel map assumes a specific cc/min at a specific pressure",
+                 "Stamped or laser-marked; often the whole identification, e.g. 0280156094"],
+                ["Resistance", "High-impedance (about 12–16 Ω) and low-impedance (2–3 Ω) injectors are driven "
+                               "differently — a low-Z injector on a high-Z driver burns the driver",
+                 "Measure across the two pins"],
+                ["Connector", "USCAR, EV1, EV6, EV14 and a dozen Japanese and Chinese keys look similar from above",
+                 "Photograph it; the keyway matters more than the pin count"],
+                ["Body length and o-ring", "Short and long bodies, 11 mm and 14 mm o-rings — the wrong one leaks or "
+                                           "will not seat", "Measure the body, not the box"],
+                ["Spray pattern", "Single, twin or multi-hole; a different pattern wets the port differently",
+                 "Visible on the tip; not interchangeable on GDI"],
+            ]),
+            ("h2", "Symptoms of one bad injector"),
+            ("ul", [
+                "A single-cylinder misfire at idle that smooths out as rpm rises — the classic clogged or lazy "
+                "injector.",
+                "Rough cold start with a strong fuel smell, then normal running once warm.",
+                "One plug that is black while the others are the correct colour — swap-test before ordering.",
+                "A lean code on one bank only (V engines), or long-term fuel trim pulled far in one direction.",
+                "A dead miss with a fuel smell and a hard start after the engine is switched off: a leaking "
+                "injector dripping into the port.",
+            ]),
+            ("h2", "What the codes prove"),
+            ("table", ["Code", "Reads as", "What it proves"], [
+                ["P0201 – P0208", "Injector circuit open, cylinder 1 to 8",
+                 "The electrical circuit, not the spray. Check the connector and the resistance first."],
+                ["P0261 – P0264", "Injector circuit low, cylinders 1 to 4", "A short to ground, or a coil that has "
+                                                                            "failed closed"],
+                ["P0300 / P0301", "Random misfire / misfire cylinder 1", "Points at the cylinder, not the cause — "
+                                                                        "ignition, compression or fuel"],
+                ["P0171 / P0172", "System too lean / too rich (bank 1)", "A bank-level fuel problem: an injector, a "
+                                                                        "leak, or the pressure regulator"],
+                ["P0087", "Fuel rail pressure too low", "Check supply pressure before blaming the injectors"],
+            ]),
+            ("p", ("A clogged injector sets no code at all until the misfire becomes bad enough. If the car has a "
+                   "single-cylinder misfire with a normal ignition system, the injector is the next suspect — and "
+                   "the swap test proves it in twenty minutes.")),
+            ("h2", "Test before you buy"),
+            ("ol", [
+                "Read the misfire counter per cylinder in live data, then swap that injector with a known-good "
+                "neighbour. If the misfire moves with the injector, you have your answer.",
+                "Measure resistance across the pins and compare with the workshop figure; a reading far outside "
+                "spec is a failed coil.",
+                "Use a noid light or a scope on the injector connector while cranking — a pulsing signal means the "
+                "driver is fine and the injector is the problem.",
+                "Check fuel pressure and delivery before condemning injectors; a weak pump produces the same lean "
+                "codes.",
+                "On a high-mileage engine, send the set for cleaning and flow testing first — it is cheaper than "
+                "eight new injectors and tells you whether the set is still balanced.",
+            ]),
+            ("h2", "Why a set has to be balanced"),
+            ("p", ("The control unit trims fuel for the bank as a whole. If one injector flows 8% less than the "
+                   "others, that cylinder runs lean while the trim pulls the whole bank rich — the other three "
+                   "cylinders then run rich, and the plugs tell a confusing story. That is why a partial "
+                   "replacement works only when the new injector matches the flow of the old set, and why serious "
+                   "workshops prefer a matched set.")),
+            ("h2", "Finding it in our catalogue"),
+            ("p", ("Our [[L:cat/injector|fuel injector catalogue]] lists each injector by OE number with "
+                   "cross-references and fitment. Typical entries: "
+                   "[[L:part/25335146|25335146]] for the Wuling Jiabao, Minyi and Happy Messenger 1.1, and "
+                   "[[L:part/0280156094|0280156094]] for the Bosch-system Great Wall, King Long and Foton "
+                   "applications.")),
+            ("ul", [
+                "Send the number stamped on the injector body, plus a photo of the connector and the tip.",
+                "Order in sets where the customer is replacing a full rail — state the quantity and the flow "
+                "requirement.",
+                "GDI injectors are not interchangeable with port injectors even when the connector matches; say "
+                "which system the car uses.",
+            ]),
+        ],
+    },
+
+    # ================================================================= 10
+    {
+        "slug": "engine-sensor-map-fault-code-to-part",
+        "nav": "Sensor map: code → part",
+        "title": "Engine Sensor Map: Which Sensor Sets Which Fault Code",
+        "h1": "Engine sensor map: which sensor sets which fault code",
+        "desc": ("One table from fault code to the sensor that sets it and the part on our site: crank, cam, MAF, "
+                 "MAP, TPS, O2, coolant, knock, speed, purge, oil control valve and idle stepper."),
+        "lead": ("Buyers search by code, not by part name. This page turns a fault code into the sensor that sets "
+                 "it, then into the catalogue that sells it — with the one extra check that prevents a wrong "
+                 "order in each row."),
+        "date": "2026-11-20",
+        "minutes": 8,
+        "body": [
+            ("h2", "How to use this page"),
+            ("p", ("Read the code, find the family in the table, then follow the link to the catalogue page or one "
+                   "of our guides. Every row also names the check that separates a failed sensor from a wiring or "
+                   "mechanical fault, because a code that names a sensor does not prove the sensor is faulty.")),
+            ("table", ["Sensor", "What it measures", "Typical codes", "Typical symptom", "Check before ordering"], [
+                ["Crankshaft position", "Engine speed and crank angle", "P0335, P0336",
+                 "Cranks but will not start; sudden stall", "Engine speed in live data while cranking"],
+                ["Camshaft position", "Which stroke each cylinder is on", "P0340, P0341",
+                 "Long crank, then batch injection; rough running", "Timing, if the belt or chain has been touched"],
+                ["Mass air flow (MAF)", "Air mass entering the engine", "P0100 – P0104",
+                 "Poor power, black smoke, rich or lean trims", "Check the intake for leaks between MAF and "
+                                                                 "throttle"],
+                ["Intake pressure (MAP / boost)", "Manifold pressure", "P0105 – P0109",
+                 "Lean at load, poor boost control", "Compare with key-on atmospheric reading"],
+                ["Air temperature", "Intake air temperature", "P0110 – P0113", "Cold-start fuelling errors",
+                 "Corrosion inside the MAF body on combined sensors"],
+                ["Coolant temperature", "Engine coolant temperature", "P0115 – P0119",
+                 "Wrong cold-start fuel, fan running always, gauge wrong", "Compare live value with a cold engine"],
+                ["Throttle position (TPS)", "Throttle plate angle", "P0120 – P0124",
+                 "High or unstable idle, limp mode", "The two tracks must agree — see the throttle body guide"],
+                ["Oxygen sensor", "Oxygen in the exhaust", "P0130 – P0141",
+                 "Rich or lean codes, high consumption", "Bank and upstream/downstream position first"],
+                ["Fuel injector", "Fuel delivered per cylinder", "P0201 – P0208, P0261 – P0264",
+                 "Single-cylinder misfire, fuel smell", "Swap the injector with a neighbour"],
+                ["Knock sensor", "Block vibration", "P0325 – P0334", "Timing retarded, poor power",
+                 "Mounting torque and corrosion under the bolt"],
+                ["Vehicle speed (VSS)", "Road speed", "P0500 – P0503",
+                 "Speedometer dead, cruise control off", "Which unit feeds the speedo — gearbox or ABS"],
+                ["Idle control / stepper", "Idle air bypass", "P0505 – P0511",
+                 "Hunting or stalling idle", "Clean the passage before replacing the motor"],
+                ["Oil control valve (VVT)", "Cam phaser oil flow", "P0010 – P0014", "P0011 timing code, rough idle",
+                 "Oil condition and the screen in the solenoid"],
+                ["Canister purge valve", "Fuel vapour flow", "P0443 – P0455",
+                 "Fuel smell, hard fill at the pump", "Check the valve clicks and holds vacuum"],
+                ["EGR differential pressure (DPFE)", "EGR flow", "P0401, P0402",
+                 "Pinging, poor economy, EGR code", "Blocked EGR passages give the same code"],
+                ["Fuel pressure regulator", "Rail pressure", "P0089, P0087", "Lean under load, hard start",
+                 "Measure pressure before condemning the regulator"],
+            ]),
+            ("p", ("Codes in these ranges are generic OBD-II definitions; the same number can mean something "
+                   "else on a given manufacturer. Confirm against the maker's list before quoting a part.")),
+            ("h2", "The three pairs people confuse"),
+            ("ul", [
+                "<b>MAP and MAF.</b> Some engines use both, some only one. Fitting the wrong family leaves the "
+                "engine management estimating air from a sensor that is not there.",
+                "<b>TPS and accelerator pedal sensor.</b> A drive-by-wire car has both; a P0120 is the throttle "
+                "body, a P2135-style code can be either. Read which module reports the code.",
+                "<b>Crank and cam.</b> They fail with the same symptom on paper and completely different ones in "
+                "practice: no crank signal means no start, no cam signal often still runs. See "
+                "[[L:guides/crank-cam-sensor-no-start-diagnosis.html|the no-start guide]].",
+            ]),
+            ("h2", "Codes that are not a sensor"),
+            ("p", ("Four families arrive in the same inbox and rarely need a sensor: P0420 (catalyst efficiency), "
+                   "P0442 and P0455 (evaporative leak), P0171 with a whistle (air leak), and P0300 with a "
+                   "compression problem. If the customer has already replaced two sensors for the same code, the "
+                   "code is describing an effect, not a part.")),
+            ("h2", "Where each family lives on this site"),
+            ("ul", [
+                "[[L:cat/ckp|Crankshaft position sensors]] · [[L:cat/cmp|Camshaft position sensors]]",
+                "[[L:cat/maf|Mass air flow sensors]] · [[L:cat/map|Intake pressure sensors]] · "
+                "[[L:cat/temp|Temperature sensors]]",
+                "[[L:cat/tps|Throttle position sensors]] · [[L:cat/throttle|Throttle bodies]]",
+                "[[L:cat/o2|Oxygen sensors]] · [[L:cat/injector|Fuel injectors]] · [[L:cat/knock|Knock sensors]]",
+                "[[L:cat/speed|Speed sensors]] · [[L:cat/stepper|Idle stepper motors]] · "
+                "[[L:cat/ocv|Oil control valves]]",
+                "[[L:cat/purge|Canister purge valves]] · [[L:cat/vsv|Vacuum solenoid valves]] · "
+                "[[L:cat/dpfe|Differential pressure sensors]] · [[L:cat/fuelpress|Fuel pressure regulators]]",
+            ]),
+            ("h2", "Related guides"),
+            ("ul", [
+                "[[L:guides/oxygen-sensor-codes-and-part-matching.html|Oxygen sensor codes P0130 to P0135]]",
+                "[[L:guides/crank-cam-sensor-no-start-diagnosis.html|No-start diagnosis: crank and cam sensors]]",
+                "[[L:guides/throttle-body-cleaning-and-relearn.html|Throttle body cleaning and relearn]]",
+                "[[L:guides/fuel-injector-flow-matching-and-part-numbers.html|Fuel injector flow and part "
+                "matching]]",
+            ]),
         ],
     },
 ]
