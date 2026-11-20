@@ -55,7 +55,15 @@ def main():
         shutil.copyfile(DATA_JS, bak)
         print(" 已备份：%s" % os.path.basename(bak))
 
-    print("\n[1/3] 读目录表，补新型号 …")
+    print("\n[0/4] 同步产品数据译名表（pdata_i18n.py → assets/i18n.js）…")
+    try:
+        import pdata_i18n
+        pdata_i18n.write_js()
+        print("   译名表已同步。")
+    except Exception as e:
+        print("   [提示] 译名表没同步（不影响站点其它部分）：%s" % e)
+
+    print("\n[1/4] 读目录表，补新型号 …")
     import import_more
     rc = import_more.main()
     if rc:

@@ -76,6 +76,13 @@ DEFAULT_CFG = {
     "analytics": "",
     # 是否把买家搜的词（型号/OE 号）一起记下来：1 = 记，空 = 不记
     "analytics_q": "",
+    # 站长平台验证（填哪条就全站输出哪个 meta；不填 = 不输出，页面完全不变）
+    #   谷歌验证=   Google Search Console 的「HTML 标记」那一串
+    #   必应验证=   Bing Webmaster Tools 的 msvalidate.01
+    #   百度验证=   百度搜索资源平台的 baidu-site-verification
+    "gsc": "",
+    "bing": "",
+    "baidu": "",
 }
 
 # 首页信任条 / 产品页条款块用的口径。
@@ -184,9 +191,23 @@ POS_WORDS = {
 }
 
 PER_PAGE = 700          # 品类页每页列多少个型号（ABS 2065 个拆成 3 页，避免单页过大）
+
+
+def _asset_ver(path, base):
+    """静态资源缓存键 = 手写的日期段 + 文件内容哈希前 8 位。
+    这样改完 i18n.js 就算忘了改版本号，老访客也不会吃到缓存里的旧字典。
+    （2026-11-20 加的：产品数据译名就写在这份 i18n.js 里，缓存没刷新会直接显示旧译名）"""
+    try:
+        import hashlib
+        with open(path, "rb") as fh:
+            return "%s-%s" % (base, hashlib.sha1(fh.read()).hexdigest()[:8])
+    except Exception:
+        return base
+
+
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
 CSS_V = "20261119l"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
-I18N_V = "20261119i18n3"     # 改 assets/i18n.js（加语种/改文案）之后改这里，老访客才不会用缓存里的旧字典
+I18N_V = _asset_ver(os.path.join(HERE, "assets", "i18n.js"), "20261120i18n4")
 
 
 # ------------------------------------------------------------------ 配置
@@ -211,6 +232,11 @@ def load_cfg():
             "统计": "analytics", "分析": "analytics", "统计代码": "analytics",
             "analytics": "analytics",
             "统计查询词": "analytics_q", "analytics_q": "analytics_q",
+            "谷歌验证": "gsc", "google验证": "gsc", "gsc": "gsc",
+            "google-site-verification": "gsc", "谷歌站长": "gsc",
+            "必应验证": "bing", "bing验证": "bing", "bing": "bing",
+            "msvalidate": "bing", "必应站长": "bing",
+            "百度验证": "baidu", "baidu": "baidu", "百度站长": "baidu",
         }
         for line in raw.splitlines():
             line = line.strip()
@@ -632,6 +658,14 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
         if (cfg.get("analytics_q") or "").strip() in ("1", "yes", "true", "on"):
             an += '\n<meta name="ymy-analytics-q" content="1">'
     an += '\n<script defer src="%sassets/analytics.js?v=%s"></script>' % (base, ANALYTICS_V)
+    # 站长平台验证 meta：填了哪个就出哪个，都没填就为空（页面与改动前逐字节一致）
+    ver = ""
+    for _key, _name in (("gsc", "google-site-verification"),
+                        ("bing", "msvalidate.01"),
+                        ("baidu", "baidu-site-verification")):
+        _val = (cfg.get(_key) or "").strip()
+        if _val:
+            ver += '\n<meta name="%s" content="%s">' % (_name, esc(_val))
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -639,7 +673,7 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{title}</title>
 <meta name="description" content="{desc}">
-<meta name="robots" content="{robots}">{can}
+<meta name="robots" content="{robots}">{ver}{can}
 <meta property="og:type" content="{ogtype}">
 <meta property="og:site_name" content="Guangzhou Yumengyang Auto Parts">
 <meta property="og:title" content="{title}">
@@ -651,7 +685,7 @@ def head_block(cfg, title, desc, canonical, og_image="", og_type="product", ld_l
 <script defer src="{base}assets/i18n.js?v={i18nv}"></script>{an}{extra}{ld}
 </head>""".format(title=esc(title), desc=esc(desc), can=can, ogurl=ogurl, robots=robots,
                  ogtype=og_type, img=img, ld=ld, langboot=LANG_BOOT, favicon=FAVICON, base=base,
-                 an=an, extra=extra_scripts, cssv=CSS_V, i18nv=I18N_V)
+                 an=an, extra=extra_scripts, cssv=CSS_V, i18nv=I18N_V, ver=ver)
 
 
 
@@ -752,40 +786,45 @@ LIVE_BRAND_SLUGS = set()      # 真正生成了品牌页的 slug（型号页只�
 
 
 def spec_rows(it):
+    """规格表行：[(data-i18n 键, 单元格 HTML, 产品数据标记)]。
+    第三项 = "pd" 时，单元格里的文字是产品数据（品牌 / 车型 / 备注），
+    由 assets/i18n.js 的 I18N.pd() 按当前语种逐词替换（查不到译名保留英文）。"""
     rows = []
     if it.get("oe"):
-        rows.append(("spec_oe", '<span style="font-variant-numeric:tabular-nums">%s</span>' % esc(it["oe"])))
+        rows.append(("spec_oe", '<span style="font-variant-numeric:tabular-nums">%s</span>' % esc(it["oe"]), ""))
     if it.get("x"):
         tags = "".join("<span>%s</span>" % esc(x) for x in it["x"][:24])
-        rows.append(("spec_xref", '<div class="tags">%s</div>' % tags))
+        rows.append(("spec_xref", '<div class="tags">%s</div>' % tags, ""))
     if it.get("b"):
-        rows.append(("spec_brand", esc(it["b"])))
+        rows.append(("spec_brand", esc(it["b"]), ""))
     if it.get("a"):
-        rows.append(("spec_fit", esc(it["a"])))
+        rows.append(("spec_fit", esc(it["a"]), "pd"))
     else:
-        rows.append(("spec_fit", '<span class="dash">&mdash;</span>'))
+        rows.append(("spec_fit", '<span class="dash">&mdash;</span>', ""))
     if it.get("_brands") and brandlib is not None:
         bl = [b for b in it["_brands"] if brandlib.brand_slug(b) in LIVE_BRAND_SLUGS][:4]
         if bl:
             rows.append(("spec_fit_brands", '<div class="tags">%s</div>' % "".join(
-                '<a href="../brand/%s.html">%s</a>' % (brandlib.brand_slug(b), esc(b)) for b in bl)))
+                '<a href="../brand/%s.html" data-pd="brand">%s</a>' % (brandlib.brand_slug(b), esc(b))
+                for b in bl), ""))
     # 结构化适配信息（从适配车型文本里解析出来的，没解析到就不显示）
     if it.get("y"):
         rows.append(("spec_years", '<span style="font-variant-numeric:tabular-nums">%s</span>'
-                     % esc(", ".join(it["y"]))))
+                     % esc(", ".join(it["y"])), ""))
     if it.get("d"):
         rows.append(("spec_displ", '<div class="tags">%s</div>'
-                     % "".join("<span>%s</span>" % esc(x) for x in it["d"])))
+                     % "".join("<span>%s</span>" % esc(x) for x in it["d"]), ""))
     if it.get("e"):
         rows.append(("spec_engine", '<div class="tags">%s</div>'
-                     % "".join("<span>%s</span>" % esc(x) for x in it["e"])))
+                     % "".join("<span>%s</span>" % esc(x) for x in it["e"]), ""))
     notes = public_notes(it.get("r"))
     if notes:
-        rows.append(("spec_notes", esc(notes)))
-    rows.append(("our_sku", esc(it["m"])))
+        rows.append(("spec_notes", esc(notes), "pd"))
+    rows.append(("our_sku", esc(it["m"]), ""))
     label = dict(SPEC_LABELS)
-    return "".join('<tr><th data-i18n="%s">%s</th><td>%s</td></tr>' % (k, label.get(k, k), v)
-                   for k, v in rows)
+    return "".join('<tr><th data-i18n="%s">%s</th><td%s>%s</td></tr>'
+                   % (k, label.get(k, k), ' data-pd="text"' if pd else "", v)
+                   for k, v, pd in rows)
 
 
 # ==================================================================== 内链网络
@@ -1022,7 +1061,8 @@ def _link_card(x):
            'decoding="async"></span>' % esc(img)) if img else '<span class="lkimg none" aria-hidden="true"></span>'
     oe = x.get("oe")
     oe_html = '<span class="lkoe">OE %s</span>' % esc(oe) if oe else ""
-    return ('<a class="lk" href="../c/%s.html">%s<b>%s</b><span class="lkf">%s</span>%s</a>'
+    return ('<a class="lk" href="../c/%s.html">%s<b>%s</b>'
+            '<span class="lkf" data-pd="text">%s</span>%s</a>'
             % (esc(x["s"]), pic, esc(x["m"]), esc(_fit_summary(x)), oe_html))
 
 
@@ -1277,7 +1317,7 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
            '<div class="nopic"><span data-i18n="nopic">No photo available for this part</span><br>'
            '<span style="font-size:12px" data-i18n="nopic_sub">Ask us on WhatsApp for a real picture</span></div>')
 
-    app_html = ('<p>%s</p>' % esc(apps)) if apps else \
+    app_html = ('<p data-pd="text">%s</p>' % esc(apps)) if apps else \
         '<p data-i18n="app_fallback">Please contact us with your vehicle model and we will confirm the fitment.</p>'
 
     wa_text = "Hi, I am interested in %s%s. Please send me the price, MOQ and delivery time." % (
@@ -1326,7 +1366,7 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
     <div class="kicker" data-cat="%s">%s</div>
     <h1><span class="sr-only">%s </span>%s</h1>
     <p class="sub2"><span data-i18n="our_sku">Our SKU</span> <b>%s</b>%s</p>
-    <p class="langnote" data-i18n="langnote">Product data is shown in English</p>
+    <p class="langnote" data-i18n="langnote">Brand names and notes follow your language; unrecognised vehicle names stay in English</p>
     <table class="spec">%s</table>
     %s
     <div class="cta">

@@ -218,6 +218,8 @@ R350/GL450
   /* ---------- 多语言：文案都走 I18N.t(key, 英文兜底, 变量) ---------- */
   var T = function(k, fb, vars){ return window.I18N ? window.I18N.t(k, fb, vars) : (fb || ""); };
   var CATNAME = function(key, fb){ return window.I18N ? window.I18N.cat(key, fb) : fb; };
+  /* 产品数据（品牌名 / 车型里的品牌与方位词 / 备注）按当前语种逐词替换；没译名的保留英文 */
+  var PD = function(s){ return (window.I18N && window.I18N.pd) ? window.I18N.pd(s) : s; };
 
   /* 热销四类固定在前，其余按型号数从多到少（和导航、品类总览一致）；0 型号的品类不露出 */
   var HOT = ["coil", "fuelpump", "o2", "plug"];
@@ -508,7 +510,7 @@ R350/GL450
     var oe = it.oe ? '<div class="oe"><b>OE</b>' + esc(it.oe) + '</div>' : '';
     var xs = (it.x && it.x.length) ? '<div class="xs">' + it.x.slice(0,2).map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('') +
              (it.x.length > 2 ? '<span>+' + (it.x.length - 2) + '</span>' : '') + '</div>' : '';
-    var alt = it.a ? '<div class="name">' + esc(it.a) + '</div>'
+    var alt = it.a ? '<div class="name">' + esc(PD(it.a)) + '</div>'
       : (it.n ? '<div class="name">' + esc(it.n) + '</div>' : '<div class="name dash">&mdash;</div>');
     var href = 'c/' + encodeURIComponent(it.s || ('p' + it.i)) + '.html';
     return '<a class="card" href="' + esc(href) + '" data-id="' + it.i + '">' + pic +
@@ -721,8 +723,8 @@ R350/GL450
     if(it.x && it.x.length){
       rows.push([T('modal_xref', 'Cross-ref'), '<div class="tags">' + it.x.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('') + '</div>']);
     }
-    if(it.a) rows.push([T('modal_fit', 'Fitment'), esc(it.a)]);
-    if(it.r) rows.push([T('modal_notes', 'Notes'), esc(it.r)]);
+    if(it.a) rows.push([T('modal_fit', 'Fitment'), esc(PD(it.a))]);
+    if(it.r) rows.push([T('modal_notes', 'Notes'), esc(PD(it.r))]);
     rows.push([T('modal_cat', 'Category'), esc(catName(it))]);
     $kv.innerHTML = rows.map(function(r){ return '<dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd>'; }).join('');
 

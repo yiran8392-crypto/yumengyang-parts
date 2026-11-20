@@ -1,11 +1,17 @@
 /* 型号查询站 · 界面多语言（en 默认，另有 zh / ar / ru / fr / es / pt / id / fa）
-   只翻界面文案和品类名；产品数据（型号 / 车型 / 备注）永远是英文。
+   翻三样东西：
+     ① 界面文案（T 字典）和品类名（C 表）
+     ② 产品数据的「品牌 / 车型里的品牌与方位词 / 备注」（PDATA 段 + I18N.pd()，
+        译名表在 pdata_i18n.py，空译就用英文原文当 fallback）
+     ③ 型号代码、OE 号、包装号永远不翻
    <title> / meta description / canonical 都不动，SEO 保持英文。
    页面里用 data-i18n="key" 标文案，data-v-n 之类给占位符传值；
-   data-cat="coil" 标品类名。切换器是 <select class="langsel">。
+   data-cat="coil" 标品类名；data-pd 标「产品数据，要逐词替换」的节点。
+   切换器是 <select class="langsel">。
    语言选择存 localStorage（键 ymy_lang），也支持 ?lang=zh 临时预览。
-   加新语种要动三处：这里（LANGS / IDX / T / C / norm / dir）、sitegen.py 的
-   LANG_OPTIONS + LANG_BOOT、assets/share.js，然后跑 rerender.py 重出页面。 */
+   加新语种要动四处：这里（LANGS / IDX / T / C / PDATA 列序 / norm / dir）、
+   pdata_i18n.py 的 LANGS、sitegen.py 的 LANG_OPTIONS + LANG_BOOT、
+   assets/share.js，然后跑 rerender.py 重出页面。 */
 (function () {
   var DEF = "en";
   var KEY = "ymy_lang";
@@ -45,7 +51,7 @@
       more: "更多",
       nopic: "这个型号暂无实拍图",
       nopic_sub: "WhatsApp 索取实拍图",
-      langnote: "产品数据以英文显示",
+      langnote: "品牌名和备注已按你的语言显示，未收录的车型名保留英文",
       app_fallback: "请把车型发给我们，我们来确认适配。",
       cat_lead: "我们现货的每个型号都带 OE 号和交叉号。点型号可以看适配、实拍图和询价按钮。",
       models_n: "{n} 个型号",
@@ -595,7 +601,7 @@
       more: "المزيد",
       nopic: "لا توجد صورة حقيقية لهذه القطعة",
       nopic_sub: "اطلب صورة حقيقية على واتساب",
-      langnote: "بيانات المنتج معروضة باللغة الإنجليزية",
+      langnote: "أسماء الماركات والملاحظات معروضة بلغتك، وأسماء الطرازات غير المترجمة تبقى بالإنجليزية",
       app_fallback: "أرسل لنا طراز مركبتك وسنؤكد التوافق.",
       cat_lead: "كل قطعة متوفرة لدينا مع رقم OE والمراجع. اضغط على رقم القطعة لعرض التوافق والصور وطلب عرض السعر.",
       models_n: "{n} قطعة",
@@ -1145,7 +1151,7 @@
       more: "Ещё",
       nopic: "Нет реального фото этой детали",
       nopic_sub: "Запросите настоящее фото в WhatsApp",
-      langnote: "Данные о товаре на английском",
+      langnote: "Марки и примечания — на вашем языке, нерасшифрованные модели остаются на английском",
       app_fallback: "Пришлите модель автомобиля — подтвердим применимость.",
       cat_lead: "Каждая деталь в наличии: номер OE и кросс-номера. Нажмите на номер детали, чтобы увидеть применимость, фото и кнопку запроса цены.",
       models_n: "{n} моделей",
@@ -1695,7 +1701,7 @@
       more: "Plus",
       nopic: "Pas de photo réelle pour cette pièce",
       nopic_sub: "Demandez une vraie photo sur WhatsApp",
-      langnote: "Les données produit sont affichées en anglais",
+      langnote: "Marques et notes dans votre langue, les modèles non répertoriés restent en anglais",
       app_fallback: "Envoyez-nous votre modèle de véhicule et nous confirmerons la compatibilité.",
       cat_lead: "Chaque référence en stock est livrée avec sa référence OE et ses références croisées. Cliquez sur une référence pour voir la compatibilité, les photos et le bouton de devis.",
       models_n: "{n} références",
@@ -2245,7 +2251,7 @@
       more: "Más",
       nopic: "Sin foto real de esta referencia",
       nopic_sub: "Pida una foto real por WhatsApp",
-      langnote: "Los datos del producto se muestran en inglés",
+      langnote: "Marcas y notas en tu idioma; los modelos no registrados siguen en inglés",
       app_fallback: "Envíenos su vehículo y confirmamos la compatibilidad.",
       cat_lead: "Cada referencia que tenemos lleva su número OE y sus referencias cruzadas. Pulse una referencia para ver compatibilidad, fotos y el botón de cotización.",
       models_n: "{n} referencias",
@@ -2792,7 +2798,7 @@
       more: "Mais",
       nopic: "Sem foto real desta referência",
       nopic_sub: "Peça uma foto real pelo WhatsApp",
-      langnote: "Os dados do produto aparecem em inglês",
+      langnote: "Marcas e notas no seu idioma; os modelos não cadastrados seguem em inglês",
       app_fallback: "Envie o seu veículo e confirmamos a compatibilidade.",
       cat_lead: "Cada referência que temos traz o número OE e as referências cruzadas. Toque numa referência para ver compatibilidade, fotos e o botão de cotação.",
       models_n: "{n} referências",
@@ -3339,7 +3345,7 @@
       more: "Lainnya",
       nopic: "Belum ada foto asli untuk part ini",
       nopic_sub: "Minta foto asli lewat WhatsApp",
-      langnote: "Data produk ditampilkan dalam bahasa Inggris",
+      langnote: "Nama merek dan catatan dalam bahasa Anda; model yang belum terdaftar tetap bahasa Inggris",
       app_fallback: "Kirim kendaraan Anda dan kami konfirmasi kecocokannya.",
       cat_lead: "Setiap part yang kami stok dilengkapi nomor OE dan referensi silang. Klik nomor part untuk melihat kecocokan, foto, dan tombol penawaran.",
       models_n: "{n} nomor part",
@@ -3886,7 +3892,7 @@
       more: "بیشتر",
       nopic: "هنوز عکس واقعی این قطعه موجود نیست",
       nopic_sub: "عکس واقعی را در واتساپ بخواهید",
-      langnote: "داده‌های محصول به انگلیسی نمایش داده می‌شود",
+      langnote: "نام برندها و یادداشت‌ها به زبان شماست؛ مدل‌های ترجمه‌نشده انگلیسی می‌مانند",
       app_fallback: "خودروی خود را بفرستید تا سازگاری را تأیید کنیم.",
       cat_lead: "هر قطعه‌ای که موجود داریم با شماره OE و شماره جایگزین ارائه می‌شود. روی شماره قطعه بزنید تا سازگاری، عکس واقعی و دکمه استعلام را ببینید.",
       models_n: "{n} شماره قطعه",
@@ -4436,6 +4442,313 @@
     vsv: ["真空电磁阀", "صمامات التفريغ", "Вакуумные клапаны", "Électrovannes de dépression", "Válvulas solenoides de vacío", "Válvulas solenoides de vácuo", "Solenoid vakum", "شیرهای خلأ"],
   };
 
+  /* ===== PDATA:BEGIN 由 pdata_i18n.py 生成，别手改这一段（改译名请改 pdata_i18n.py） ===== */
+  /* 产品数据译名：英语原文在前；空串 = 这种语言就用英文原名 */
+  var PD = [
+    ["Accent", "雅绅特", "", "", "", "", "", "", ""],
+    ["Accord", "雅阁", "", "", "", "", "", "", ""],
+    ["Acura", "讴歌", "أكيورا", "Акура", "", "", "", "", "آکورا"],
+    ["Aeolus", "风神", "", "", "", "", "", "", ""],
+    ["Alfa Romeo", "阿尔法·罗密欧", "ألفا روميو", "Альфа Ромео", "", "", "", "", "آلفارومئو"],
+    ["Also packed as", "另有包装号", "معبأ أيضاً كـ", "Также фасуется как", "Aussi conditionné en", "También envasado como", "Também embalado como", "Juga dikemas sebagai", "همچنین بسته‌بندی به‌صورت"],
+    ["AlSvin", "悦翔", "", "", "", "", "", "", ""],
+    ["Alto", "奥拓", "", "", "", "", "", "", ""],
+    ["Arrizo", "艾瑞泽", "", "", "", "", "", "", ""],
+    ["Asx", "劲炫", "", "", "", "", "", "", ""],
+    ["Atenza", "阿特兹", "", "", "", "", "", "", ""],
+    ["Audi", "奥迪", "أودي", "Ауди", "", "", "", "", "آئودی"],
+    ["Aveo", "乐骋", "", "", "", "", "", "", ""],
+    ["Axela", "昂克赛拉", "", "", "", "", "", "", ""],
+    ["BAIC", "北汽", "بايك", "БАИК", "", "", "", "", "بایک"],
+    ["Baodian", "宝典", "", "", "", "", "", "", ""],
+    ["Baojun", "宝骏", "باوجون", "Баоцзюнь", "", "", "", "", "بائوجون"],
+    ["Beetle", "甲壳虫", "", "", "", "", "", "", ""],
+    ["Beijing", "北京", "", "", "", "", "", "", ""],
+    ["Benben", "奔奔", "", "", "", "", "", "", ""],
+    ["Bent", "弯", "منحني", "Изогнутый", "Coudé", "Curvo", "Curvo", "Bengkok", "خم"],
+    ["Besturn", "奔腾", "", "", "", "", "", "", ""],
+    ["Binyue", "缤越", "", "", "", "", "", "", ""],
+    ["Bluebird", "蓝鸟", "", "", "", "", "", "", ""],
+    ["BMW", "宝马", "بي إم دبليو", "БМВ", "", "", "", "", "بی‌ام‌و"],
+    ["Bora", "宝来", "", "", "", "", "", "", ""],
+    ["Borgward", "宝沃", "بورجوارد", "Боргвард", "", "", "", "", "بورگوارت"],
+    ["Borui", "博瑞", "", "", "", "", "", "", ""],
+    ["Boyue", "博越", "", "", "", "", "", "", ""],
+    ["Brilliance", "华晨", "بريليانس", "", "", "", "", "", "بریلیانس"],
+    ["Buick", "别克", "بويك", "Бьюик", "", "", "", "", "بیوک"],
+    ["BYD", "比亚迪", "بي واي دي", "БИД", "", "", "", "", "بی‌وای‌دی"],
+    ["Cadillac", "凯迪拉克", "كاديلاك", "Кадиллак", "", "", "", "", "کادیلاک"],
+    ["Camry", "凯美瑞", "", "", "", "", "", "", ""],
+    ["Captiva", "科帕奇", "", "", "", "", "", "", ""],
+    ["Cavalier", "科沃兹", "", "", "", "", "", "", ""],
+    ["Cerato", "赛拉图", "", "", "", "", "", "", ""],
+    ["Changan", "长安", "شانجان", "Чанган", "", "", "", "", "چانگان"],
+    ["Changhe", "昌河", "", "", "", "", "", "", ""],
+    ["Cherokee", "自由光", "", "", "", "", "", "", ""],
+    ["Chery", "奇瑞", "شيري", "Чери", "", "", "", "", "چری"],
+    ["Chevrolet", "雪佛兰", "شيفروليه", "Шевроле", "", "", "", "", "شورولت"],
+    ["Chrysler", "克莱斯勒", "كرايسلر", "Крайслер", "", "", "", "", "کرایسلر"],
+    ["Citroen", "雪铁龙", "سيتروين", "Ситроен", "", "", "", "", "سیتروئن"],
+    ["City", "锋范", "", "", "", "", "", "", ""],
+    ["Civic", "思域", "", "", "", "", "", "", ""],
+    ["Compass", "指南者", "", "", "", "", "", "", ""],
+    ["Connector", "插头", "موصل", "Разъём", "Connecteur", "Conector", "Conector", "Konektor", "اتصال"],
+    ["Coolbear", "酷熊", "", "", "", "", "", "", ""],
+    ["Corolla", "卡罗拉", "", "", "", "", "", "", ""],
+    ["Cowin", "凯翼", "", "", "", "", "", "", ""],
+    ["Crider", "凌派", "", "", "", "", "", "", ""],
+    ["Crosstour", "歌诗图", "", "", "", "", "", "", ""],
+    ["Crown", "皇冠", "", "", "", "", "", "", ""],
+    ["Cruze", "科鲁兹", "", "", "", "", "", "", ""],
+    ["Dacia", "达契亚", "داسيا", "Дачия", "", "", "", "", "داچیا"],
+    ["Daewoo", "大宇", "دايو", "Дэу", "", "", "", "", "دوو"],
+    ["Daihatsu", "大发", "ديهاتسو", "Дайхацу", "", "", "", "", "دایهاتسو"],
+    ["Delica", "得利卡", "", "", "", "", "", "", ""],
+    ["DFSK", "东风小康", "", "", "", "", "", "", ""],
+    ["Diesel", "柴油", "ديزل", "Дизель", "Diesel", "Diésel", "Diesel", "Diesel", "دیزل"],
+    ["Discontinued - no reorder", "已停产，不再补货", "متوقف - لا إعادة طلب", "Снято с производства", "Arrêté - pas de réassort", "Descontinuado", "Descontinuado", "Tidak diproduksi lagi", "توقف تولید"],
+    ["Discovery", "发现", "", "", "", "", "", "", ""],
+    ["Dodge", "道奇", "دودج", "Додж", "", "", "", "", "دوج"],
+    ["Dongfeng", "东风", "دونغفنغ", "Дунфэн", "", "", "", "", "دونگ‌فنگ"],
+    ["Double Iridium", "双铱金", "إيريديوم مزدوج", "Двойной иридий", "Double iridium", "Doble iridio", "Irídio duplo", "Iridium ganda", "ایریدیم دوتایی"],
+    ["Double Platinum", "双铂金", "بلاتين مزدوج", "Двойная платина", "Double platine", "Doble platino", "Platina dupla", "Platinum ganda", "پلاتین دوتایی"],
+    ["Eado", "逸动", "", "", "", "", "", "", ""],
+    ["Ecosport", "翼搏", "", "", "", "", "", "", ""],
+    ["Edge", "锐界", "", "", "", "", "", "", ""],
+    ["Elantra", "伊兰特", "", "", "", "", "", "", ""],
+    ["electrode", "电极", "قطب", "электрод", "électrode", "electrodo", "eletrodo", "elektroda", "الکترود"],
+    ["Elysee", "爱丽舍", "", "", "", "", "", "", ""],
+    ["Emgrand", "帝豪", "", "", "", "", "", "", ""],
+    ["Enclave", "昂科雷", "", "", "", "", "", "", ""],
+    ["Encore", "昂科拉", "", "", "", "", "", "", ""],
+    ["Engine", "发动机", "محرك", "Двигатель", "Moteur", "Motor", "Motor", "Mesin", "موتور"],
+    ["Envision", "昂科威", "", "", "", "", "", "", ""],
+    ["Epica", "景程", "", "", "", "", "", "", ""],
+    ["Evoque", "极光", "", "", "", "", "", "", ""],
+    ["Excelle", "凯越", "", "", "", "", "", "", ""],
+    ["Exeed", "星途", "إكسيد", "Эксид", "", "", "", "", "اکسید"],
+    ["Fabia", "晶锐", "", "", "", "", "", "", ""],
+    ["FAW", "一汽", "فاو", "ФАВ", "", "", "", "", "فاو"],
+    ["Fengguang", "风光", "", "", "", "", "", "", ""],
+    ["Fiat", "菲亚特", "فيات", "Фиат", "", "", "", "", "فیات"],
+    ["Fiesta", "嘉年华", "", "", "", "", "", "", ""],
+    ["Florid", "炫丽", "", "", "", "", "", "", ""],
+    ["Focus", "福克斯", "", "", "", "", "", "", ""],
+    ["Ford", "福特", "فورد", "Форд", "", "", "", "", "فورد"],
+    ["Forester", "森林人", "", "", "", "", "", "", ""],
+    ["Forthing", "风行", "فورثينغ", "", "", "", "", "", "فورسینگ"],
+    ["Foton", "福田", "فوتون", "Фотон", "", "", "", "", "فوتون"],
+    ["Front", "前", "أمامي", "Передний", "Avant", "Delantero", "Dianteiro", "Depan", "جلو"],
+    ["Fulwin", "风云", "", "", "", "", "", "", ""],
+    ["GAC", "广汽", "", "", "", "", "", "", ""],
+    ["Geely", "吉利", "جيلي", "Джили", "", "", "", "", "جیلی"],
+    ["Genesis", "捷尼赛思", "جينيسيس", "Дженезис", "", "", "", "", "جنسیس"],
+    ["GM", "通用", "جي إم", "", "", "", "", "", "جی‌ام"],
+    ["GMC", "GMC", "جي إم سي", "", "", "", "", "", "جی‌ام‌سی"],
+    ["Golf", "高尔夫", "", "", "", "", "", "", ""],
+    ["Great Wall", "长城", "جريت وول", "Грейт Волл", "", "", "", "", "گریت وال"],
+    ["Hafei", "哈飞", "", "", "", "", "", "", ""],
+    ["Haima", "海马", "هايما", "Хайма", "", "", "", "", "هایما"],
+    ["Haise", "海狮", "", "", "", "", "", "", ""],
+    ["Hanteng", "汉腾", "", "", "", "", "", "", ""],
+    ["Haval", "哈弗", "هافال", "Хавал", "", "", "", "", "هاول"],
+    ["Hawtai", "华泰", "", "", "", "", "", "", ""],
+    ["Heijingang", "黑金刚", "", "", "", "", "", "", ""],
+    ["Heyue", "和悦", "", "", "", "", "", "", ""],
+    ["Highlander", "汉兰达", "", "", "", "", "", "", ""],
+    ["Honda", "本田", "هوندا", "Хонда", "", "", "", "", "هوندا"],
+    ["Hongguang", "宏光", "", "", "", "", "", "", ""],
+    ["Hongtu", "鸿途", "", "", "", "", "", "", ""],
+    ["Huanghai", "黄海", "", "", "", "", "", "", ""],
+    ["Huansu", "幻速", "", "", "", "", "", "", ""],
+    ["Hyundai", "现代", "هيونداي", "Хендай", "", "", "", "", "هیوندای"],
+    ["Imported", "进口", "مستورد", "Импортный", "Importé", "Importado", "Importado", "Impor", "وارداتی"],
+    ["Infiniti", "英菲尼迪", "إنفينيتي", "Инфинити", "", "", "", "", "اینفینیتی"],
+    ["Inner", "内", "داخلي", "Внутренний", "Intérieur", "Interior", "Interno", "Dalam", "داخلی"],
+    ["Iridium", "铱金", "إيريديوم", "Иридий", "Iridium", "Iridio", "Irídio", "Iridium", "ایریدیم"],
+    ["Iridium-Platinum", "铱铂金", "إيريديوم-بلاتين", "Иридий-платина", "Iridium-Platine", "Iridio-Platino", "Irídio-Platina", "Iridium-Platinum", "ایریدیم-پلاتین"],
+    ["Isuzu", "五十铃", "إيسوزو", "Исузу", "", "", "", "", "ایسوزو"],
+    ["Iveco", "依维柯", "إيفيكو", "Ивеко", "", "", "", "", "ایوکو"],
+    ["JAC", "江淮", "جاك", "Джак", "", "", "", "", "جک"],
+    ["Jaguar", "捷豹", "جاكوار", "Ягуар", "", "", "", "", "جگوار"],
+    ["Jeep", "吉普", "جيب", "Джип", "", "", "", "", "جیپ"],
+    ["Jetour", "捷途", "جيتور", "Джетур", "", "", "", "", "جتور"],
+    ["Jetta", "捷达", "", "", "", "", "", "", ""],
+    ["Jinbei", "金杯", "جينبي", "Цзиньбэй", "", "", "", "", "جین‌بی"],
+    ["Jingyi", "景逸", "", "", "", "", "", "", ""],
+    ["JMC", "江铃", "", "", "", "", "", "", ""],
+    ["Journey", "酷威", "", "", "", "", "", "", ""],
+    ["Junjie", "骏捷", "", "", "", "", "", "", ""],
+    ["Karry", "开瑞", "", "", "", "", "", "", ""],
+    ["Kia", "起亚", "كيا", "Киа", "", "", "", "", "کیا"],
+    ["Kuga", "翼虎", "", "", "", "", "", "", ""],
+    ["Lacrosse", "君越", "", "", "", "", "", "", ""],
+    ["Lada", "拉达", "لادا", "Лада", "", "", "", "", "لادا"],
+    ["Lancer", "蓝瑟", "", "", "", "", "", "", ""],
+    ["Lancia", "蓝旗亚", "لانشيا", "Лянча", "", "", "", "", "لانچیا"],
+    ["Land Rover", "路虎", "لاند روفر", "Ленд Ровер", "", "", "", "", "لندروور"],
+    ["Landwind", "陆风", "", "", "", "", "", "", ""],
+    ["Lavida", "朗逸", "", "", "", "", "", "", ""],
+    ["Left", "左", "يسار", "Левый", "Gauche", "Izquierdo", "Esquerdo", "Kiri", "چپ"],
+    ["Legacy", "力狮", "", "", "", "", "", "", ""],
+    ["Leopaard", "猎豹", "", "", "", "", "", "", ""],
+    ["Leopaul", "猎豹", "", "", "", "", "", "", ""],
+    ["Levin", "雷凌", "", "", "", "", "", "", ""],
+    ["Lexus", "雷克萨斯", "لكزس", "Лексус", "", "", "", "", "لکسوس"],
+    ["LH", "左", "يسار", "Лев.", "G", "Izq.", "Esq.", "Kiri", "چپ"],
+    ["LH/RH", "左右", "يمين/يسار", "Лев./прав.", "G/D", "Izq./Der.", "Esq./Dir.", "Kiri/kanan", "چپ/راست"],
+    ["Liana", "利亚纳", "", "", "", "", "", "", ""],
+    ["Lifan", "力帆", "ليفان", "Лифан", "", "", "", "", "لیفان"],
+    ["Lincoln", "林肯", "لينكولن", "Линкольн", "", "", "", "", "لینکلن"],
+    ["Lingzhi", "菱智", "", "", "", "", "", "", ""],
+    ["Livina", "骊威", "", "", "", "", "", "", ""],
+    ["Lova", "乐风", "", "", "", "", "", "", ""],
+    ["Lower", "下", "سفلي", "Нижний", "Inférieur", "Inferior", "Inferior", "Bawah", "پایین"],
+    ["Luxgen", "纳智捷", "", "", "", "", "", "", ""],
+    ["Lynk", "领克", "", "", "", "", "", "", ""],
+    ["Magotan", "迈腾", "", "", "", "", "", "", ""],
+    ["Mahindra", "马恒达", "ماهيندرا", "Махиндра", "", "", "", "", "ماهیندرا"],
+    ["Malibu", "迈锐宝", "", "", "", "", "", "", ""],
+    ["Maruti", "马鲁蒂", "ماروتي", "Марути", "", "", "", "", "ماروتی"],
+    ["Maserati", "玛莎拉蒂", "مازيراتي", "Мазерати", "", "", "", "", "مازراتی"],
+    ["Material:", "材质：", "المادة:", "Материал:", "Matière :", "Material:", "Material:", "Bahan:", "جنس:"],
+    ["Maxus", "大通", "ماكسوس", "Максус", "", "", "", "", "ماکسوس"],
+    ["Mazda", "马自达", "مازدا", "Мазда", "", "", "", "", "مزدا"],
+    ["Mercedes-Benz", "奔驰", "مرسيدس", "Мерседес", "", "", "", "", "مرسدس‌بنز"],
+    ["MG", "名爵", "إم جي", "МГ", "", "", "", "", "ام‌جی"],
+    ["Mini", "迷你", "ميني", "Мини", "", "", "", "", "مینی"],
+    ["Mitsubishi", "三菱", "ميتسوبيشي", "Мицубиси", "", "", "", "", "میتسوبیشی"],
+    ["Mondeo", "蒙迪欧", "", "", "", "", "", "", ""],
+    ["Monza", "科鲁泽", "", "", "", "", "", "", ""],
+    ["Murano", "楼兰", "", "", "", "", "", "", ""],
+    ["NETA", "哪吒", "", "", "", "", "", "", ""],
+    ["New", "新", "جديد", "Новый", "Neuf", "Nuevo", "Novo", "Baru", "نو"],
+    ["Nickel", "镍", "نيكل", "Никель", "Nickel", "Níquel", "Níquel", "Nikel", "نیکل"],
+    ["Nickel-Copper", "镍铜", "نيكل-نحاس", "Никель-медь", "Nickel-cuivre", "Níquel-Cobre", "Níquel-Cobre", "Nikel-Tembaga", "نیکل-مس"],
+    ["Nissan", "日产", "نيسان", "Ниссан", "", "", "", "", "نیسان"],
+    ["Not kept in stock", "不备货", "غير متوفر بالمخزون", "Нет на складе", "Non stocké", "Sin stock", "Sem estoque", "Tidak ada stok", "موجود نیست"],
+    ["Octavia", "明锐", "", "", "", "", "", "", ""],
+    ["Odyssey", "奥德赛", "", "", "", "", "", "", ""],
+    ["Old", "旧", "قديم", "Старый", "Ancien", "Usado", "Usado", "Lama", "قدیمی"],
+    ["Ono", "欧诺", "", "", "", "", "", "", ""],
+    ["Opel", "欧宝", "أوبل", "Опель", "", "", "", "", "اوپل"],
+    ["Oriental", "东方之子", "", "", "", "", "", "", ""],
+    ["Oushan", "欧尚", "", "", "", "", "", "", ""],
+    ["Outback", "傲虎", "", "", "", "", "", "", ""],
+    ["Outer", "外", "خارجي", "Внешний", "Extérieur", "Exterior", "Externo", "Luar", "بیرونی"],
+    ["Outlander", "欧蓝德", "", "", "", "", "", "", ""],
+    ["Packing:", "包装：", "التعبئة:", "Упаковка:", "Conditionnement :", "Empaque:", "Embalagem:", "Kemasan:", "بسته‌بندی:"],
+    ["Pajero", "帕杰罗", "", "", "", "", "", "", ""],
+    ["Passat", "帕萨特", "", "", "", "", "", "", ""],
+    ["Patriot", "自由客", "", "", "", "", "", "", ""],
+    ["pcs/box", "件/盒", "قطعة/علبة", "шт./кор.", "pcs/boîte", "uds./caja", "un./caixa", "pcs/kotak", "عدد/جعبه"],
+    ["Petrol", "汽油", "بنزين", "Бензин", "Essence", "Gasolina", "Gasolina", "Bensin", "بنزین"],
+    ["Peugeot", "标致", "بيجو", "Пежо", "", "", "", "", "پژو"],
+    ["Pickup", "皮卡", "بيك أب", "Пикап", "Pick-up", "Pickup", "Picape", "Pikap", "وانت"],
+    ["Platinum", "铂金", "بلاتين", "Платина", "Platine", "Platino", "Platina", "Platinum", "پلاتین"],
+    ["Porsche", "保时捷", "بورش", "Порше", "", "", "", "", "پورشه"],
+    ["Prado", "普拉多", "", "", "", "", "", "", ""],
+    ["Present", "至今", "حتى الآن", "н.в.", "actuel", "actual", "atual", "sekarang", "تاکنون"],
+    ["Prius", "普锐斯", "", "", "", "", "", "", ""],
+    ["Proton", "宝腾", "بروتون", "Протон", "", "", "", "", "پروتون"],
+    ["Qashqai", "逍客", "", "", "", "", "", "", ""],
+    ["Qin", "秦", "", "", "", "", "", "", ""],
+    ["Qty/vehicle", "每车用量", "الكمية لكل سيارة", "Кол-во на авто", "Qté/véhicule", "Cant./vehículo", "Qtd./veículo", "Jumlah/kendaraan", "تعداد در خودرو"],
+    ["Raeton", "睿骋", "", "", "", "", "", "", ""],
+    ["Ram", "公羊", "رام", "Рам", "", "", "", "", "رم"],
+    ["Range Rover", "揽胜", "", "", "", "", "", "", ""],
+    ["Rear", "后", "خلفي", "Задний", "Arrière", "Trasero", "Traseiro", "Belakang", "عقب"],
+    ["Refine", "瑞风", "", "", "", "", "", "", ""],
+    ["Regal", "君威", "", "", "", "", "", "", ""],
+    ["Reiz", "锐志", "", "", "", "", "", "", ""],
+    ["Renault", "雷诺", "رينو", "Рено", "", "", "", "", "رنو"],
+    ["RH", "右", "يمين", "Прав.", "D", "Der.", "Dir.", "Kanan", "راست"],
+    ["Right", "右", "يمين", "Правый", "Droit", "Derecho", "Direito", "Kanan", "راست"],
+    ["Rio", "锐欧", "", "", "", "", "", "", ""],
+    ["Roewe", "荣威", "", "Роуи", "", "", "", "", "رووی"],
+    ["Rongguang", "荣光", "", "", "", "", "", "", ""],
+    ["Saab", "萨博", "ساب", "Сааб", "", "", "", "", "ساب"],
+    ["Sagitar", "速腾", "", "", "", "", "", "", ""],
+    ["SAIC", "上汽", "سايك", "", "", "", "", "", "سایک"],
+    ["Sail", "赛欧", "", "", "", "", "", "", ""],
+    ["Santana", "桑塔纳", "", "", "", "", "", "", ""],
+    ["Seat", "西雅特", "سيات", "Сеат", "", "", "", "", "سیت"],
+    ["Sedan", "轿车", "سيدان", "Седан", "Berline", "Sedán", "Sedã", "Sedan", "سدان"],
+    ["Sehol", "思皓", "", "", "", "", "", "", ""],
+    ["Senia", "森雅", "", "", "", "", "", "", ""],
+    ["Senova", "绅宝", "", "", "", "", "", "", ""],
+    ["Series", "系", "سلسلة", "Серия", "Série", "Serie", "Série", "Seri", "سری"],
+    ["Skoda", "斯柯达", "سكودا", "Шкода", "", "", "", "", "اشکودا"],
+    ["Smart", "斯玛特", "سمارت", "Смарт", "", "", "", "", "اسمارت"],
+    ["Sokon", "小康", "", "", "", "", "", "", ""],
+    ["Sonata", "索纳塔", "", "", "", "", "", "", ""],
+    ["Song", "宋", "", "", "", "", "", "", ""],
+    ["Sorento", "索兰托", "", "", "", "", "", "", ""],
+    ["Soueast", "东南", "ساوإيست", "", "", "", "", "", "سواست"],
+    ["Spark", "乐驰", "", "", "", "", "", "", ""],
+    ["Spirior", "思铂睿", "", "", "", "", "", "", ""],
+    ["Sportage", "狮跑", "", "", "", "", "", "", ""],
+    ["SsangYong", "双龙", "سانج يونج", "СсангЙонг", "", "", "", "", "سانگیونگ"],
+    ["Stepper:", "步进马达：", "محرك خطوة:", "Шаговый мотор:", "Moteur pas-à-pas :", "Motor paso a paso:", "Motor de passo:", "Motor stepper:", "موتور پله‌ای:"],
+    ["Straight", "直", "مستقيم", "Прямой", "Droit", "Recto", "Reto", "Lurus", "مستقیم"],
+    ["Subaru", "斯巴鲁", "سوبارو", "Субару", "", "", "", "", "سوبارو"],
+    ["Sunny", "阳光", "", "", "", "", "", "", ""],
+    ["Superb", "昊锐", "", "", "", "", "", "", ""],
+    ["Suzuki", "铃木", "سوزوكي", "Сузуки", "", "", "", "", "سوزوکی"],
+    ["SWM", "斯威", "", "", "", "", "", "", ""],
+    ["Sylphy", "轩逸", "", "", "", "", "", "", ""],
+    ["Tata", "塔塔", "تاتا", "Тата", "", "", "", "", "تاتا"],
+    ["Taurus", "金牛座", "", "", "", "", "", "", ""],
+    ["Teana", "天籁", "", "", "", "", "", "", ""],
+    ["Tesla", "特斯拉", "تسلا", "Тесла", "", "", "", "", "تسلا"],
+    ["Tianye", "田野", "", "", "", "", "", "", ""],
+    ["Tiggo", "瑞虎", "", "", "", "", "", "", ""],
+    ["Tiguan", "途观", "", "", "", "", "", "", ""],
+    ["Tiida", "骐达", "", "", "", "", "", "", ""],
+    ["Touareg", "途锐", "", "", "", "", "", "", ""],
+    ["Touran", "途安", "", "", "", "", "", "", ""],
+    ["Toyota", "丰田", "تويوتا", "Тойота", "", "", "", "", "تویوتا"],
+    ["Transit", "全顺", "", "", "", "", "", "", ""],
+    ["Trax", "创酷", "", "", "", "", "", "", ""],
+    ["Triomphe", "凯旋", "", "", "", "", "", "", ""],
+    ["Truck", "货车", "شاحنة", "Грузовик", "Camion", "Camión", "Caminhão", "Truk", "کامیون"],
+    ["Trumpchi", "传祺", "", "", "", "", "", "", ""],
+    ["Tucson", "途胜", "", "", "", "", "", "", ""],
+    ["UAZ", "乌阿斯", "أواز", "УАЗ", "", "", "", "", "اوز"],
+    ["Unit: pc", "单位：件", "الوحدة: قطعة", "Ед.: шт.", "Unité : pc", "Unidad: ud", "Unidade: un", "Satuan: pcs", "واحد: عدد"],
+    ["Upper", "上", "علوي", "Верхний", "Supérieur", "Superior", "Superior", "Atas", "بالا"],
+    ["Valve", "阀", "صمام", "Клапан", "Soupape", "Válvula", "Válvula", "Katup", "سوپاپ"],
+    ["Van", "面包车", "فان", "Фургон", "Fourgon", "Furgoneta", "Van", "Van", "ون"],
+    ["Venucia", "启辰", "", "", "", "", "", "", ""],
+    ["Verano", "威朗", "", "", "", "", "", "", ""],
+    ["Verna", "瑞纳", "", "", "", "", "", "", ""],
+    ["Vezel", "缤智", "", "", "", "", "", "", ""],
+    ["Vigus", "域虎", "", "", "", "", "", "", ""],
+    ["Vios", "威驰", "", "", "", "", "", "", ""],
+    ["Vision", "远景", "", "", "", "", "", "", ""],
+    ["Vitara", "维特拉", "", "", "", "", "", "", ""],
+    ["Voleex", "腾翼", "", "", "", "", "", "", ""],
+    ["Volkswagen", "大众", "فولكس فاجن", "Фольксваген", "", "", "", "", "فولکس‌واگن"],
+    ["Volvo", "沃尔沃", "فولفو", "Вольво", "", "", "", "", "ولوو"],
+    ["Weiwang", "威旺", "", "", "", "", "", "", ""],
+    ["Weizhi", "威志", "", "", "", "", "", "", ""],
+    ["WEY", "魏牌", "", "", "", "", "", "", ""],
+    ["Wingle", "风骏", "", "", "", "", "", "", ""],
+    ["With", "带", "مع", "С", "Avec", "Con", "Com", "Dengan", "با"],
+    ["Without", "无", "بدون", "Без", "Sans", "Sin", "Sem", "Tanpa", "بدون"],
+    ["Wrangler", "牧马人", "", "", "", "", "", "", ""],
+    ["Wuling", "五菱", "وولينغ", "Вулинг", "", "", "", "", "وولینگ"],
+    ["Xingka", "星卡", "", "", "", "", "", "", ""],
+    ["Xingyue", "星越", "", "", "", "", "", "", ""],
+    ["Yaris", "雅力士", "", "", "", "", "", "", ""],
+    ["Yuan", "元", "", "", "", "", "", "", ""],
+    ["Zhanqi", "战旗", "", "", "", "", "", "", ""],
+    ["Zhiguang", "之光", "", "", "", "", "", "", ""],
+    ["Zhonghua", "中华", "", "", "", "", "", "", ""],
+    ["Zotye", "众泰", "زوتي", "", "", "", "", "", "زوتی"],
+  ];
+  /* ===== PDATA:END ===== */
+
   var lang = DEF;
 
   function norm(v) {
@@ -4465,6 +4778,38 @@
     var arr = C[key];
     if (!arr || lang === "en") return fb || "";
     return arr[IDX[lang]] || fb || "";
+  }
+  /* ---------------- 产品数据（品牌 / 车型 / 备注）逐词替换 ----------------
+     PD 表由 pdata_i18n.py 生成：[英文原文, zh, ar, ru, fr, es, pt, id, fa]。
+     空串 = 这种语言就用英文原文（查不到官方译名时的 fallback，不是漏做）。
+     替换按整词来，长的先匹配（Great Wall 先于 Wall），型号代码和 OE 号不碰。 */
+  var PDM = {}, PDR = {};
+  function pdEscape(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function pdBuild(l) {
+    if (PDM[l]) return;
+    var m = {}, src = [], o = IDX[l] + 1, i, v;
+    for (i = 0; i < PD.length; i++) {
+      v = PD[i][o];
+      if (!v) continue;
+      m[PD[i][0].toUpperCase()] = v;
+      src.push(PD[i][0]);
+    }
+    src.sort(function (a, b) { return b.length - a.length; });
+    PDM[l] = m;
+    PDR[l] = src.length ? new RegExp("\\b(?:" + src.map(pdEscape).join("|") + ")\\b", "gi") : null;
+  }
+  function pd(text) {
+    var t = text == null ? "" : String(text);
+    if (!t || lang === "en") return t;
+    pdBuild(lang);
+    var re = PDR[lang];
+    if (!re) return t;
+    return t.replace(re, function (hit) {
+      var v = PDM[lang][hit.toUpperCase()];
+      return v == null ? hit : v;
+    });
   }
   function domVars(el) {
     var v = {}, a;
@@ -4515,6 +4860,13 @@
       if (!el.hasAttribute("data-cat-src")) el.setAttribute("data-cat-src", el.textContent);
       el.textContent = catName(el.getAttribute("data-cat"), el.getAttribute("data-cat-src"));
     }
+    /* data-pd：产品数据（品牌名 / 车型里的品牌与方位词 / 备注），逐词替换，原文存进 data-pd-src */
+    list = document.querySelectorAll("[data-pd]");
+    for (i = 0; i < list.length; i++) {
+      el = list[i];
+      if (!el.hasAttribute("data-pd-src")) el.setAttribute("data-pd-src", el.textContent);
+      el.textContent = pd(el.getAttribute("data-pd-src"));
+    }
     list = document.querySelectorAll("select.langsel");
     for (i = 0; i < list.length; i++) list[i].value = lang;
 
@@ -4540,7 +4892,7 @@
   });
 
   window.I18N = {
-    t: t, cat: catName, set: set, apply: apply, read: read,
+    t: t, cat: catName, pd: pd, set: set, apply: apply, read: read,
     get lang() { return lang; },
     langs: LANGS
   };
