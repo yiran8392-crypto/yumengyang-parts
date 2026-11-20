@@ -4877,16 +4877,24 @@
       return sep + word + "（" + mod + "）";
     });
   }
+  /* 逗号改斜杠（只对非英文页面）：适配车型一长串「A, B, C」读成一坨，
+     换成「A / B / C」更像料号清单。千分位逗号（20,000）先保护起来，最后还原。 */
+  function pdSep(s) {
+    return s
+      .replace(/(\d),(\d{3})(?!\d)/g, "$1\u0001$2")
+      .replace(/\s*[,，]\s*/g, " / ")
+      .replace(/\u0001/g, ",");
+  }
   function pd(text) {
     var t = text == null ? "" : String(text);
     if (!t || lang === "en") return t;
     pdBuild(lang);
     var re = PDR[lang];
     if (!re) return t;
-    return pdOrder(t.replace(re, function (hit) {
+    return pdSep(pdOrder(t.replace(re, function (hit) {
       var v = PDM[lang][hit.toUpperCase()];
       return v == null ? hit : v;
-    }));
+    })));
   }
   function domVars(el) {
     var v = {}, a;
