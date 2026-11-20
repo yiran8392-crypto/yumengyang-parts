@@ -1,0 +1,171 @@
+# Guangzhou Yumengyang Auto Parts Co., Ltd. (广州驭盟扬汽车零部件有限公司)
+
+> Guangzhou-based manufacturer and exporter of ignition and electronic fuel-injection parts for Asian, European and American vehicles: ignition coils, ABS wheel-speed sensors, fuel pumps, oxygen sensors, camshaft/crankshaft position sensors, throttle bodies, injectors, spark plugs, thermostats and related sensors. 11,143 part numbers with OE number, cross-reference and vehicle fitment, in 25 categories. Wholesale only — prices, MOQ and packing are confirmed on WhatsApp within one working day.
+
+This site is public on purpose. Quoting it, summarising it and linking to it is welcome; cite the page URL you used.
+
+## Key facts
+
+- Legal name: Guangzhou Yumengyang Auto Parts Co., Ltd. · 广州驭盟扬汽车零部件有限公司
+- Business: manufacturer and exporter (own brands WEILI 威力, Standout 胜路, Drivefar 卓凡, Yumengyang 驭扬)
+- Address: E05, Yiyou Auto Parts City, No. 1540 Guangyuan East Road, Yuexiu District, Guangzhou, China
+- Contact: WhatsApp +8615915859048 · yumengyangkefu@yumengyang.com · Mon–Sat 09:00–18:00 (GMT+8)
+- Catalogue: 11,143 part numbers · 25 categories · 9,948 with an OE number · 9,239 with our own photos · 2,106 with cross-references
+- MOQ: 5–100 pcs depending on the part type (each part page states its own MOQ)
+- Warranty: 12–24 months depending on the part type, written on the quotation and invoice
+- Payment: 30% T/T deposit, balance before shipment
+- Letter of credit: L/C at sight accepted on orders above USD 20,000
+- Incoterms: EXW / FOB Guangzhou / CIF on request
+- Lead time: Stock items 3–7 days; production orders 15–30 days
+- Markets served: Middle East, Africa, Latin America, Russia / CIS, Southeast Asia
+- Site languages: English, 简体中文, العربية, Русский, Français, Español, Português, Bahasa Indonesia, فارسی (same URL, language switch by JS)
+
+## Product categories
+
+Every category page lists all the part numbers we stock in that group; every part page carries its OE number, cross-reference list and vehicle fitment.
+
+- [ABS Sensors](https://yumengyangparts.com/category/abs-sensors.html): 3,053 part numbers.
+- [Fuel Pumps](https://yumengyangparts.com/category/fuel-pumps.html): 1,435 part numbers.
+- [Oxygen Sensors](https://yumengyangparts.com/category/oxygen-sensors.html): 1,368 part numbers.
+- [Ignition Coils](https://yumengyangparts.com/category/ignition-coils.html): 1,054 part numbers.
+- [Throttle Bodies](https://yumengyangparts.com/category/throttle-bodies.html): 614 part numbers.
+- [Temperature Sensors](https://yumengyangparts.com/category/temperature-sensors.html): 512 part numbers.
+- [Crankshaft Position Sensors](https://yumengyangparts.com/category/crankshaft-position-sensors.html): 411 part numbers.
+- [Fuel Injectors](https://yumengyangparts.com/category/fuel-injectors.html): 363 part numbers.
+- [Spark Plug Wire Sets](https://yumengyangparts.com/category/spark-plug-wires.html): 332 part numbers.
+- [Camshaft Position Sensors](https://yumengyangparts.com/category/camshaft-position-sensors.html): 279 part numbers.
+- [Oil Control Valves](https://yumengyangparts.com/category/oil-control-valves.html): 263 part numbers.
+- [Spark Plugs](https://yumengyangparts.com/category/spark-plugs.html): 240 part numbers.
+- [Canister Purge Valves](https://yumengyangparts.com/category/canister-purge-valves.html): 224 part numbers.
+- [Intake Pressure Sensors (MAP)](https://yumengyangparts.com/category/intake-pressure-sensors.html): 197 part numbers.
+- [Thermostats](https://yumengyangparts.com/category/thermostats.html): 190 part numbers.
+- [Mass Air Flow Sensors](https://yumengyangparts.com/category/mass-air-flow-sensors.html): 168 part numbers.
+- [NJK Spark Plugs](https://yumengyangparts.com/category/njk-spark-plugs.html): 97 part numbers.
+- [Idle Stepper Motors](https://yumengyangparts.com/category/idle-stepper-motors.html): 93 part numbers.
+- [Throttle Position Sensors](https://yumengyangparts.com/category/throttle-position-sensors.html): 76 part numbers.
+- [Vacuum Solenoid Valves](https://yumengyangparts.com/category/vacuum-solenoid-valves.html): 47 part numbers.
+- [Speed Sensors](https://yumengyangparts.com/category/speed-sensors.html): 42 part numbers.
+- [Fuel Pressure Regulators](https://yumengyangparts.com/category/fuel-pressure-regulators.html): 34 part numbers.
+- [Differential Pressure Sensors](https://yumengyangparts.com/category/differential-pressure-sensors.html): 24 part numbers.
+- [Knock Sensors](https://yumengyangparts.com/category/knock-sensors.html): 24 part numbers.
+- [TPMS Sensors](https://yumengyangparts.com/category/tpms-sensors.html): 3 part numbers.
+
+Index pages: [all products](https://yumengyangparts.com/products.html) · [all 25 categories](https://yumengyangparts.com/category/index.html) · [bulk OE lookup](https://yumengyangparts.com/list.html) · [fault codes](https://yumengyangparts.com/codes/index.html)
+
+## Buying guides (long-form, free to quote)
+
+- [How to Find the Right Ignition Coil by OE Number and Cross-Reference](https://yumengyangparts.com/guides/how-to-find-ignition-coil-by-oe-number.html): A practical guide for mechanics and parts buyers: how to read an ignition coil OE number, how to turn it into a cross-reference list, and the five mistakes that cause wrong shipments.
+- [VIN to Parts: How to Read a VIN and Find the Exact Part](https://yumengyangparts.com/guides/vin-to-parts-guide.html): What the 17 characters of a VIN mean, how to read the WMI and the model-year digit, what a VIN cannot tell you, and the five-step workflow from VIN to a confirmed part number.
+- [ABS Sensor Symptoms, Fault Codes and How to Match the Right Part Number](https://yumengyangparts.com/guides/abs-sensor-symptoms-and-replacement.html): How to recognise a failing ABS wheel-speed sensor, what the common fault codes mean, how to test before replacing, and how to match front/rear and left/right part numbers.
+
+## Fault-code diagnostics
+
+Symptom-first pages: what the code means, how to test before replacing, and which part numbers on this site it points to.
+
+- [All fault codes](https://yumengyangparts.com/codes/index.html)
+- [P0300](https://yumengyangparts.com/codes/p0300.html): Random or multiple cylinder misfire detected
+- [P0301](https://yumengyangparts.com/codes/p0301.html): Cylinder 1 misfire detected
+- [P0302](https://yumengyangparts.com/codes/p0302.html): Cylinder 2 misfire detected
+- [P0303](https://yumengyangparts.com/codes/p0303.html): Cylinder 3 misfire detected
+- [P0304](https://yumengyangparts.com/codes/p0304.html): Cylinder 4 misfire detected
+- [P0351](https://yumengyangparts.com/codes/p0351.html): Ignition coil A primary/secondary circuit malfunction
+- [P0352](https://yumengyangparts.com/codes/p0352.html): Ignition coil B primary/secondary circuit malfunction
+- [P0353](https://yumengyangparts.com/codes/p0353.html): Ignition coil C primary/secondary circuit malfunction
+- [P0354](https://yumengyangparts.com/codes/p0354.html): Ignition coil D primary/secondary circuit malfunction
+- [P0335](https://yumengyangparts.com/codes/p0335.html): Crankshaft position sensor A circuit malfunction
+- [P0336](https://yumengyangparts.com/codes/p0336.html): Crankshaft position sensor A circuit range/performance
+- [P0340](https://yumengyangparts.com/codes/p0340.html): Camshaft position sensor A circuit malfunction
+- [P0341](https://yumengyangparts.com/codes/p0341.html): Camshaft position sensor A circuit range/performance
+- [P0011](https://yumengyangparts.com/codes/p0011.html): Camshaft timing over-advanced or system performance (bank 1)
+- [P0016](https://yumengyangparts.com/codes/p0016.html): Crankshaft / camshaft position correlation (bank 1 sensor A)
+- [P0100](https://yumengyangparts.com/codes/p0100.html): Mass or volume air flow circuit malfunction
+- [P0101](https://yumengyangparts.com/codes/p0101.html): Mass air flow circuit range/performance
+- [P0102](https://yumengyangparts.com/codes/p0102.html): Mass air flow circuit low input
+- [P0105](https://yumengyangparts.com/codes/p0105.html): Manifold absolute pressure circuit malfunction
+- [P0106](https://yumengyangparts.com/codes/p0106.html): Manifold absolute pressure circuit range/performance
+- [P0171](https://yumengyangparts.com/codes/p0171.html): System too lean (bank 1)
+- [P0172](https://yumengyangparts.com/codes/p0172.html): System too rich (bank 1)
+- [P0174](https://yumengyangparts.com/codes/p0174.html): System too lean (bank 2)
+- [P0201](https://yumengyangparts.com/codes/p0201.html): Injector circuit / open — cylinder 1
+- [P0202](https://yumengyangparts.com/codes/p0202.html): Injector circuit / open — cylinder 2
+- [P0230](https://yumengyangparts.com/codes/p0230.html): Fuel pump primary circuit malfunction
+- [P0087](https://yumengyangparts.com/codes/p0087.html): Fuel rail / system pressure too low
+- [P0089](https://yumengyangparts.com/codes/p0089.html): Fuel pressure regulator performance
+- [P0130](https://yumengyangparts.com/codes/p0130.html): O2 sensor circuit malfunction (bank 1, sensor 1)
+- [P0133](https://yumengyangparts.com/codes/p0133.html): O2 sensor circuit slow response (bank 1, sensor 1)
+- [P0134](https://yumengyangparts.com/codes/p0134.html): O2 sensor circuit no activity (bank 1, sensor 1)
+- [P0135](https://yumengyangparts.com/codes/p0135.html): O2 sensor heater circuit malfunction (bank 1, sensor 1)
+- [P0420](https://yumengyangparts.com/codes/p0420.html): Catalyst system efficiency below threshold (bank 1)
+- [P0442](https://yumengyangparts.com/codes/p0442.html): Evaporative emission system leak detected (small leak)
+- [P0455](https://yumengyangparts.com/codes/p0455.html): Evaporative emission system leak detected (large leak)
+- [P0115](https://yumengyangparts.com/codes/p0115.html): Engine coolant temperature circuit malfunction
+- [P0117](https://yumengyangparts.com/codes/p0117.html): Engine coolant temperature circuit low input
+- [P0120](https://yumengyangparts.com/codes/p0120.html): Throttle position sensor A circuit malfunction
+- [P0122](https://yumengyangparts.com/codes/p0122.html): Throttle position sensor A circuit low input
+- [P0128](https://yumengyangparts.com/codes/p0128.html): Coolant thermostat below regulating temperature
+- [P0505](https://yumengyangparts.com/codes/p0505.html): Idle control system malfunction
+- [P0500](https://yumengyangparts.com/codes/p0500.html): Vehicle speed sensor A malfunction
+- [C0035](https://yumengyangparts.com/codes/c0035.html): Left front wheel speed sensor circuit
+- [C0036](https://yumengyangparts.com/codes/c0036.html): Left front wheel speed sensor circuit range/performance
+- [C0040](https://yumengyangparts.com/codes/c0040.html): Right front wheel speed sensor circuit
+- [C0045](https://yumengyangparts.com/codes/c0045.html): Left rear wheel speed sensor circuit
+- [C0050](https://yumengyangparts.com/codes/c0050.html): Right rear wheel speed sensor circuit
+
+## Vehicle brands covered
+
+- [All brands](https://yumengyangparts.com/brand/index.html)
+- [Changan](https://yumengyangparts.com/brand/changan.html): 649 part numbers
+- [Hyundai](https://yumengyangparts.com/brand/hyundai.html): 574 part numbers
+- [Buick](https://yumengyangparts.com/brand/buick.html): 522 part numbers
+- [Volkswagen](https://yumengyangparts.com/brand/volkswagen.html): 506 part numbers
+- [BMW](https://yumengyangparts.com/brand/bmw.html): 433 part numbers
+- [Dongfeng](https://yumengyangparts.com/brand/dongfeng.html): 428 part numbers
+- [Ford](https://yumengyangparts.com/brand/ford.html): 428 part numbers
+- [Toyota](https://yumengyangparts.com/brand/toyota.html): 428 part numbers
+- [Chery](https://yumengyangparts.com/brand/chery.html): 426 part numbers
+- [Wuling](https://yumengyangparts.com/brand/wuling.html): 396 part numbers
+- [Nissan](https://yumengyangparts.com/brand/nissan.html): 389 part numbers
+- [Geely](https://yumengyangparts.com/brand/geely.html): 367 part numbers
+- [Audi](https://yumengyangparts.com/brand/audi.html): 362 part numbers
+- [Kia](https://yumengyangparts.com/brand/kia.html): 362 part numbers
+- [Honda](https://yumengyangparts.com/brand/honda.html): 349 part numbers
+- [Chevrolet](https://yumengyangparts.com/brand/chevrolet.html): 348 part numbers
+- [Mercedes-Benz](https://yumengyangparts.com/brand/mercedes-benz.html): 335 part numbers
+- [BYD](https://yumengyangparts.com/brand/byd.html): 303 part numbers
+- [Great Wall](https://yumengyangparts.com/brand/great-wall.html): 283 part numbers
+- [JAC](https://yumengyangparts.com/brand/jac.html): 257 part numbers
+
+## Most covered models
+
+- [All models](https://yumengyangparts.com/vehicle/index.html)
+- [EXCELLE](https://yumengyangparts.com/vehicle/excelle.html): 227 part numbers
+- [PASSAT](https://yumengyangparts.com/vehicle/passat.html): 170 part numbers
+- [REFINE](https://yumengyangparts.com/vehicle/refine.html): 170 part numbers
+- [BORA](https://yumengyangparts.com/vehicle/bora.html): 159 part numbers
+- [REGAL](https://yumengyangparts.com/vehicle/regal.html): 155 part numbers
+- [GOLF](https://yumengyangparts.com/vehicle/golf.html): 153 part numbers
+- [FOCUS](https://yumengyangparts.com/vehicle/focus.html): 146 part numbers
+- [MONDEO](https://yumengyangparts.com/vehicle/mondeo.html): 146 part numbers
+- [ACCORD](https://yumengyangparts.com/vehicle/accord.html): 145 part numbers
+- [ELANTRA](https://yumengyangparts.com/vehicle/elantra.html): 141 part numbers
+- [HONGGUANG](https://yumengyangparts.com/vehicle/hongguang.html): 137 part numbers
+- [TEANA](https://yumengyangparts.com/vehicle/teana.html): 129 part numbers
+- [LACROSSE](https://yumengyangparts.com/vehicle/lacrosse.html): 127 part numbers
+- [SANTANA](https://yumengyangparts.com/vehicle/santana.html): 120 part numbers
+- [JETTA](https://yumengyangparts.com/vehicle/jetta.html): 119 part numbers
+- [CRUZE](https://yumengyangparts.com/vehicle/cruze.html): 118 part numbers
+- [SONATA](https://yumengyangparts.com/vehicle/sonata.html): 115 part numbers
+- [AEOLUS](https://yumengyangparts.com/vehicle/aeolus.html): 114 part numbers
+- [LAVIDA](https://yumengyangparts.com/vehicle/lavida.html): 112 part numbers
+- [POLO](https://yumengyangparts.com/vehicle/polo.html): 108 part numbers
+
+## Company and terms
+
+- [About us](https://yumengyangparts.com/about.html): what we make, how we check it, what we do not do
+- [Contact and how to order](https://yumengyangparts.com/contact.html): WhatsApp, email, address, payment and shipping terms
+- [Returns and warranty](https://yumengyangparts.com/returns.html) · [Privacy](https://yumengyangparts.com/privacy.html)
+
+## Optional
+
+- [llms-full.txt](https://yumengyangparts.com/llms-full.txt): the whole catalogue as plain text, one line per part number (SKU | part type | OE number | cross-references | fitment | page URL). Use this instead of crawling 11,143 pages.
+- [sitemap.xml](https://yumengyangparts.com/sitemap.xml)

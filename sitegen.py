@@ -38,6 +38,11 @@ try:
 except Exception:
     brandlib = None
 
+try:
+    import geo                          # GEO：robots 放行 AI 爬虫 + llms.txt / llms-full.txt
+except Exception:
+    geo = None
+
 # 二维码里解出来的「加好友」链接（2026-11-11 用 zxing-cpp 解 qr-wecom.webp / qr-whatsapp.webp 得到）。
 # 页脚和联系页二维码下面的按钮直接指向它们：手机点一下 = 打开微信添加页 / 拉起 WhatsApp 对话。
 # 换二维码后必须同步改这里（解一下新二维码就行）。
@@ -1287,6 +1292,8 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
         "description": clean_text(desc),
         "image": [rel_url(cfg, it.get("p") or ("assets/og/%s.jpg" % cat_slug(cat)))],
         "manufacturer": {"@type": "Organization", "name": cfg["company_en"]},
+        # GEO：AI 搜索最常问的两件事——哪儿产的、保多久。答得出来就直接写进结构化数据
+        "countryOfOrigin": {"@type": "Country", "name": "China"},
     }
     if has_site(cfg):
         ld["url"] = canonical
@@ -1299,6 +1306,9 @@ def page_model(cfg, it, cat, related=None, canon_slug=None):
         props.append({"@type": "PropertyValue", "name": "Brand", "value": it["b"]})
     for x in (it.get("x") or [])[:8]:
         props.append({"@type": "PropertyValue", "name": "Cross Reference", "value": x})
+    props.append({"@type": "PropertyValue", "name": "Warranty",
+                  "value": "12–24 months depending on part type"})
+    props.append({"@type": "PropertyValue", "name": "Sold as", "value": "Wholesale, FOB Guangzhou"})
     if props:
         ld["additionalProperty"] = props
 
@@ -3451,6 +3461,7 @@ def build_static(items, cats, log=print):
     # ---- 品牌页 / 车型页（从适配车型数据自动分组的长尾落地页）
     brand_files, vehicle_files = [], []
     bentries = []
+    ventries = []
     if brandlib is not None:
         # 先算车型页（品牌页的「热门车型」chips 只链已经生成出来的页，不产生死链）
         vmap = {}
@@ -3639,8 +3650,32 @@ def build_static(items, cats, log=print):
           + "\n".join(urls) + "\n</urlset>\n")
     open(os.path.join(HERE, "sitemap.xml"), "w", encoding="utf-8", newline="\n").write(sm)
 
-    robots = ("User-agent: *\nAllow: /\n\nSitemap: %s/sitemap.xml\n" % cfg["site_url"])
+    # robots.txt：搜索爬虫 + AI 爬虫一起放行（GEO），文案与名单在 geo.py
+    robots = (geo.robots_txt(cfg) if geo else
+              ("User-agent: *\nAllow: /\n\nSitemap: %s/sitemap.xml\n" % cfg["site_url"]))
     open(os.path.join(HERE, "robots.txt"), "w", encoding="utf-8", newline="\n").write(robots)
+
+    # ---- GEO：给 AI 搜索引擎的站点说明书（llms.txt 约定）+ 全量型号清单
+    if geo is not None:
+        try:
+            _moqs = []
+            for _k, _d in (PRICING or {}).items():
+                try:
+                    _moqs.append(int(_d.get("moq") or 0))
+                except Exception:
+                    pass
+            _moqs += [int(MODEL_MOQ)] + [int(x) for x in MOQ_OVERRIDE.values()]
+            _moqs = [x for x in _moqs if x > 0]
+            _guides = list(getattr(guides_content, "GUIDES", None) or []) if guides_content else []
+            open(os.path.join(HERE, "llms.txt"), "w", encoding="utf-8", newline="\n").write(
+                geo.llms_txt(cfg, items, cats, CAT_META, bentries, ventries, _guides,
+                             _code_list(), TERMS, (min(_moqs), max(_moqs)) if _moqs else None))
+            open(os.path.join(HERE, "llms-full.txt"), "w", encoding="utf-8", newline="\n").write(
+                geo.llms_full_txt(cfg, items, cats, CAT_META))
+            log("  GEO：robots 放行 %d 家 AI 爬虫 · llms.txt / llms-full.txt 已生成"
+                % len(geo.AI_CRAWLERS))
+        except Exception as e:
+            log("  [warn] GEO 文件没生成（不影响站点其它部分）：%s" % e)
 
     open(os.path.join(HERE, "404.html"), "w", encoding="utf-8", newline="\n").write(page_404(cfg))
 

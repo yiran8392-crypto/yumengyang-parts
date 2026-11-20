@@ -1,4 +1,91 @@
+# https://yumengyangparts.com/robots.txt
+# Everything here is public: part numbers, OE cross-references, fitment.
+# Search engines and AI answer engines are both welcome - being quoted is the point.
+#
+# AI crawlers: start at https://yumengyangparts.com/llms.txt (short, curated).
+#              https://yumengyangparts.com/llms-full.txt is the whole catalogue, one line per part.
+#
+
 User-agent: *
 Allow: /
+
+# ---------------------------------------------------------------------------
+# AI / LLM crawlers, listed one by one on purpose: a platform that only looks for
+# its own token would otherwise fall through to its own defaults.
+# ---------------------------------------------------------------------------
+
+# OpenAI - ChatGPT training and browsing
+User-agent: GPTBot
+
+# OpenAI - ChatGPT search index
+User-agent: OAI-SearchBot
+
+# OpenAI - live fetch when a user asks
+User-agent: ChatGPT-User
+
+# Perplexity - index
+User-agent: PerplexityBot
+
+# Perplexity - live fetch
+User-agent: Perplexity-User
+
+# Anthropic - Claude
+User-agent: ClaudeBot
+
+# Anthropic - live fetch
+User-agent: Claude-User
+
+# Anthropic - search index
+User-agent: Claude-SearchBot
+
+# Anthropic - legacy UA
+User-agent: anthropic-ai
+
+# Google - Gemini / Vertex AI
+User-agent: Google-Extended
+
+# Apple - Spotlight / Siri
+User-agent: Applebot
+
+# Apple - Apple Intelligence
+User-agent: Applebot-Extended
+
+# Amazon - Alexa / Rufus
+User-agent: Amazonbot
+
+# DuckDuckGo - AI answers
+User-agent: DuckAssistBot
+
+# Mistral - Le Chat
+User-agent: MistralAI-User
+
+# You.com
+User-agent: YouBot
+
+# Cohere
+User-agent: cohere-ai
+
+# Meta AI
+User-agent: meta-externalagent
+
+# ByteDance / Doubao
+User-agent: Bytespider
+
+# Huawei Petal search
+User-agent: PetalBot
+
+# Yandex (Russia / CIS)
+User-agent: YandexBot
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+
+# ---------------------------------------------------------------------------
+# Machine-readable index for LLMs (llmstxt.org)
+#   /llms.txt       who we are + every category, guide, fault code and index page
+#   /llms-full.txt  every part number with OE, cross-reference and fitment
+# ---------------------------------------------------------------------------
+
 
 Sitemap: https://yumengyangparts.com/sitemap.xml
