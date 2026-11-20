@@ -713,11 +713,13 @@ def sitehead(cfg, active="", base="../"):
             '<a href="%sindex.html"%s data-i18n="nav_home">Home</a>'
             '<a class="hot" href="%scategory/index.html" data-i18n="nav_products">Products</a>'
             '<a href="%scodes/index.html"%s data-i18n="nav_codes">Fault codes</a>'
+            '<a href="%sguides/index.html"%s data-i18n="nav_guides">Guides</a>'
             '<a href="%sabout.html"%s data-i18n="nav_about">About us</a>'
             '<a href="%scontact.html"%s data-i18n="nav_contact">Contact</a>'
             '</nav>') % (base, ' class="on"' if active == "home" else "",
                          base,
                          base, ' class="on"' if active == "codes" else "",
+                         base, ' class="on"' if active == "guides" else "",
                          base, ' class="on"' if active == "about" else "",
                          base, ' class="on"' if active == "contact" else "")
     return """<a class="skip" href="#main">Skip to content</a>
@@ -766,12 +768,14 @@ def sitefoot(cfg, base="../"):
     <p class="fh" data-i18n="foot_products">Our products</p>
     <ul class="plist">%(plist)s
       <li><a href="%(base)scategory/index.html" data-i18n="all_cat_h1">All product categories</a></li>
+      <li><a href="%(base)sguides/index.html" data-i18n="guides_h">Buying guides</a></li>
     </ul>
   </div>
 </div>
 <div class="copy">&copy; 2026 <span class="notranslate" %(nt)s>%(en)s</span>
   <a href="%(base)sindex.html" data-i18n="lookup">OE lookup</a>
   <a href="%(base)sabout.html" data-i18n="foot_about">About us</a>
+  <a href="%(base)sguides/index.html" data-i18n="guides_h">Buying guides</a>
   %(pol)s · <a href="%(base)ssitemap.xml" data-i18n="sitemap">Sitemap</a></div>
 </footer>""" % {"nt": NOTRANSLATE, "en": esc(cfg["company_en"]),
                "addr": addr_span(cfg), "hours": esc(cfg["hours"]), "pol": pol,
@@ -2505,7 +2509,7 @@ def page_guide(cfg, g, resolve):
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg, "", base="../"), esc(g["h1"]),
+""" % (sitehead(cfg, "guides", base="../"), esc(g["h1"]),
        "gd_%s_h1" % slug.replace("-", "_"), esc(g["h1"]),
        "Published " + g["date"], g.get("minutes", 6),
        "gd_%s_lead" % slug.replace("-", "_"), esc(g["lead"]),
@@ -2555,7 +2559,7 @@ def page_guides_index(cfg):
 </main>
 %s
 </body></html>
-""" % (sitehead(cfg, "", base="../"), "".join(cards), esc(total_txt), sitefoot(cfg, base="../"))
+""" % (sitehead(cfg, "guides", base="../"), "".join(cards), esc(total_txt), sitefoot(cfg, base="../"))
     return head_block(cfg, title, desc, rel_url(cfg, "guides/index.html"), "assets/og/og-default.webp",
                       "website", ld_list, base="../") + "\n" + body
 
@@ -3039,6 +3043,33 @@ def _put_block(text, name, block, label="index.html"):
     return new
 
 
+def home_guides_html(cfg, n=3):
+    """首页「采购指南」那条：优先放这三个（枢纽页 + 两个主力品类），缺了就退回最新 n 篇。
+    以前这块是手写死的 3 个链接，加了新指南首页永远看不到——改成跟着数据走。"""
+    gs = list(getattr(guides_content, "GUIDES", None) or [])
+    if not gs:
+        return ""
+    by_slug = {g["slug"]: g for g in gs}
+    pick = [by_slug[s] for s in HOME_GUIDE_ORDER if s in by_slug][:n]
+    for g in reversed(gs):
+        if len(pick) >= n:
+            break
+        if g not in pick:
+            pick.append(g)
+    out = ['<a href="guides/%s.html">%s</a>' % (esc(g["slug"]), esc(g.get("nav") or g["slug"]))
+           for g in pick]
+    out.append('<a href="guides/index.html"><span data-i18n="guides_more">More guides</span> &rarr;</a>')
+    return "".join(out)
+
+
+# 首页指南条的顺序（改这里就改首页露出哪三篇，不用碰 HTML）
+HOME_GUIDE_ORDER = [
+    "engine-sensor-map-fault-code-to-part",
+    "how-to-find-ignition-coil-by-oe-number",
+    "fuel-pump-symptoms-and-part-matching",
+]
+
+
 def inject_home(cfg, cats, by_cat, brand_entries=None):
     """首页 = 公司页。
 
@@ -3058,6 +3089,7 @@ def inject_home(cfg, cats, by_cat, brand_entries=None):
     h = _put_block(h, "HOME_CONTACT", home_contact_html(cfg))
     h = _put_block(h, "HOME_WHY", why_html(cfg))
     h = _put_block(h, "HOME_FAQ", faq_html(cfg))
+    h = _put_block(h, "HOME_GUIDES", home_guides_html(cfg))
     h = _put_block(h, "HOME_FOOT", sitefoot(cfg, base=""))  # 首页也用它，保持全站一致
     # 首页 head 里的 SITE_LD 已经由 head_block() 输出（site_ld + faq_ld），
     # 这里不再往 body 写第二份——否则 Organization/WebSite/FAQPage 各重复一次。
