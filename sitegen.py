@@ -206,7 +206,7 @@ def _asset_ver(path, base):
 
 
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261119l"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261120m"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 I18N_V = _asset_ver(os.path.join(HERE, "assets", "i18n.js"), "20261120i18n4")
 
 
@@ -804,13 +804,13 @@ def spec_rows(it):
     if it.get("_brands") and brandlib is not None:
         bl = [b for b in it["_brands"] if brandlib.brand_slug(b) in LIVE_BRAND_SLUGS][:4]
         if bl:
-            rows.append(("spec_fit_brands", '<div class="tags">%s</div>' % "".join(
+            rows.append(("spec_fit_brands", '<div class="tags">%s</div>' % ' <span class="pdsep">/</span> '.join(
                 '<a href="../brand/%s.html" data-pd="brand">%s</a>' % (brandlib.brand_slug(b), esc(b))
                 for b in bl), ""))
     # 结构化适配信息（从适配车型文本里解析出来的，没解析到就不显示）
     if it.get("y"):
         rows.append(("spec_years", '<span style="font-variant-numeric:tabular-nums">%s</span>'
-                     % esc(", ".join(it["y"])), ""))
+                     % esc(", ".join(it["y"])), "years"))
     if it.get("d"):
         rows.append(("spec_displ", '<div class="tags">%s</div>'
                      % "".join("<span>%s</span>" % esc(x) for x in it["d"]), ""))
@@ -823,7 +823,7 @@ def spec_rows(it):
     rows.append(("our_sku", esc(it["m"]), ""))
     label = dict(SPEC_LABELS)
     return "".join('<tr><th data-i18n="%s">%s</th><td%s>%s</td></tr>'
-                   % (k, label.get(k, k), ' data-pd="text"' if pd else "", v)
+                   % (k, label.get(k, k), ' data-pd="%s"' % pd if pd else "", v)
                    for k, v, pd in rows)
 
 

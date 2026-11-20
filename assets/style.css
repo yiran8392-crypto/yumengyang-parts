@@ -326,6 +326,8 @@ html[dir="rtl"] .spec th{padding:11px 0 11px 14px}
 .spec td{padding:11px 0;border-top:1px solid #eef2f5;word-break:break-word;color:#22384b}
 .spec .tags{display:flex;flex-wrap:wrap;gap:6px}
 .spec .tags span{background:#f1f5f8;border:1px solid #e6edf2;border-radius:6px;padding:3px 9px;font-size:13px;color:#44607a;font-variant-numeric:tabular-nums}
+/* 适配品牌之间的分隔斜杠：不要标签底（.tags span 会给它加底色和边框） */
+.spec .tags .pdsep{background:0 0;border:0;border-radius:0;padding:0;color:#9aa8b4;font-size:13.5px}
 .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
 .btn-wa{
   display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--wa);color:var(--wa-ink);

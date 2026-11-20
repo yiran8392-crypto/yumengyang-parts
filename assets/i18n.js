@@ -4885,16 +4885,19 @@
       .replace(/\s*[,，]\s*/g, " / ")
       .replace(/\u0001/g, ",");
   }
-  function pd(text) {
+  function pd(text, kind) {
     var t = text == null ? "" : String(text);
     if (!t || lang === "en") return t;
     pdBuild(lang);
     var re = PDR[lang];
-    if (!re) return t;
-    return pdSep(pdOrder(t.replace(re, function (hit) {
+    var out = re ? t.replace(re, function (hit) {
       var v = PDM[lang][hit.toUpperCase()];
       return v == null ? hit : v;
-    })));
+    }) : t;
+    out = pdSep(pdOrder(out));
+    /* 年份列（data-pd="years"）：2005-2018 → 2005/2018，跟斜杠分隔保持一致 */
+    if (kind === "years") out = out.replace(/(\d{4})\s*[-–—]\s*(\d{4})/g, "$1/$2");
+    return out;
   }
   function domVars(el) {
     var v = {}, a;
@@ -4945,12 +4948,13 @@
       if (!el.hasAttribute("data-cat-src")) el.setAttribute("data-cat-src", el.textContent);
       el.textContent = catName(el.getAttribute("data-cat"), el.getAttribute("data-cat-src"));
     }
-    /* data-pd：产品数据（品牌名 / 车型里的品牌与方位词 / 备注），逐词替换，原文存进 data-pd-src */
+    /* data-pd：产品数据（品牌名 / 车型里的品牌与方位词 / 备注），逐词替换，原文存进 data-pd-src。
+       data-pd="years" 是年份列，额外把 2005-2018 变成 2005/2018。 */
     list = document.querySelectorAll("[data-pd]");
     for (i = 0; i < list.length; i++) {
       el = list[i];
       if (!el.hasAttribute("data-pd-src")) el.setAttribute("data-pd-src", el.textContent);
-      el.textContent = pd(el.getAttribute("data-pd-src"));
+      el.textContent = pd(el.getAttribute("data-pd-src"), el.getAttribute("data-pd"));
     }
     list = document.querySelectorAll("select.langsel");
     for (i = 0; i < list.length; i++) list[i].value = lang;
