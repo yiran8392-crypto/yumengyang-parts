@@ -2524,9 +2524,18 @@ def page_guides_index(cfg):
             '<em>%d min read →</em></a>' % (esc(g["slug"]), esc(g["h1"]), esc(g["desc"]),
                                             g.get("minutes", 6)))
     total_txt = "{:,}".format(cfg.get("_total", 0))
-    title = "Buying guides: OE numbers, VIN and ABS sensors | Yumengyang Auto Parts"
-    desc = ("Three practical guides for mechanics and parts buyers: find an ignition coil by OE number, "
-            "read a VIN, and diagnose an ABS sensor before ordering.")
+    # 标题/摘要跟着指南数量走：以前写死「OE numbers, VIN and ABS sensors」，加到 10 篇以后就过期了
+    n_guides = len(guides_content.GUIDES)
+    title = "Buying guides: fault codes, part numbers and fitment | Yumengyang"
+    desc = ("%d practical guides for mechanics and parts buyers: reading an OE number, decoding fault codes "
+            "(P0130, P0230, P0335), throttle relearn, injector flow matching and spark plug heat range."
+            % n_guides)
+    # 目录页给搜索引擎/AI 一张清单（ItemList），比只给一堆卡片链接好读
+    _items = [{"@type": "ListItem", "position": i, "name": g["h1"],
+               "url": rel_url(cfg, "guides/%s.html" % g["slug"])}
+              for i, g in enumerate(guides_content.GUIDES, 1)]
+    ld_list = [{"@context": "https://schema.org", "@type": "ItemList",
+                "name": "Buying guides", "numberOfItems": n_guides, "itemListElement": _items}]
     body = """<body class="docpage">
 %s
 <main id="main" tabindex="-1" class="policy">
@@ -2548,7 +2557,7 @@ def page_guides_index(cfg):
 </body></html>
 """ % (sitehead(cfg, "", base="../"), "".join(cards), esc(total_txt), sitefoot(cfg, base="../"))
     return head_block(cfg, title, desc, rel_url(cfg, "guides/index.html"), "assets/og/og-default.webp",
-                      "website", base="../") + "\n" + body
+                      "website", ld_list, base="../") + "\n" + body
 
 
 CODES_DATE = "2026-11-10"     # 故障码页正文的维护日期（改了 CODES 就改这个）
