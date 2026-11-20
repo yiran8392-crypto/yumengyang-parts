@@ -324,10 +324,11 @@ def _norm_code(s):
     return _tidy(_ascii_punct(s)).strip(" ,;")
 
 
-def clean_payload(payload, log=print, dedupe=True):
+def clean_payload(payload, log=print, dedupe=False):
     """清洗 + 去重。原地改 payload，返回统计。
-    dedupe=False：只清洗不删重复（四品牌入站后同 OE 会有多个 SKU，
-    每个 SKU 都是能单独报价的商品，删了就是删页面——要不要合并得人决定，别自动删）。"""
+    默认**不删重复**：四品牌入站后同一个 OE 会有多个 SKU（WEILI / Standout / Drivefar / 驭扬），
+    每个 SKU 都是能单独报价的商品，自动删掉就是删线上页面。要合并成一条得人决定，
+    需要时显式传 dedupe=True（会按信息完整度挑一条留下，其余从 items 里去掉）。"""
     items = payload.get("items") or []
     stats = {"brand": 0, "fit": 0, "unresolved": {}, "unspecified": 0,
              "fit_empty": 0, "dup_removed": 0, "dedupe": [], "mapping": {},
@@ -548,9 +549,9 @@ def fill_slugs(payload, log=None):
     return before
 
 
-def prepare(write=True, log=print, dedupe=True):
-    """读 data.js → 清洗去重 → 补 slug → 写回 + 拆包。返回 (payload, stats)。
-    dedupe=False 只清洗不删重复（四品牌入站后同 OE 多 SKU 的情况用这个）。"""
+def prepare(write=True, log=print, dedupe=False):
+    """读 data.js → 清洗 → （可选去重）→ 补 slug → 写回 + 拆包。返回 (payload, stats)。
+    dedupe 默认 False，理由见 clean_payload 的说明。"""
     payload = load_payload()
     n_notes = strip_internal_notes(payload)
     if n_notes:
