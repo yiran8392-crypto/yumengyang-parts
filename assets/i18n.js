@@ -4652,6 +4652,8 @@
     ["Navara", "纳瓦拉", "نافارا", "Навара", "", "", "", "", ""],
     ["NETA", "哪吒", "", "", "", "", "", "", ""],
     ["New", "新", "جديد", "Новый", "Neuf", "Nuevo", "Novo", "Baru", "نو"],
+    ["New Energy", "新能源", "New Energy", "New Energy", "", "", "", "", "New Energy"],
+    ["new model", "新车型", "new model", "new model", "", "", "", "", "new model"],
     ["Nickel", "镍", "نيكل", "Никель", "Nickel", "Níquel", "Níquel", "Nikel", "نیکل"],
     ["Nickel-Copper", "镍铜", "نيكل-نحاس", "Никель-медь", "Nickel-cuivre", "Níquel-Cobre", "Níquel-Cobre", "Nikel-Tembaga", "نیکل-مس"],
     ["Nissan", "日产", "نيسان", "Ниссан", "", "", "", "", "نیسان"],
@@ -4860,16 +4862,31 @@
     PDM[l] = m;
     PDR[l] = src.length ? new RegExp(src.map(pdAnt).join("|"), "gi") : null;
   }
+  /* 语序调整：「新/旧」这类修饰词只有中文要挪位置。
+     中文 —— 「新 Passat」直译成「新 帕萨特」，中国人读着别扭，挪成「帕萨特（新）」；
+     俄/西/葡/法/印尼 —— 形容词本来就在名词前面（Новый Пассат / Nuevo Passat），不动；
+     阿语/波斯语 —— 严格说形容词在名词后面，但翻成阿语的车系名常是两个词（سانتا في / رينج روفر），
+     硬挪会散架，所以保持原样不冒险。
+     后面跟的是 Gen2 / Model / Series 这种泛称时不挪（否则会写出「MODEL（新）」）。 */
+  var ZH_MOD_RE = /(^|[^\u4e00-\u9fa5A-Za-z0-9])(新|旧)\s+([A-Za-z0-9\u4e00-\u9fa5][A-Za-z0-9\u4e00-\u9fa5\-.]*)/g;
+  var MOD_GENERIC = /^(gen|gen\d+|model|models|series|year|type|version|edition|style|plus|pro)\d*$/i;
+  function pdOrder(s) {
+    if (lang !== "zh") return s;
+    return s.replace(ZH_MOD_RE, function (m0, sep, mod, word) {
+      if (MOD_GENERIC.test(word)) return m0;
+      return sep + word + "（" + mod + "）";
+    });
+  }
   function pd(text) {
     var t = text == null ? "" : String(text);
     if (!t || lang === "en") return t;
     pdBuild(lang);
     var re = PDR[lang];
     if (!re) return t;
-    return t.replace(re, function (hit) {
+    return pdOrder(t.replace(re, function (hit) {
       var v = PDM[lang][hit.toUpperCase()];
       return v == null ? hit : v;
-    });
+    }));
   }
   function domVars(el) {
     var v = {}, a;

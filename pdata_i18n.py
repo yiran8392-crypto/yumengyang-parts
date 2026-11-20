@@ -173,6 +173,10 @@ TERMS = {
     "Outer":      ("外", "خارجي", "Внешний", "Extérieur", "Exterior", "Externo", "Luar", "بیرونی"),
     "New":        ("新", "جديد", "Новый", "Neuf", "Nuevo", "Novo", "Baru", "نو"),
     "Old":        ("旧", "قديم", "Старый", "Ancien", "Usado", "Usado", "Lama", "قدیمی"),
+    # 这两个是短语，长的先匹配，所以不会被拆成「新 + 能源」。
+    # 别的语种显式写回英文原文：这样 "New" 那条不会把这个短语拆开翻（写出 Новый Energy 这种）。
+    "New Energy": ("新能源", "New Energy", "New Energy", "", "", "", "", "New Energy"),
+    "new model":  ("新车型", "new model", "new model", "", "", "", "", "new model"),
     "Imported":   ("进口", "مستورد", "Импортный", "Importé", "Importado", "Importado", "Impor", "وارداتی"),
     "Without":    ("无", "بدون", "Без", "Sans", "Sin", "Sem", "Tanpa", "بدون"),
     "With":       ("带", "مع", "С", "Avec", "Con", "Com", "Dengan", "با"),
