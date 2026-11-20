@@ -4445,6 +4445,8 @@
   /* ===== PDATA:BEGIN 由 pdata_i18n.py 生成，别手改这一段（改译名请改 pdata_i18n.py） ===== */
   /* 产品数据译名：英语原文在前；空串 = 这种语言就用英文原名 */
   var PD = [
+    ["-cyl", "缸", " أسطوانة", "-цил.", "-cyl.", "-cil.", "-cil.", "-sil.", " سیلندر"],
+    ["-cyl & ", "缸 和 ", " أسطوانة و ", "-цил. и ", "-cyl. et ", "-cil. y ", "-cil. e ", "-sil. dan ", " سیلندر و "],
     ["Accent", "雅绅特", "أكسنت", "Акцент", "", "", "", "", "اکسنت"],
     ["Accord", "雅阁", "أكورد", "Аккорд", "", "", "", "", "اکورد"],
     ["Acura", "讴歌", "أكيورا", "Акура", "", "", "", "", "آکورا"],
@@ -4629,6 +4631,7 @@
     ["Lower", "下", "سفلي", "Нижний", "Inférieur", "Inferior", "Inferior", "Bawah", "پایین"],
     ["Luxgen", "纳智捷", "", "", "", "", "", "", ""],
     ["Lynk", "领克", "", "", "", "", "", "", ""],
+    ["Lynk & Co", "领克", "لينك آند كو", "Линк энд Ко", "", "", "", "", "لینک اند کو"],
     ["Magotan", "迈腾", "", "", "", "", "", "", ""],
     ["Mahindra", "马恒达", "ماهيندرا", "Махиндра", "", "", "", "", "ماهیندرا"],
     ["Malibu", "迈锐宝", "ماليبو", "Малибу", "", "", "", "", "مالیبو"],
@@ -4836,6 +4839,13 @@
   function pdEscape(s) {
     return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
+  /* 每个词条单独加边界：以字母数字开头的才加前面的 \b、以字母数字结尾的才加后面的 \b。
+     这样 "-cyl"、" & " 这种带符号/空格的词条也能用，而不会像统一 \b 那样永远配不上。 */
+  function pdAnt(key) {
+    var head = /^[A-Za-z0-9]/.test(key) ? "\\b" : "";
+    var tail = /[A-Za-z0-9]$/.test(key) ? "\\b" : "";
+    return "(?:" + head + pdEscape(key) + tail + ")";
+  }
   function pdBuild(l) {
     if (PDM[l]) return;
     var m = {}, src = [], o = IDX[l] + 1, i, v;
@@ -4845,9 +4855,10 @@
       m[PD[i][0].toUpperCase()] = v;
       src.push(PD[i][0]);
     }
+    /* 长的先匹配：Great Wall 先于 Wall、"-cyl & " 先于 "-cyl"、Lynk & Co 先于 Lynk */
     src.sort(function (a, b) { return b.length - a.length; });
     PDM[l] = m;
-    PDR[l] = src.length ? new RegExp("\\b(?:" + src.map(pdEscape).join("|") + ")\\b", "gi") : null;
+    PDR[l] = src.length ? new RegExp(src.map(pdAnt).join("|"), "gi") : null;
   }
   function pd(text) {
     var t = text == null ? "" : String(text);

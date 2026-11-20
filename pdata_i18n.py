@@ -131,6 +131,7 @@ BRANDS = {
     "Hanteng":           ("汉腾", "", "", "", "", "", "", ""),
     "SWM":               ("斯威", "", "", "", "", "", "", ""),
     "Lynk":              ("领克", "", "", "", "", "", "", ""),
+    "Lynk & Co":         ("领克", "لينك آند كو", "Линк энд Ко", "", "", "", "", "لینک اند کو"),
     "NETA":              ("哪吒", "", "", "", "", "", "", ""),
     "Luxgen":            ("纳智捷", "", "", "", "", "", "", ""),
     "Hawtai":            ("华泰", "", "", "", "", "", "", ""),
@@ -397,6 +398,10 @@ PHRASES = {
     "Nickel-Copper":      ("镍铜", "نيكل-نحاس", "Никель-медь", "Nickel-cuivre", "Níquel-Cobre", "Níquel-Cobre", "Nikel-Tembaga", "نیکل-مس"),
     "Nickel":             ("镍", "نيكل", "Никель", "Nickel", "Níquel", "Níquel", "Nikel", "نیکل"),
     "electrode":          ("电极", "قطب", "электрод", "électrode", "electrodo", "eletrodo", "elektroda", "الکترود"),
+    # 复合说法：「Qty/vehicle: 4-cyl & 6-cyl」这种。长的先匹配，
+    # 所以 "-cyl & " 会整段吃掉，单剩 "-cyl" 的由下面那条兜底。
+    "-cyl & ":            ("缸 和 ", " أسطوانة و ", "-цил. и ", "-cyl. et ", "-cil. y ", "-cil. e ", "-sil. dan ", " سیلندر و "),
+    "-cyl":               ("缸", " أسطوانة", "-цил.", "-cyl.", "-cil.", "-cil.", "-sil.", " سیلندر"),
 }
 
 MARK_BEGIN = "  /* ===== PDATA:BEGIN 由 pdata_i18n.py 生成，别手改这一段（改译名请改 pdata_i18n.py） ===== */"
@@ -446,10 +451,11 @@ def self_check(verbose=True):
     rs = rows()
     bad = 0
     for src, d in rs:
-        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9 ./&:\-]*", src):
+        core = src.strip()
+        if not re.fullmatch(r"[A-Za-z0-9\-][A-Za-z0-9 ./&:\-]*", core):
             print("  [!] 原词里有可疑字符：%r" % src)
             bad += 1
-        if len(src) < 2:
+        if len(core) < 2:
             print("  [!] 太短，容易误替换：%r" % src)
             bad += 1
     if verbose:
