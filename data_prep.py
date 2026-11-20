@@ -24,7 +24,7 @@ DATA_DIR = os.path.join(HERE, "data")
 DATA_JS = os.path.join(DATA_DIR, "data.js")
 MAP_DIR = os.path.join(os.path.dirname(HERE), "型号查询站-清洗映射")
 CHUNK = 240                 # 每个分片多少条
-CLEAN_VER = 9               # 字典/规则版本，改了它才会重新清洗
+CLEAN_VER = 12               # 字典/规则版本，改了它才会重新清洗
 
 CJK = re.compile(r"[\u4e00-\u9fa5]")
 
@@ -105,6 +105,10 @@ BRAND = {
     "威利": "WEILI", "加加": "JIAJIA", "德尔福": "Delphi", "博世": "Bosch", "电装": "Denso",
     "联合电子": "UAES", "马瑞利": "Magneti Marelli", "西门子": "Siemens", "摩托罗拉": "Motorola",
     "德尔福款": "Delphi type", "博世款": "Bosch type", "联电款": "UAES type",
+    # 2026-11-20 补：源表里出现过、以前会被洗成空（品牌丢成 Unspecified 的元凶）
+    "驭扬": "Yumengyang", "魏牌": "WEY", "康明斯": "Cummins",
+    "焊马": "Hummer", "雪弗兰": "Chevrolet", "尼桑": "Nissan", "标志": "Peugeot",
+    "玛瑞利": "Magneti Marelli", "吉奥": "Gonow", "瑞驰": "Ruichi",
 }
 
 MODEL = {
@@ -170,6 +174,12 @@ MODEL = {
     "菱帅": "Lioncel", "蓝瑟": "Lancer", "翼神": "Lancer EX", "戈蓝": "Galant", "欧蓝德": "Outlander",
     "劲炫": "ASX", "帕杰罗": "Pajero", "劲畅": "Montero Sport", "得利卡": "Delica",
     "风迪思": "Fortis", "君阁": "Zinger",
+    # 2026-11-20 补：备注 / 适配里出现过、以前翻不掉的车型
+    "小海狮": "Haise", "森特拉": "Sentra", "圣达菲": "Santa Fe", "索兰": "Sorento",
+    "北斗星": "Beidouxing", "羚羊": "Antelope", "祥菱": "Xiangling", "驭菱": "Yuling",
+    "瑞风M6": "Refine M6", "瑞风M5": "Refine M5", "坦克700": "Tank 700",
+    "马6": "Mazda 6", "马3": "Mazda 3", "老马6": "old Mazda 6", "新马6": "new Mazda 6",
+    "星旺": "Xingwang", "星朗": "Xinglang", "田野": "Tianye", "插电式混合动力": "PHEV",
 }
 
 DESC = {
@@ -201,6 +211,17 @@ DESC = {
     "电磁阀": "solenoid valve", "节气门": "throttle body", "喷油嘴": "injector",
     "油泵": "fuel pump", "水泵": "water pump", "壳体": "housing", "支架": "bracket",
     "螺丝": "screw", "孔位": "mounting holes", "带涡轮": "turbo", "不带涡轮": "non-turbo",
+    # 2026-11-20 补：号码/备注里残留的英文站不该出现的中文
+    "电阻小": "low resistance", "电阻大": "high resistance",
+    "紫色": "purple", "棕色": "brown", "灰色": "grey", "黑色": "black", "白色": "white",
+    "铱金": "iridium", "铂金": "platinum", "铜芯": "copper core", "镍合金": "nickel alloy",
+    "硅胶材质": "silicone", "硅胶": "silicone", "双插": "2-pin", "单插": "1-pin",
+    "线束": "harness", "定制": "custom", "库存": "", "有库存": "", "没库存": "",
+    "旧OE号": "old OE number", "旧OE": "old OE", "新OE号": "new OE number",
+    "不带铁片": "without bracket", "带铁片": "with bracket",
+    "八代": "8th gen", "九代": "9th gen", "十代": "10th gen", "七代": "7th gen",
+    "一代": "1st gen", "二代": "2nd gen", "三代": "3rd gen", "四代": "4th gen",
+    "五代": "5th gen", "六代": "6th gen", "老": "old",
     # 单字兜底：中文里出现最多的几个，翻出来比直接删可读性好
     "款": "", "价": "", "新": "new", "氧": "O2", "后": "rear", "前": "front",
     "代": "gen", "系": "series", "国": "Euro", "级": "class", "年": "year",
@@ -228,6 +249,8 @@ def _tidy(s):
     s = re.sub(r"[:：]\s*[:：]+", ":", s)
     s = re.sub(r"\(\s*\)", " ", s)
     s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r",\s*\.", ".", s)                      # 「, .」这种翻译残留
+    s = re.sub(r"\b([A-Za-z]{2,})\s+\1\b", r"\1", s)   # 「new new」重复词
     s = re.sub(r"^[\s,;/\-:]+|[\s,;/\-:]+$", "", s)
     return s.strip()
 
@@ -259,24 +282,56 @@ def _score(it):
 
 
 def _ascii_punct(t):
-    """全角标点 → 半角（源表里「465Q（新款）」这种，英文站上很难看）。"""
+    """全角标点 → 半角（源表里「465Q（新款）」这种，英文站上很难看）。
+    2026-11-20 补：OE/交叉号里大量出现「；」「，」「、」（一个字段塞了多个号），
+    以及弯引号「‘ ’」「·」和从 Excel 带进来的 U+FFFD 替换符。"""
     if not t:
         return t
     for a, b in (("（", "("), ("）", ")"), ("【", "["), ("】", "]"), ("／", "/"),
                  ("；", ";"), ("，", ","), ("、", ","), ("。", "."), ("～", "~"),
-                 ("＋", "+"), ("－", "-"), ("％", "%"), ("＃", "#"), ("！", "!"), ("？", "?")):
+                 ("＋", "+"), ("－", "-"), ("％", "%"), ("＃", "#"), ("！", "!"), ("？", "?"),
+                 ("：", ":"), ("　", " "), ("「", '"'), ("」", '"'),
+                 ("“", '"'), ("”", '"'), ("‘", "'"), ("’", "'"), ("·", " "),
+                 ("﹑", ","), ("≠", " not "), ("…", " "), ("Ⅷ", " VIII "),
+                 ("＜", "<"), ("＞", ">"), ("＝", "="), ("＊", "*"), ("＿", "_")):
         t = t.replace(a, b)
+    # Excel 导出时最常见的三种脏东西：替换符、零宽字符、控制字符
+    t = re.sub("[\ufffd\u200b-\u200f\u202a-\u202e\ufeff]", " ", t)
+    t = re.sub("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", " ", t)
     t = re.sub(r"\(\s+", "(", t)
     t = re.sub(r"\s+\)", ")", t)
     t = re.sub(r"(?<=[0-9A-Za-z])\((?=\S)", " (", t)
+    t = re.sub(r"\s*;\s*", "; ", t)
+    t = re.sub(r"\s*,\s*", ", ", t)
+    t = re.sub(r"\s{2,}", " ", t)
     return t
 
 
-def clean_payload(payload, log=print):
-    """清洗 + 去重。原地改 payload，返回统计。"""
+# 源表里几乎无法自动判断的个别坏串：整串对不上就照这里硬改
+# （源表那一串里带 U+FFFD，第一次清洗会把它换成空格，所以两种形状都登记）
+EXACT_FIX = {
+    "Toyota 8A \ufffd \ufffd2.2?999 Haise": "Toyota 8A 2.2 1999 Haise",
+    "Toyota 8A 2.2?999 Haise": "Toyota 8A 2.2 1999 Haise",
+}
+
+
+def _norm_code(s):
+    """OE 号 / 型号 / 交叉号：只做标点与脏字符归一，不动字母数字。
+    slug 用的是历史值（build 里 keep_existing=True），改这里不会改线上地址。"""
+    s = EXACT_FIX.get((s or "").strip(), (s or "").strip())
+    if not s:
+        return s
+    return _tidy(_ascii_punct(s)).strip(" ,;")
+
+
+def clean_payload(payload, log=print, dedupe=True):
+    """清洗 + 去重。原地改 payload，返回统计。
+    dedupe=False：只清洗不删重复（四品牌入站后同 OE 会有多个 SKU，
+    每个 SKU 都是能单独报价的商品，删了就是删页面——要不要合并得人决定，别自动删）。"""
     items = payload.get("items") or []
     stats = {"brand": 0, "fit": 0, "unresolved": {}, "unspecified": 0,
-             "fit_empty": 0, "dup_removed": 0, "dedupe": [], "mapping": {}}
+             "fit_empty": 0, "dup_removed": 0, "dedupe": [], "mapping": {},
+             "code": 0, "note": 0}
     for it in items:
         orig = {}
 
@@ -290,7 +345,7 @@ def clean_payload(payload, log=print):
             stats["unspecified"] += 1
         it["b"] = nb.strip()
 
-        a = it.get("a") or ""
+        a = EXACT_FIX.get((it.get("a") or "").strip(), it.get("a") or "")
         na, _left, leftover = translate(a)
         if na != a:
             orig["a"] = a
@@ -301,23 +356,54 @@ def clean_payload(payload, log=print):
             stats["fit_empty"] += 1
         it["a"] = _ascii_punct(na.strip())
         it["n"] = _ascii_punct((it.get("n") or "").strip())
-        it["r"] = _ascii_punct((it.get("r") or "").strip())
 
+        # 备注 r：以前只做标点归一，中文原样留在英文页上（「八代雅阁」「长城」这种）。
+        # 2026-11-20 起跟适配车型一样走词典翻译，翻不掉的单字兜底成空。
+        r0 = _ascii_punct(EXACT_FIX.get((it.get("r") or "").strip(), it.get("r") or "").strip())
+        nr, _rleft, rleft = translate(r0)
+        if nr != r0:
+            orig["r"] = it.get("r") or ""
+            stats["note"] += 1
+        for k in rleft:
+            stats["unresolved"][k] = stats["unresolved"].get(k, 0) + 1
+        it["r"] = _ascii_punct(nr.strip())
+
+        # OE / 型号 / 交叉号：去中文 + 全角标点归一（slug 不受影响，见 _norm_code 注释）
         for k in ("m", "oe"):
             v = it.get(k) or ""
-            if CJK.search(v):
+            nv = _norm_code(re.sub(r"[\u4e00-\u9fa5]+", " ", v) if CJK.search(v) else v)
+            if nv != v:
                 orig[k] = v
-                it[k] = _tidy(re.sub(r"[\u4e00-\u9fa5]+", " ", v))
+                stats["code"] += 1
+            it[k] = nv
         xs = it.get("x") or []
-        if any(CJK.search(x or "") for x in xs):
+        nx, x_changed = [], False
+        for y in xs:
+            y0 = y or ""
+            ny = _norm_code(re.sub(r"[\u4e00-\u9fa5]+", " ", y0) if CJK.search(y0) else y0)
+            if ny != y0:
+                x_changed = True
+            if ny:
+                nx.append(ny)
+        if x_changed:
             orig["x"] = list(xs)
-            it["x"] = [x for x in (_tidy(re.sub(r"[\u4e00-\u9fa5]+", " ", y or "")) for y in xs) if x]
+            stats["code"] += 1
+        it["x"] = nx
         if orig:
             stats["mapping"][str(it["i"])] = orig
 
     # OE 去重：同 OE（忽略大小写和分隔符）只留信息最全的一条
     def oekey(v):
         return re.sub(r"[^0-9A-Z]", "", (v or "").upper())
+
+    if not dedupe:
+        payload["_clean"] = CLEAN_VER
+        payload["_clean_stats"] = {k: v for k, v in stats.items() if k != "mapping"}
+        log("  清洗：品牌 %d 条、适配 %d 条、归 Unspecified %d、适配洗空 %d、号码/交叉号 %d、备注 %d；"
+            "本次不删重复 → %d 条"
+            % (stats["brand"], stats["fit"], stats["unspecified"], stats["fit_empty"],
+               stats["code"], stats["note"], len(items)))
+        return stats
 
     best = {}
     for it in items:
@@ -340,9 +426,10 @@ def clean_payload(payload, log=print):
     payload["items"] = out
     payload["_clean"] = CLEAN_VER
     payload["_clean_stats"] = {k: v for k, v in stats.items() if k != "mapping"}
-    log("  清洗：品牌 %d 条、适配 %d 条、归 Unspecified %d、适配洗空 %d；OE 去重 -%d 条 → %d 条"
+    log("  清洗：品牌 %d 条、适配 %d 条、归 Unspecified %d、适配洗空 %d、号码/交叉号 %d、备注 %d；"
+        "OE 去重 -%d 条 → %d 条"
         % (stats["brand"], stats["fit"], stats["unspecified"], stats["fit_empty"],
-           stats["dup_removed"], len(out)))
+           stats["code"], stats["note"], stats["dup_removed"], len(out)))
     return stats
 
 
@@ -461,14 +548,15 @@ def fill_slugs(payload, log=None):
     return before
 
 
-def prepare(write=True, log=print):
-    """读 data.js → 清洗去重 → 补 slug → 写回 + 拆包。返回 (payload, stats)。"""
+def prepare(write=True, log=print, dedupe=True):
+    """读 data.js → 清洗去重 → 补 slug → 写回 + 拆包。返回 (payload, stats)。
+    dedupe=False 只清洗不删重复（四品牌入站后同 OE 多 SKU 的情况用这个）。"""
     payload = load_payload()
     n_notes = strip_internal_notes(payload)
     if n_notes:
         log("  备注清洗：%d 条去掉了内部质检/销量/同款备注" % n_notes)
     if payload.get("_clean") != CLEAN_VER:
-        stats = clean_payload(payload, log=log)
+        stats = clean_payload(payload, log=log, dedupe=dedupe)
         fill_slugs(payload, log=log)
         if write:
             write_map(stats)

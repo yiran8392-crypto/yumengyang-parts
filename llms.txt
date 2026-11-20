@@ -10,7 +10,7 @@ This site is public on purpose. Quoting it, summarising it and linking to it is 
 - Business: manufacturer and exporter (own brands WEILI 威力, Standout 胜路, Drivefar 卓凡, Yumengyang 驭扬)
 - Address: E05, Yiyou Auto Parts City, No. 1540 Guangyuan East Road, Yuexiu District, Guangzhou, China
 - Contact: WhatsApp +8615915859048 · yumengyangkefu@yumengyang.com · Mon–Sat 09:00–18:00 (GMT+8)
-- Catalogue: 11,143 part numbers · 25 categories · 9,948 with an OE number · 9,239 with our own photos · 2,106 with cross-references
+- Catalogue: 11,143 part numbers · 25 categories · 9,943 with an OE number · 9,239 with our own photos · 2,106 with cross-references
 - MOQ: 5–100 pcs depending on the part type (each part page states its own MOQ)
 - Warranty: 12–24 months depending on the part type, written on the quotation and invoice
 - Payment: 30% T/T deposit, balance before shipment
@@ -57,6 +57,11 @@ Index pages: [all products](https://yumengyangparts.com/products.html) · [all 2
 - [How to Find the Right Ignition Coil by OE Number and Cross-Reference](https://yumengyangparts.com/guides/how-to-find-ignition-coil-by-oe-number.html): A practical guide for mechanics and parts buyers: how to read an ignition coil OE number, how to turn it into a cross-reference list, and the five mistakes that cause wrong shipments.
 - [VIN to Parts: How to Read a VIN and Find the Exact Part](https://yumengyangparts.com/guides/vin-to-parts-guide.html): What the 17 characters of a VIN mean, how to read the WMI and the model-year digit, what a VIN cannot tell you, and the five-step workflow from VIN to a confirmed part number.
 - [ABS Sensor Symptoms, Fault Codes and How to Match the Right Part Number](https://yumengyangparts.com/guides/abs-sensor-symptoms-and-replacement.html): How to recognise a failing ABS wheel-speed sensor, what the common fault codes mean, how to test before replacing, and how to match front/rear and left/right part numbers.
+- [Fuel Pump Symptoms, P0230 and How to Match a Pump, Hanger or Assembly](https://yumengyangparts.com/guides/fuel-pump-symptoms-and-part-matching.html): How a tired in-tank fuel pump behaves, what P0087 and P0230 really mean, when an assembly beats a bare pump, and the details that decide the part number.
+- [Oxygen Sensor Codes P0130 to P0135 and How to Match a Sensor](https://yumengyangparts.com/guides/oxygen-sensor-codes-and-part-matching.html): What P0130 to P0135 really mean, how to tell a dead sensor from a vacuum leak or a wiring fault, and the details — wire count, heater, thread and cable length — that decide the part number.
+- [Throttle Body Cleaning, P0507 and Electronic Throttle Relearn](https://yumengyangparts.com/guides/throttle-body-cleaning-and-relearn.html): Why cleaning an electronic throttle body can put the car in limp mode, what P0120, P0122 and P0507 mean, the safe cleaning sequence, and what decides the part number.
+- [No-Start Diagnosis: Crankshaft and Camshaft Position Sensors](https://yumengyangparts.com/guides/crank-cam-sensor-no-start-diagnosis.html): A crank sensor that fails hot leaves no code and no start. How to prove it in ten minutes, what P0335 and P0340 mean, and how type, length and connector decide the part number.
+- [Spark Plug Heat Range, Reach and Cross-Reference Explained](https://yumengyangparts.com/guides/spark-plug-heat-range-and-cross-reference.html): Why two plugs with the same thread are not interchangeable: heat range, reach, seat type, resistor and electrode material. Plus how to cross-reference NGK, Denso, Bosch and Champion.
 
 ## Fault-code diagnostics
 
@@ -114,37 +119,37 @@ Symptom-first pages: what the code means, how to test before replacing, and whic
 ## Vehicle brands covered
 
 - [All brands](https://yumengyangparts.com/brand/index.html)
-- [Changan](https://yumengyangparts.com/brand/changan.html): 649 part numbers
+- [Changan](https://yumengyangparts.com/brand/changan.html): 650 part numbers
 - [Hyundai](https://yumengyangparts.com/brand/hyundai.html): 574 part numbers
-- [Buick](https://yumengyangparts.com/brand/buick.html): 522 part numbers
-- [Volkswagen](https://yumengyangparts.com/brand/volkswagen.html): 506 part numbers
+- [Buick](https://yumengyangparts.com/brand/buick.html): 524 part numbers
+- [Volkswagen](https://yumengyangparts.com/brand/volkswagen.html): 507 part numbers
 - [BMW](https://yumengyangparts.com/brand/bmw.html): 433 part numbers
-- [Dongfeng](https://yumengyangparts.com/brand/dongfeng.html): 428 part numbers
-- [Ford](https://yumengyangparts.com/brand/ford.html): 428 part numbers
+- [Dongfeng](https://yumengyangparts.com/brand/dongfeng.html): 430 part numbers
+- [Ford](https://yumengyangparts.com/brand/ford.html): 429 part numbers
 - [Toyota](https://yumengyangparts.com/brand/toyota.html): 428 part numbers
 - [Chery](https://yumengyangparts.com/brand/chery.html): 426 part numbers
 - [Wuling](https://yumengyangparts.com/brand/wuling.html): 396 part numbers
-- [Nissan](https://yumengyangparts.com/brand/nissan.html): 389 part numbers
+- [Nissan](https://yumengyangparts.com/brand/nissan.html): 392 part numbers
 - [Geely](https://yumengyangparts.com/brand/geely.html): 367 part numbers
 - [Audi](https://yumengyangparts.com/brand/audi.html): 362 part numbers
 - [Kia](https://yumengyangparts.com/brand/kia.html): 362 part numbers
+- [Chevrolet](https://yumengyangparts.com/brand/chevrolet.html): 349 part numbers
 - [Honda](https://yumengyangparts.com/brand/honda.html): 349 part numbers
-- [Chevrolet](https://yumengyangparts.com/brand/chevrolet.html): 348 part numbers
 - [Mercedes-Benz](https://yumengyangparts.com/brand/mercedes-benz.html): 335 part numbers
 - [BYD](https://yumengyangparts.com/brand/byd.html): 303 part numbers
-- [Great Wall](https://yumengyangparts.com/brand/great-wall.html): 283 part numbers
-- [JAC](https://yumengyangparts.com/brand/jac.html): 257 part numbers
+- [Great Wall](https://yumengyangparts.com/brand/great-wall.html): 287 part numbers
+- [JAC](https://yumengyangparts.com/brand/jac.html): 258 part numbers
 
 ## Most covered models
 
 - [All models](https://yumengyangparts.com/vehicle/index.html)
-- [EXCELLE](https://yumengyangparts.com/vehicle/excelle.html): 227 part numbers
+- [EXCELLE](https://yumengyangparts.com/vehicle/excelle.html): 229 part numbers
 - [PASSAT](https://yumengyangparts.com/vehicle/passat.html): 170 part numbers
 - [REFINE](https://yumengyangparts.com/vehicle/refine.html): 170 part numbers
-- [BORA](https://yumengyangparts.com/vehicle/bora.html): 159 part numbers
+- [BORA](https://yumengyangparts.com/vehicle/bora.html): 160 part numbers
 - [REGAL](https://yumengyangparts.com/vehicle/regal.html): 155 part numbers
 - [GOLF](https://yumengyangparts.com/vehicle/golf.html): 153 part numbers
-- [FOCUS](https://yumengyangparts.com/vehicle/focus.html): 146 part numbers
+- [FOCUS](https://yumengyangparts.com/vehicle/focus.html): 147 part numbers
 - [MONDEO](https://yumengyangparts.com/vehicle/mondeo.html): 146 part numbers
 - [ACCORD](https://yumengyangparts.com/vehicle/accord.html): 145 part numbers
 - [ELANTRA](https://yumengyangparts.com/vehicle/elantra.html): 141 part numbers
@@ -152,11 +157,11 @@ Symptom-first pages: what the code means, how to test before replacing, and whic
 - [TEANA](https://yumengyangparts.com/vehicle/teana.html): 129 part numbers
 - [LACROSSE](https://yumengyangparts.com/vehicle/lacrosse.html): 127 part numbers
 - [SANTANA](https://yumengyangparts.com/vehicle/santana.html): 120 part numbers
+- [CRUZE](https://yumengyangparts.com/vehicle/cruze.html): 119 part numbers
 - [JETTA](https://yumengyangparts.com/vehicle/jetta.html): 119 part numbers
-- [CRUZE](https://yumengyangparts.com/vehicle/cruze.html): 118 part numbers
 - [SONATA](https://yumengyangparts.com/vehicle/sonata.html): 115 part numbers
 - [AEOLUS](https://yumengyangparts.com/vehicle/aeolus.html): 114 part numbers
-- [LAVIDA](https://yumengyangparts.com/vehicle/lavida.html): 112 part numbers
+- [LAVIDA](https://yumengyangparts.com/vehicle/lavida.html): 113 part numbers
 - [POLO](https://yumengyangparts.com/vehicle/polo.html): 108 part numbers
 
 ## Company and terms

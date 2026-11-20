@@ -583,7 +583,9 @@ def write_data_js(items, cats):
         holder = {"items": rows}
         data_prep.clean_payload(holder, log=print)
         rows = holder["items"]
-        sitegen.make_slugs(rows)
+        # 2026-11-20：清洗规则会动 OE 里的标点，重算 slug 可能让线上老地址变掉；
+        # keep_existing=True 只给空 slug 的补，已有地址一律不动（和 data_prep.fill_slugs 一致）
+        sitegen.make_slugs(rows, keep_existing=True)
     except Exception as e:
         print("  数据清洗失败（用原始数据）：%s" % e)
     payload = {
