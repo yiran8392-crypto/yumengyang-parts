@@ -211,7 +211,7 @@ def _asset_ver(path, base):
 
 
 ANALYTICS_V = "20261110b"   # 改 assets/analytics.js 之后把这个版本号一起改，浏览器才会重新拉
-CSS_V = "20261120m"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
+CSS_V = "20261121a"          # 改 assets/style.css 之后改这里，等于给全站换个缓存键
 I18N_V = _asset_ver(os.path.join(HERE, "assets", "i18n.js"), "20261120i18n4")
 
 
@@ -2487,6 +2487,17 @@ def page_guide(cfg, g, resolve):
     others = [x for x in guides_content.GUIDES if x["slug"] != slug]
     more = "".join('<a href="./%s.html">%s</a>' % (esc(x["slug"]), esc(x["nav"])) for x in others)
     wa = wa_link(cfg, "Hi, I read your guide. I have a question about a part number.")
+    # ---- FAQ：可见区块 + FAQPage 结构化数据（2026-11-21）
+    # 两边内容必须一致（只给 schema 不给可见内容＝违规），所以都从 g["faq"] 同一份数据来。
+    faqs = [(q, a) for q, a in (g.get("faq") or [])]
+    faq_html, faq_ld = "", None
+    if faqs:
+        faq_html = ('<section class="dsec guidefaq"><h2 data-i18n="guide_faq_h">Questions buyers ask</h2>%s</section>'
+                    % "".join('<h3>%s</h3><p>%s</p>' % (esc(q), esc(a)) for q, a in faqs))
+        faq_ld = {"@context": "https://schema.org", "@type": "FAQPage",
+                  "mainEntity": [{"@type": "Question", "name": clean_text(q),
+                                  "acceptedAnswer": {"@type": "Answer", "text": clean_text(a)}}
+                                 for q, a in faqs]}
     body = """<body class="docpage">
 %s
 <main id="main" tabindex="-1" class="policy">
@@ -2516,8 +2527,11 @@ def page_guide(cfg, g, resolve):
        guide_blocks_html(g["body"], resolve, "gd_%s" % slug.replace("-", "_")), more,
        NOTRANSLATE, esc(BRAND_CN), NOTRANSLATE, esc(cfg["company_en"]), addr_span(cfg),
        esc(wa), esc("WhatsApp " + wa_display(cfg["whatsapp"])), sitefoot(cfg, base="../"))
+    if faq_html:
+        # 插在「更多指南」之前，读完正文刚好接上常见问题
+        body = body.replace('<nav class="gmore">', faq_html + '\n  <nav class="gmore">', 1)
     return head_block(cfg, g["title"] + " | Yumengyang Auto Parts", g["desc"], canonical, og, "article",
-                      [ld, crumbs], base="../") + "\n" + body
+                      [x for x in (ld, crumbs, faq_ld) if x], base="../") + "\n" + body
 
 
 def page_guides_index(cfg):

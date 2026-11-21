@@ -845,6 +845,10 @@ html[dir="rtl"] .btn-share svg,html[dir="rtl"] .btn-copy svg{transform:scaleX(-1
 .doc .dsec li b{color:var(--ink)}
 .doc .dsec h2{margin-top:2px}
 .doc .dsec>.gtable{margin-top:12px}
+/* FAQ 区块（2026-11-21）：可见内容与 FAQPage 结构化数据同一份数据源 */
+.doc .dsec h3{margin:14px 0 4px;font-size:14.5px;font-weight:700;color:var(--ink);line-height:1.45}
+.doc .dsec h3:first-of-type{margin-top:0}
+.guidefaq h2{margin-bottom:12px}
 .gtable{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e9eff4;border-radius:10px}
 .gtable table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
 .gtable th{text-align:start;padding:10px 14px;background:#f6f9fb;color:#5a7186;font-weight:700;

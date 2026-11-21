@@ -33,6 +33,20 @@ GUIDES = [
     # ================================================================= 1
     {
         "slug": "how-to-find-ignition-coil-by-oe-number",
+        "faq": [
+            ("Can you match a coil if I only have the vehicle?",
+             "Yes. Send the VIN and the engine code, and we compare them against the OE list on our part pages. "
+             "A photo of the marking on the old coil is faster and safer than either."),
+            ("Is your coil genuine or aftermarket?",
+             "Our own brand, built to OE specification — WEILI, Standout, Drivefar or Yumengyang depending on the "
+             "part. The brand of every part is shown on its page and on the invoice."),
+            ("What is the minimum order for ignition coils?",
+             "It depends on the coil: the MOQ is on each part page, and stock items can be quoted at the smaller "
+             "quantity. Ask for the exact MOQ with the number you need."),
+            ("What if the coil does not fit?",
+             "Send photos of the old part, its marking and the new one. If what we shipped does not carry the OE "
+             "number you ordered, we replace it or credit it — the terms are on the returns page."),
+        ],
         "nav": "Find a coil by OE number",
         "title": "How to Find the Right Ignition Coil by OE Number and Cross-Reference",
         "h1": "How to find the right ignition coil by OE number",
@@ -140,6 +154,20 @@ GUIDES = [
     # ================================================================= 2
     {
         "slug": "vin-to-parts-guide",
+        "faq": [
+            ("Can you decode my VIN for me?",
+             "Yes — send the 17 characters on WhatsApp with the part you are looking for. We read the WMI and the "
+             "model-year digit and reply with the numbers we stock for that car."),
+            ("Which VIN characters matter most for parts?",
+             "Characters 1 to 3 (who built it and for which market), 4 to 8 (model, engine, body) and 10 (model "
+             "year). The last six are the serial number and rarely change a part number."),
+            ("Why does the VIN show a different year from the registration?",
+             "The VIN year is the model year, which can be up to a year before the build date, and imported cars "
+             "are often registered months later. Quote the model year, not the plate."),
+            ("Do you store the VINs customers send?",
+             "No. The VIN is used inside the conversation to match parts; we do not keep a vehicle database and we "
+             "do not publish customer details."),
+        ],
         "nav": "VIN to parts",
         "title": "VIN to Parts: How to Read a VIN and Find the Exact Part",
         "h1": "VIN to parts: how to read a VIN and find the exact part",
@@ -245,6 +273,20 @@ GUIDES = [
     # ================================================================= 3
     {
         "slug": "abs-sensor-symptoms-and-replacement",
+        "faq": [
+            ("Do you sell left and right ABS sensors separately?",
+             "Yes. Front left, front right, rear left and rear right are separate numbers on most platforms — "
+             "say which corner you need when you ask for a price."),
+            ("Can I fit a 2-pin sensor where a 3-pin one came off?",
+             "No. Passive (2-pin) and active (3-pin) sensors work on different principles and are not "
+             "interchangeable, even when the housing looks the same."),
+            ("My ABS light is on but the sensor tests fine — what else?",
+             "The tone ring on the hub, the harness at the strut, or the ABS module. A cracked ring produces the "
+             "same symptoms as a dead sensor and costs less to fix."),
+            ("What is the minimum order for ABS sensors?",
+             "Most references start at 10 pcs, and the MOQ for a specific part is shown on its page. Mixed part "
+             "numbers can be combined in one order."),
+        ],
         "nav": "ABS sensor symptoms",
         "title": "ABS Sensor Symptoms, Fault Codes and How to Match the Right Part Number",
         "h1": "ABS sensor symptoms, fault codes and part matching",
@@ -349,6 +391,20 @@ GUIDES = [
     # ================================================================= 4
     {
         "slug": "fuel-pump-symptoms-and-part-matching",
+        "faq": [
+            ("Do you sell the complete module or only the pump motor?",
+             "Both, depending on the reference. The part page says which one it is; send a photo of the module top "
+             "and we confirm before quoting."),
+            ("What is the minimum order for fuel pumps?",
+             "5 pcs — single pieces are not accepted for fuel pumps and throttle bodies, because they ship in "
+             "foam trays."),
+            ("Can I choose a higher-flow pump?",
+             "No. The flow and pressure rating is part of the OE specification; a higher-flow pump on a standard "
+             "engine makes it run rich at idle."),
+            ("Does the module include the fuel level sender?",
+             "When the OE part includes it, yes — and it is matched on resistance, so the gauge reads correctly. "
+             "If you only need the sender, tell us and we quote it separately."),
+        ],
         "nav": "Fuel pump symptoms",
         "title": "Fuel Pump Symptoms, P0230 and How to Match a Pump, Hanger or Assembly",
         "h1": "Fuel pump symptoms and how to match a pump, hanger or assembly",
@@ -456,6 +512,19 @@ GUIDES = [
     # ================================================================= 5
     {
         "slug": "oxygen-sensor-codes-and-part-matching",
+        "faq": [
+            ("How do I know if I need the upstream or the downstream sensor?",
+             "Position on the car: before the catalyst is upstream (sensor 1), after it is downstream (sensor 2). "
+             "Send the number from the old sensor and a photo of the connector — the cable length gives it away."),
+            ("Do you sell universal splice-in sensors?",
+             "We list direct-fit numbers. Universal sensors are available on request for workshops that crimp "
+             "their own connectors, but export orders normally take the plug-and-play version."),
+            ("How many wires does my sensor have?",
+             "Count them on the old part: 1 to 4 wires means a narrowband sensor (4-wire is the common heated "
+             "type), 5 or 6 means wideband. The count is part of the part number."),
+            ("What is the minimum order for oxygen sensors?",
+             "10 pcs for most references; the exact MOQ is on the part page."),
+        ],
         "nav": "O2 sensor codes",
         "title": "Oxygen Sensor Codes P0130 to P0135 and How to Match a Sensor",
         "h1": "Oxygen sensor codes P0130 to P0135 and how to match a sensor",
@@ -540,6 +609,19 @@ GUIDES = [
     # ================================================================= 6
     {
         "slug": "throttle-body-cleaning-and-relearn",
+        "faq": [
+            ("Does a new throttle body need programming?",
+             "On most platforms it needs a relearn or basic setting after fitting, and a few need the body coded to "
+             "the car. We flag which one in the quotation so the workshop can plan for it."),
+            ("Can I clean my throttle body instead of replacing it?",
+             "Often yes — clean it and complete the relearn. Replace it when the two position tracks disagree "
+             "(P2135), when the motor cannot reach the commanded position (P2119), or when the plate is loose."),
+            ("Does the body come with the position sensor?",
+             "It depends on the reference; the part page states whether the TPS is integrated. Complete bodies are "
+             "the safer choice for export orders."),
+            ("What is the minimum order for throttle bodies?",
+             "5 pcs, the same as fuel pumps, because of the foam packaging."),
+        ],
         "nav": "Throttle body relearn",
         "title": "Throttle Body Cleaning, P0507 and Electronic Throttle Relearn",
         "h1": "Throttle body cleaning, P0507 and the electronic throttle relearn",
@@ -611,6 +693,19 @@ GUIDES = [
     # ================================================================= 7
     {
         "slug": "crank-cam-sensor-no-start-diagnosis",
+        "faq": [
+            ("Can a crank sensor fail without setting a code?",
+             "Yes. A sensor that only fails when hot, or that produces a weak signal, often leaves no code because "
+             "the control unit never sees a clean failure. Live data and a scope find it."),
+            ("How do I tell a Hall sensor from an inductive one?",
+             "Count the wires: 2 wires is inductive, 3 is Hall or magneto-resistive. An inductive sensor produces "
+             "its own AC signal; the others need a supply."),
+            ("Do you supply the connector or the pigtail?",
+             "We can quote connectors and repair pigtails on request — they are not on the site. Send a photo of "
+             "the connector face."),
+            ("What is the minimum order for these sensors?",
+             "10 pcs for most references. Cam and crank sensors of different numbers can share one order."),
+        ],
         "nav": "Crank / cam sensor",
         "title": "No-Start Diagnosis: Crankshaft and Camshaft Position Sensors",
         "h1": "No-start diagnosis for crankshaft and camshaft position sensors",
@@ -683,6 +778,19 @@ GUIDES = [
     # ================================================================= 8
     {
         "slug": "spark-plug-heat-range-and-cross-reference",
+        "faq": [
+            ("Are your spark plugs resistor type?",
+             "Yes for the ranges we list — the resistor is part of the OE specification on modern engines. "
+             "Non-resistor plugs are quoted only on request."),
+            ("What is the minimum order for spark plugs?",
+             "40 pcs, which is 10 boxes of 4. Plugs are packed by the box, so orders are quoted in boxes."),
+            ("Can I mix heat ranges across one engine?",
+             "No. All cylinders should run the same plug unless the manufacturer specifies otherwise; one colder "
+             "plug in a set makes the trim and the misfire counters lie."),
+            ("Do you sell iridium and platinum plugs?",
+             "Yes, depending on the OE number — the material is listed on the part page. Do not re-gap an iridium "
+             "plug by levering the centre electrode."),
+        ],
         "nav": "Spark plug heat range",
         "title": "Spark Plug Heat Range, Reach and Cross-Reference Explained",
         "h1": "Spark plug heat range, reach and cross-reference explained",
@@ -749,6 +857,19 @@ GUIDES = [
     # ================================================================= 9
     {
         "slug": "fuel-injector-flow-matching-and-part-numbers",
+        "faq": [
+            ("Do you sell injectors in matched sets?",
+             "Yes. State the quantity and the flow requirement and we quote a set taken from one production "
+             "batch, so the cylinders stay balanced."),
+            ("Can I replace just one injector?",
+             "Yes, but the new one has to match the flow of the remaining set. On a high-mileage engine, cleaning "
+             "and flow-testing the existing set is often the better value."),
+            ("Are GDI injectors available?",
+             "Yes for the numbers we list. They are not interchangeable with port injectors even when the "
+             "connector matches — say which system the car uses."),
+            ("What is the minimum order for fuel injectors?",
+             "10 pcs for most references; the MOQ for a specific part is on its page."),
+        ],
         "nav": "Fuel injector matching",
         "title": "Fuel Injectors: Flow Rate, Resistance and How to Match a Part Number",
         "h1": "Fuel injector flow, resistance and part matching",
@@ -838,6 +959,20 @@ GUIDES = [
     # ================================================================= 10
     {
         "slug": "engine-sensor-map-fault-code-to-part",
+        "faq": [
+            ("Can you tell me which sensor my code points to?",
+             "Yes — send the code and the vehicle. We reply with the sensor family, the numbers we stock and the "
+             "check to carry out first."),
+            ("What if my code is not in the table?",
+             "Send it anyway. The table covers the families we sell sensors for; if we stock the related part we "
+             "add the page, and if we do not, we tell you instead of guessing."),
+            ("Do you sell only sensors?",
+             "No — 25 categories and more than 11,000 part numbers, from ignition coils and fuel pumps to "
+             "thermostats, throttle bodies, injectors and idle control valves."),
+            ("How do I order something not on the site?",
+             "Send the OE number or a photo of the part on WhatsApp. If we can source it, you get a price, MOQ and "
+             "packing details within one working day."),
+        ],
         "nav": "Sensor map: code → part",
         "title": "Engine Sensor Map: Which Sensor Sets Which Fault Code",
         "h1": "Engine sensor map: which sensor sets which fault code",
