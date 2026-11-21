@@ -3700,6 +3700,21 @@ def build_static(items, cats, log=print):
     # 批量查价页：工具体验页，买家经常从导航进来，之前漏在 sitemap 外
     urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>'
                 % (esc(rel_url(cfg, "list.html")), today))
+    # 多语种静态页（由 mk_lang_sites.py 生成到 ar/ ru/ es/ pt/）
+    # 扫实际目录、不写死清单 —— 这样以后加语种或改镜像范围，sitemap 自动跟上。
+    for _lc in ("ar", "ru", "es", "pt"):
+        _ld = os.path.join(HERE, _lc)
+        if not os.path.isdir(_ld):
+            continue
+        _found = []
+        for _root, _dirs, _files in os.walk(_ld):
+            for _name in _files:
+                if _name.lower().endswith(".html"):
+                    _found.append(os.path.join(_root, _name))
+        for _full in sorted(_found):
+            _relp = os.path.relpath(_full, HERE).replace("\\", "/")
+            urls.append('<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>'
+                        % (esc(cfg["site_url"] + "/" + _relp), today))
     sm = ('<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "\n".join(urls) + "\n</urlset>\n")
