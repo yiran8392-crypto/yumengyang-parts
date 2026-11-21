@@ -361,11 +361,98 @@ def translate_doc(tree, rel, lang, i18n, mirror_set, domain, stats):
             "location.href=(v==='en')?base:('/'+v+base);},true);})();"
         )
 
+        # --- 12. 标题本地化（品类 / 品牌 / 车型三类页面）
+        stats["title"] += localize_titles(tree, lang, i18n, pdx, idx, C)
+
     return tree
 
 
 def render(tree):
     return LH.tostring(tree, encoding="unicode", method="html", doctype="<!DOCTYPE html>")
+
+
+# ------------------------------------------------------------------ 标题本地化
+# sitegen 里这三类页面的 title 格式固定（见 sitegen.py L1598 / L1825 / L1905），
+# 用正则把变量抠出来、再用 T 表的现成模板重新拼，比无脑逐词替换安全得多。
+TITLE_CAT_RE = re.compile(r"^(.+?) — page (\d+) of (\d+) \((\d+) models\) \| (.+)$")
+# 不分页的品类页是另一种写法（见 sitegen.py L1679）："{名} — {n} models with OE numbers | ..."
+TITLE_CAT1_RE = re.compile(r"^(.+?) — (\d+) models with OE numbers \| (.+)$")
+TITLE_BRAND_RE = re.compile(r"^(.+) parts — (\d+) part numbers with OE numbers \| (.+)$")
+TITLE_VEH_RE = re.compile(r"^(.+) parts — (\d+) part numbers by OE number \| (.+)$")
+
+
+def _cat_label(tree, cat_table, idx, fallback):
+    """从页面 h1 里的 [data-cat] 取出该品类在本语种的名字。
+
+    ⚠️ 必须限定在 h1 里！页面上第一个 [data-cat] 是**导航栏**的第二行品类链接
+    （永远是「点火线圈」），拿错会把 spark-plugs 的标题也写成「点火线圈」—— 实测踩过。
+    """
+    nodes = tree.xpath("//h1//*[@data-cat]") or tree.xpath("//*[@data-cat]")
+    for ce in nodes:
+        arr = cat_table.get(ce.get("data-cat")) or []
+        if idx < len(arr) and arr[idx]:
+            return arr[idx]
+        break
+    return fallback
+
+
+def localize_titles(tree, lang, i18n, pdx, idx, cat_table):
+    """把 <title> + og:title + twitter:title 本地化。
+
+    只处理能安全解析的三种页面（品类 / 品牌 / 车型）。其余页面（首页、products…）
+    保持英文 —— **半英半阿的标题比纯英文更难看，也更容易被判低质**。
+
+    变量从页面自身取，不猜：品类名读第一个 [data-cat] 的 key，品牌/车型名读 [data-v-b]。
+    """
+    if lang == "en":
+        return 0
+    T = i18n["T"].get(lang, {})
+    t_el = tree.xpath("//title")
+    if not t_el:
+        return 0
+    old = t_el[0].text or ""
+    new = ""
+
+    m = TITLE_CAT_RE.match(old)
+    if m:
+        name, p, tot, n, brand = m.groups()
+        po, pn = T.get("page_of"), T.get("parts_n")
+        if po and pn:
+            cname = _cat_label(tree, cat_table, idx, name)
+            new = "%s — %s (%s) | %s" % (
+                cname, fill(po, {"p": p, "t": tot}), fill(pn, {"n": n}), brand)
+
+    if not new:
+        m = TITLE_CAT1_RE.match(old)
+        if m:
+            name, n, brand = m.groups()
+            pn = T.get("parts_n")
+            if pn:
+                cname = _cat_label(tree, cat_table, idx, name)
+                new = "%s — %s | %s" % (cname, fill(pn, {"n": n}), brand)
+
+    if not new:
+        for rx in (TITLE_BRAND_RE, TITLE_VEH_RE):
+            m = rx.match(old)
+            if not m:
+                continue
+            name, n, brand = m.groups()
+            bh, pn = T.get("brand_parts_h1"), T.get("parts_n")
+            if not (bh and pn):
+                continue
+            bname = name
+            for ve in tree.xpath("//*[@data-v-b]"):
+                bname = pdx(ve.get("data-v-b"))
+                break
+            new = "%s — %s | %s" % (fill(bh, {"b": bname}), fill(pn, {"n": n}), brand)
+            break
+
+    if not new:
+        return 0
+    t_el[0].text = new
+    for me in tree.xpath('//meta[@property="og:title" or @name="twitter:title"]'):
+        me.set("content", new)
+    return 1
 
 
 # ------------------------------------------------------------------ sitemap
@@ -512,7 +599,8 @@ def main():
     grand = {}
     for lang in langs:
         stats = {"i18n": 0, "i18n_miss": 0, "ph": 0, "html": 0, "cat": 0,
-                 "pd": 0, "link": 0, "asset": 0, "canonical": 0, "hreflang": 0, "pages": 0}
+                 "pd": 0, "link": 0, "asset": 0, "title": 0, "canonical": 0,
+                 "hreflang": 0, "pages": 0}
         fail = []
         for rel in pages:
             src = os.path.join(HERE, rel)
@@ -532,9 +620,9 @@ def main():
                 fail.append((rel, repr(e)[:160]))
         grand[lang] = stats
         dt = time.time() - t0
-        print("  [%s] 页 %d  文案 %d  品类 %d  产品数据 %d  链接 %d  失败 %d   %.1fs" % (
+        print("  [%s] 页 %d  文案 %d  品类 %d  产品数据 %d  链接 %d  标题 %d  失败 %d   %.1fs" % (
             lang, stats["pages"], stats["i18n"], stats["cat"], stats["pd"],
-            stats["link"], len(fail), dt))
+            stats["link"], stats["title"], len(fail), dt))
         if stats["i18n_miss"]:
             print("       ⚠ 文案缺译（退回原文）%d 处" % stats["i18n_miss"])
         for rel, err in fail[:5]:
