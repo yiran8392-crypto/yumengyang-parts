@@ -2,10 +2,12 @@
 """
 用「机器人群 2026-08-15 至今」的新解析明细补站点年份/排量/发动机号
 ================================================================
-源：03-获客与推广\\微信群分析\\机器人群-解析-0805至今.csv（VIN, 时间, 车型, 品类, SKU）
+源：最新的「机器人群-解析-全量-YYYYMMDD.csv」（VIN, 时间, 车型, 品类, SKU），
+    没有就退回旧的 机器人群-解析-0805至今.csv —— 与 build_vinmap.py 的取数口径保持一致。
 规则同 import_vin_enrich.py：只补空、≥3 条记录、年份 1980~明年、发动机只认已知系列。
 """
 import csv
+import glob
 import io
 import json
 import os
@@ -16,7 +18,9 @@ import time
 from collections import Counter, defaultdict
 
 HERE = r"D:\欧鲸鲸\default-workspace\型号查询站"
-SRC = r"D:\欧鲸鲸\default-workspace\03-获客与推广\微信群分析\机器人群-解析-0805至今.csv"
+_DIR = r"D:\欧鲸鲸\default-workspace\03-获客与推广\微信群分析"
+_cand = sorted(glob.glob(os.path.join(_DIR, "机器人群-解析-全量-*.csv")))
+SRC = _cand[-1] if _cand else os.path.join(_DIR, "机器人群-解析-0805至今.csv")
 DATA_JS = os.path.join(HERE, "data", "data.js")
 
 YEAR = re.compile(r"(?<!\d)((?:19|20)\d{2})(?!\d)")
@@ -34,6 +38,17 @@ YEAR_MAX = time.localtime().tm_year + 1
 
 def norm(c):
     return re.sub(r"[^A-Z0-9]", "", str(c or "").upper())
+
+
+PREFIX = re.compile(r"^([A-Z]{2})(\d{2}-)")
+
+
+def base_key(c):
+    """YM03-0001 / WL03-0001 / SL10-DZ046C → 030001 / 10DZ046C（去掉两位品牌前缀）。
+    norm() 会把 "-" 也去掉，所以先在原始字符串上剥前缀。"""
+    s = str(c or "").strip().upper()
+    m = PREFIX.match(s)
+    return norm(s[m.end(1):]) if m else None
 
 
 def parse_desc(desc):
@@ -84,11 +99,20 @@ def main():
     payload = json.loads(s[i:s.rindex(";")])
     items = payload["items"]
     by_model = {}
+    by_base = {}       # 裸料号（去品牌前缀）-> item，站点 11-20 起是多品牌编码
     for it in items:
         k = norm(it["m"])
         by_model[k] = it
-        if not k.startswith("WL"):
-            by_model["WL" + k] = it
+        b = base_key(it["m"])
+        if b:
+            by_base.setdefault(b, it)
+
+    def find(sku):
+        k = norm(sku)
+        if k in by_model:
+            return by_model[k]
+        b = base_key(sku)
+        return (by_base.get(b) if b else None) or by_base.get(k)
 
     pool = defaultdict(lambda: {"n": 0, "years": Counter(), "disps": Counter(), "engines": Counter()})
     rows = 0
@@ -97,8 +121,7 @@ def main():
         sku = (r.get("SKU") or "").strip().upper()
         if not sku:
             continue
-        key = norm("WL" + sku) if re.match(r"^\d{2}-", sku) else norm(sku)
-        it = by_model.get(key) or by_model.get(norm(sku))
+        it = find(sku)
         if not it:
             continue
         year, disps, engine = parse_desc(r.get("车型") or "")
@@ -118,13 +141,24 @@ def main():
         if not it or p["n"] < MIN_VINS:
             continue
         add = {}
-        if not it.get("y") and p["years"]:
+        # 页面适配文字里已经写了年份的，用群里推出来的年份做一致性校验：
+        # 一半以上对不上就说明这个 SKU 被多个车系串着用，年份/排量都别补，宁缺勿错。
+        ty = [int(x) for x in YEAR.findall(it.get("a") or "") if 1980 <= int(x) <= YEAR_MAX]
+        consistent = True
+        if ty and p["years"]:
+            lo, hi = min(ty) - 1, max(ty) + 1
+            ok = sum(1 for y in p["years"] if lo <= y <= hi)
+            if ok * 2 < len(p["years"]):
+                consistent = False          # 多半是串车系用的件，别补
+            else:                            # 对得上就按页面年份裁剪掉离群年
+                p["years"] = Counter({y: c for y, c in p["years"].items() if lo <= y <= hi})
+        if not it.get("y") and p["years"] and consistent:
             ys = list(p["years"])
             if max(ys) - min(ys) <= MAX_YEAR_SPAN:
                 rg = years_to_ranges(ys)
                 if rg:
                     add["y"] = rg
-        if not it.get("d"):
+        if not it.get("d") and consistent:
             ds = [d for d, c in p["disps"].items() if c >= MIN_DISP]
             if ds:
                 add["d"] = ["%sL" % (("%.1f" % d).rstrip("0").rstrip(".")) for d in sorted(ds)[:6]]

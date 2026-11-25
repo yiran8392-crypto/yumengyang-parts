@@ -35,8 +35,33 @@ MISSING = os.path.join(HERE, "_selftest", "站外高频SKU-%s.csv" % time.strfti
 VIN_RE = re.compile(r"^[A-HJ-NPR-Z0-9]{17}$")
 
 
+PREFIX = re.compile(r"^([A-Z]{2})(\d{2}-)")
+
+
 def norm(c):
     return re.sub(r"[^0-9A-Z]", "", str(c or "").upper())
+
+
+def base_key(c):
+    """去掉两位品牌前缀：YM03-0001 / WL03-0001 / SL10-DZ046C → 030001 / 10DZ046C。
+    站点 2026-11-20 起是多品牌编码（YM/WL/SL/TB/DF/NJ/YY），群机器人只报裸料号，
+    所以两边都按「去掉前缀」的口径对。返回 None 表示没有前缀。
+    注意 norm() 会把 "-" 一起去掉，所以前缀要在原始字符串上剥。"""
+    s = str(c or "").strip().upper()
+    m = PREFIX.match(s)
+    if not m:
+        return None
+    return norm(s[m.end(1):])
+
+
+def lookup_keys(sku):
+    """一个 SKU 可能命中的 by_model 键，按优先级返回。"""
+    out = []
+    b = base_key(sku)
+    if b:
+        out.append(b)
+    out.append(norm(sku))
+    return out
 
 
 def main():
@@ -44,11 +69,34 @@ def main():
     i = s.index("window.SITE_DATA=") + len("window.SITE_DATA=")
     items = json.loads(s[i:s.rindex(";")])["items"]
     by_model = {}
+    by_base = {}           # 裸料号 -> item；同号跨品类时留 None（不链，防跳错件）
+    _prefix = {"WL": 0, "YM": 1, "YY": 2, "SL": 3, "TB": 4, "DF": 5, "NJ": 6}
+    _groups = defaultdict(list)
     for it in items:
         k = norm(it["m"])
         by_model[k] = it
-        if not k.startswith("WL"):
-            by_model["WL" + k] = it
+        b = base_key(it["m"])    # 裸料号也建一份，群里只报 03-0001 这种
+        if b:
+            _groups[b].append(it)
+    n_amb = 0
+    for b, lst in _groups.items():
+        cats = {str(x.get("c") or "").strip().lower() for x in lst}
+        if len(cats) > 1:        # 同号不同品类 = 真不同件，宁可不链
+            by_base[b] = None
+            n_amb += 1
+            continue
+        lst.sort(key=lambda x: _prefix.get(str(x.get("m") or "")[:2].upper(), 9))
+        by_base[b] = lst[0]
+
+    def find(sku):
+        """精确 -> 带前缀去前缀 -> 裸料号直接查（群机器人报的就是裸号）"""
+        k = norm(sku)
+        if k in by_model:
+            return by_model[k]
+        b = base_key(sku)
+        if b:
+            return by_base.get(b)
+        return by_base.get(k)
 
     vin_skus = defaultdict(list)      # VIN -> [SKU]（保序去重）
     seen = defaultdict(set)
@@ -76,12 +124,12 @@ def main():
                 if sku not in seen[q]:
                     seen[q].add(sku)
                     vin_skus[q].append(sku)
-                k = norm("WL" + sku) if re.match(r"^\d{2}-", sku) else norm(sku)
-                if k in by_model or norm(sku) in by_model:
+                if find(sku):
                     matched += 1
         print("  读 %-24s 累计 VIN %d（+%d）" % (os.path.basename(src), len(vin_skus), len(vin_skus) - n_before))
 
     print("查询对 %d 行；VIN %d 个；独立 SKU %d 个" % (rows, len(vin_skus), len(sku_count)))
+    print("裸号（去品牌前缀）可用 %d 个，其中同号跨品类不链 %d 个" % (len(by_base) - n_amb, n_amb))
 
     # 分片
     shards = defaultdict(lambda: {"s": [], "v": {}, "m": {}})
@@ -97,8 +145,7 @@ def main():
                 idx_cache.setdefault(wmi, {})[sku] = len(dic)
                 dic.append(sku)
             ids.append(idx_cache[wmi][sku])
-            k = norm("WL" + sku) if re.match(r"^\d{2}-", sku) else norm(sku)
-            it = by_model.get(k) or by_model.get(norm(sku))
+            it = find(sku)
             if it and sku not in sh["m"]:
                 sh["m"][sku] = it.get("s") or ("p" + str(it["i"]))
                 n_map += 1
@@ -125,8 +172,7 @@ def main():
     # 站外高频 SKU（站上没有但被反复查）
     missing = []
     for sku, n in sku_count.most_common():
-        k = norm("WL" + sku) if re.match(r"^\d{2}-", sku) else norm(sku)
-        if k in by_model or norm(sku) in by_model:
+        if find(sku):
             continue
         missing.append((sku, n))
     with io.open(MISSING, "w", encoding="utf-8-sig", newline="") as f:
